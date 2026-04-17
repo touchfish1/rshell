@@ -12,6 +12,7 @@ import {
   listSessions,
   onDebugLog,
   onTerminalOutput,
+  getSessionSecret,
   openInFileManager,
   pullOutput,
   resizeTerminal,
@@ -203,6 +204,10 @@ export default function App() {
 
   const testConnect = async (input: SessionInput) => {
     return testHostReachability(input.host, input.port, 2000);
+  };
+
+  const getSecret = async (id: string) => {
+    return getSessionSecret(id);
   };
 
   const connect = async (id?: string) => {
@@ -445,6 +450,7 @@ export default function App() {
           onUpdate={update}
           onDelete={remove}
           onTestConnect={testConnect}
+          onGetSecret={getSecret}
           onConnect={connect}
         />
       ) : (

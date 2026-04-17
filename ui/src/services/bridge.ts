@@ -22,6 +22,10 @@ export async function hasSessionSecret(id: string): Promise<boolean> {
   return invoke("has_session_secret", { id });
 }
 
+export async function getSessionSecret(id: string): Promise<string | null> {
+  return invoke("get_session_secret", { id });
+}
+
 export async function connectSession(id: string, secret?: string): Promise<void> {
   await invoke("connect_session", { id, secret });
 }

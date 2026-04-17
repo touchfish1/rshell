@@ -11,6 +11,7 @@ interface Props {
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<boolean>;
+  onGetSecret: (id: string) => Promise<string | null>;
   onConnect?: (id: string) => void;
 }
 
@@ -34,6 +35,7 @@ export default function SessionList({
   onUpdate,
   onDelete,
   onTestConnect,
+  onGetSecret,
   onConnect,
 }: Props) {
   const [createForm, setCreateForm] = useState<SessionInput>(defaultForm);
@@ -44,6 +46,10 @@ export default function SessionList({
   const [editSession, setEditSession] = useState<Session | null>(null);
   const [editForm, setEditForm] = useState<SessionInput>(defaultForm);
   const [editSecret, setEditSecret] = useState("");
+  const [editSecretVisible, setEditSecretVisible] = useState(false);
+  const [editSecretLoaded, setEditSecretLoaded] = useState(false);
+  const [editSecretLoading, setEditSecretLoading] = useState(false);
+  const [editSecretDirty, setEditSecretDirty] = useState(false);
   const [editTesting, setEditTesting] = useState(false);
   const [editTestResult, setEditTestResult] = useState<string | null>(null);
   const [moreOpenId, setMoreOpenId] = useState<string | null>(null);
@@ -79,6 +85,10 @@ export default function SessionList({
       keepalive_secs: session.keepalive_secs,
     });
     setEditSecret("");
+    setEditSecretVisible(false);
+    setEditSecretLoaded(false);
+    setEditSecretLoading(false);
+    setEditSecretDirty(false);
     setEditTestResult(null);
   };
 
@@ -86,10 +96,36 @@ export default function SessionList({
     if (!editSession) return;
     if (!editForm.host.trim()) return;
     if (!editForm.username.trim()) return;
-    await onUpdate(editSession.id, editForm, editSecret.trim() ? editSecret : undefined);
+    await onUpdate(editSession.id, editForm, editSecretDirty ? editSecret : undefined);
     setEditSession(null);
     setEditTestResult(null);
     setEditSecret("");
+    setEditSecretVisible(false);
+    setEditSecretLoaded(false);
+    setEditSecretLoading(false);
+    setEditSecretDirty(false);
+  };
+
+  const toggleEditSecretVisible = async () => {
+    if (!editSession) return;
+    if (editSecretVisible) {
+      setEditSecretVisible(false);
+      return;
+    }
+    if (!editSecretLoaded) {
+      setEditSecretLoading(true);
+      try {
+        const secret = await onGetSecret(editSession.id);
+        setEditSecret(secret ?? "");
+        setEditSecretLoaded(true);
+        setEditSecretDirty(false);
+      } catch (err) {
+        setEditTestResult(`读取密码失败: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        setEditSecretLoading(false);
+      }
+    }
+    setEditSecretVisible(true);
   };
 
   const testCreateConnect = async () => {
@@ -375,12 +411,27 @@ export default function SessionList({
                 value={editForm.keepalive_secs ?? 30}
                 onChange={(e) => setEditForm({ ...editForm, keepalive_secs: Number(e.target.value) })}
               />
-              <input
-                placeholder="SSH Password (optional, keep unchanged if empty)"
-                type="password"
-                value={editSecret}
-                onChange={(e) => setEditSecret(e.target.value)}
-              />
+              <div className="password-input-wrap">
+                <input
+                  placeholder="SSH Password"
+                  type={editSecretVisible ? "text" : "password"}
+                  value={editSecretVisible ? editSecret : "*********"}
+                  readOnly={!editSecretVisible}
+                  onChange={(e) => {
+                    setEditSecret(e.target.value);
+                    setEditSecretDirty(true);
+                  }}
+                />
+                <button
+                  type="button"
+                  className="password-toggle-btn"
+                  onClick={() => void toggleEditSecretVisible()}
+                  title={editSecretVisible ? "隐藏密码" : "显示密码"}
+                  disabled={editSecretLoading}
+                >
+                  {editSecretLoading ? "…" : editSecretVisible ? "🙈" : "👁"}
+                </button>
+              </div>
               {editTestResult ? <div className="placeholder-row">{editTestResult}</div> : null}
               <div className="modal-actions">
                 <button className="btn btn-ghost" onClick={() => setEditSession(null)}>

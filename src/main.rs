@@ -14,6 +14,7 @@ fn main() {
             api::commands::update_session,
             api::commands::delete_session,
             api::commands::has_session_secret,
+            api::commands::get_session_secret,
             api::commands::connect_session,
             api::commands::pull_output,
             api::commands::disconnect_session,

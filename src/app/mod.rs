@@ -135,6 +135,10 @@ impl AppState {
         Ok(secret.is_some() && !secret.unwrap_or_default().is_empty())
     }
 
+    pub async fn get_secret(&self, id: Uuid) -> Result<Option<String>, String> {
+        self.store.get_secret(id).map_err(|e| e.to_string())
+    }
+
     pub async fn disconnect_session(&self, id: Uuid) -> Result<(), String> {
         let terminal = {
             let mut active = self.active.lock().await;

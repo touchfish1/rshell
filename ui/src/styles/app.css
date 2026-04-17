@@ -370,6 +370,26 @@ body {
   border-radius: 10px;
 }
 
+.password-input-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+.password-toggle-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(48, 56, 74, 0.9);
+  background: rgba(18, 24, 35, 0.75);
+  color: #d7ddea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
 .workspace {
   display: grid;
   grid-template-rows: 56px auto 110px 1fr 40px;

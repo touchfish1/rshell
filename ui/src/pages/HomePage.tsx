@@ -14,6 +14,7 @@ interface Props {
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<boolean>;
+  onGetSecret: (id: string) => Promise<string | null>;
   onConnect: (id?: string) => Promise<void>;
 }
 
@@ -30,6 +31,7 @@ export default function HomePage({
   onUpdate,
   onDelete,
   onTestConnect,
+  onGetSecret,
   onConnect,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
@@ -74,6 +76,7 @@ export default function HomePage({
                   onUpdate={onUpdate}
                   onDelete={onDelete}
                   onTestConnect={onTestConnect}
+                  onGetSecret={onGetSecret}
                   onConnect={(id) => void onConnect(id)}
                 />
               ) : (

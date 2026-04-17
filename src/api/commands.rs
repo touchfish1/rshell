@@ -64,6 +64,12 @@ pub async fn has_session_secret(state: State<'_, AppState>, id: String) -> Resul
 }
 
 #[tauri::command]
+pub async fn get_session_secret(state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    state.get_secret(id).await
+}
+
+#[tauri::command]
 pub async fn connect_session(
     app: AppHandle,
     state: State<'_, AppState>,
