@@ -4,26 +4,32 @@ import type { Session, SessionInput } from "../services/types";
 interface Props {
   sessions: Session[];
   selectedId?: string;
-  connectedIds: string[];
+  onlineMap: Record<string, boolean>;
+  pingingIds: string[];
   connected: boolean;
   error: string | null;
   status: string;
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<void>;
+  onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onTestConnect: (input: SessionInput) => Promise<boolean>;
   onConnect: (id?: string) => Promise<void>;
 }
 
 export default function HomePage({
   sessions,
   selectedId,
-  connectedIds,
+  onlineMap,
+  pingingIds,
   connected,
   error,
   status,
   onSelect,
   onCreate,
+  onUpdate,
   onDelete,
+  onTestConnect,
   onConnect,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
@@ -61,10 +67,13 @@ export default function HomePage({
                 <SessionList
                   sessions={sessions}
                   selectedId={selectedId}
-                  connectedIds={connectedIds}
+                  onlineMap={onlineMap}
+                  pingingIds={pingingIds}
                   onSelect={onSelect}
                   onCreate={onCreate}
+                  onUpdate={onUpdate}
                   onDelete={onDelete}
+                  onTestConnect={onTestConnect}
                   onConnect={(id) => void onConnect(id)}
                 />
               ) : (

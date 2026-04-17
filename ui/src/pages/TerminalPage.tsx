@@ -9,6 +9,7 @@ interface TerminalTab {
 
 interface Props {
   sessions: Session[];
+  selectedId?: string;
   activeTabId?: string;
   tabs: TerminalTab[];
   connectedIds: string[];
@@ -19,16 +20,19 @@ interface Props {
   sftpPath: string;
   sftpLoading: boolean;
   onOpenSession: (id: string) => void;
+  onSelectSession: (id: string) => void;
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string) => void;
   onSftpOpenDir: (path: string) => void;
   onSftpUp: () => void;
+  onSftpDownload: (path: string) => void;
   onBackToHome: () => void;
   onDisconnect: (id?: string) => void;
 }
 
 export default function TerminalPage({
   sessions,
+  selectedId,
   activeTabId,
   tabs,
   connectedIds,
@@ -39,10 +43,12 @@ export default function TerminalPage({
   sftpPath,
   sftpLoading,
   onOpenSession,
+  onSelectSession,
   onSwitchTab,
   onCloseTab,
   onSftpOpenDir,
   onSftpUp,
+  onSftpDownload,
   onBackToHome,
   onDisconnect,
 }: Props) {
@@ -55,8 +61,11 @@ export default function TerminalPage({
   } | null>(null);
   const [hostsWidth, setHostsWidth] = useState(240);
   const [sftpWidth, setSftpWidth] = useState(320);
+  const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
+  const normalizedPath = sftpPath === "." ? "/" : sftpPath;
+  const canGoUp = normalizedPath !== "/";
   const getDisplayName = (entry: SftpEntry) => {
     if (entry.name && entry.name.trim()) return entry.name;
     const normalized = entry.path.replace(/\\/g, "/").replace(/\/+$/, "");
@@ -107,6 +116,14 @@ export default function TerminalPage({
       window.removeEventListener("mouseup", onMouseUp);
     };
   }, [hostsWidth, sftpWidth]);
+
+  useEffect(() => {
+    const closeMenu = () => setMenu(null);
+    window.addEventListener("click", closeMenu);
+    return () => {
+      window.removeEventListener("click", closeMenu);
+    };
+  }, []);
 
   const workspaceStyle = {
     "--host-width": `${hostsWidth}px`,
@@ -163,12 +180,14 @@ export default function TerminalPage({
           <ul>
             {sessions.map((session) => {
               const hasActiveTab = activeTab?.sessionId === session.id;
+              const selected = selectedId === session.id;
               return (
                 <li key={session.id}>
                   <button
-                    className={hasActiveTab ? "active" : ""}
-                    onClick={() => onOpenSession(session.id)}
-                    title="打开或切换到该会话"
+                    className={`${selected ? "active" : ""} ${hasActiveTab ? "has-tab" : ""}`.trim()}
+                    onClick={() => onSelectSession(session.id)}
+                    onDoubleClick={() => onOpenSession(session.id)}
+                    title="单击选中，双击打开新的会话标签"
                   >
                     {session.name}
                   </button>
@@ -205,16 +224,15 @@ export default function TerminalPage({
         <aside className="terminal-sftp">
           <div className="panel-title">SFTP 文件列表</div>
           <div className="sftp-toolbar">
-            <button onClick={onSftpUp} disabled={sftpPath === "."}>
+            <button onClick={onSftpUp} disabled={!canGoUp}>
               上级
             </button>
-            <span className="sftp-path" title={sftpPath}>
-              {sftpPath}
+            <span className="sftp-path" title={normalizedPath}>
+              {normalizedPath}
             </span>
           </div>
           <div className="sftp-head">
             <span>名称</span>
-            <span>类型</span>
             <span>大小</span>
             <span>修改时间</span>
           </div>
@@ -224,26 +242,58 @@ export default function TerminalPage({
             ) : sftpEntries.length === 0 ? (
               <li className="sftp-empty">目录为空或无权限</li>
             ) : (
-              sftpEntries.map((entry) => (
-                <li key={`${entry.path}:${entry.name}`} className="sftp-row">
-                  <button
-                    className={entry.is_dir ? "sftp-dir" : "sftp-file"}
-                    onClick={() => entry.is_dir && onSftpOpenDir(entry.path)}
-                    disabled={!entry.is_dir}
-                    title={entry.path}
-                  >
-                    <span className="sftp-col-name">
-                      <span className="sftp-kind-icon">{entry.is_dir ? "▸" : "•"}</span>
-                      <span className="sftp-name-text">{getDisplayName(entry)}</span>
-                    </span>
-                    <span className="sftp-col-type">{entry.is_dir ? "目录" : "文件"}</span>
-                    <span className="sftp-col-size">{entry.is_dir ? "-" : formatSize(entry.size)}</span>
-                    <span className="sftp-col-time">{formatMtime(entry.mtime)}</span>
-                  </button>
-                </li>
-              ))
+              <>
+                {canGoUp ? (
+                  <li className="sftp-row">
+                    <button className="sftp-dir sftp-parent" onClick={onSftpUp} title="返回上一级目录">
+                      <span className="sftp-col-name">
+                        <span className="sftp-kind-icon folder">📁</span>
+                        <span className="sftp-name-text">..</span>
+                      </span>
+                      <span className="sftp-col-size">-</span>
+                      <span className="sftp-col-time">上一级</span>
+                    </button>
+                  </li>
+                ) : null}
+                {sftpEntries.map((entry) => (
+                  <li key={`${entry.path}:${entry.name}`} className="sftp-row">
+                    <button
+                      className={entry.is_dir ? "sftp-dir" : "sftp-file"}
+                      onClick={() => entry.is_dir && onSftpOpenDir(entry.path)}
+                      onContextMenu={(e) => {
+                        if (entry.is_dir) return;
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setMenu({ x: e.clientX, y: e.clientY, path: entry.path });
+                      }}
+                      title={entry.path}
+                    >
+                      <span className="sftp-col-name">
+                        <span className={`sftp-kind-icon ${entry.is_dir ? "folder" : "file"}`}>
+                          {entry.is_dir ? "📁" : "📄"}
+                        </span>
+                        <span className="sftp-name-text">{getDisplayName(entry)}</span>
+                      </span>
+                      <span className="sftp-col-size">{entry.is_dir ? "-" : formatSize(entry.size)}</span>
+                      <span className="sftp-col-time">{formatMtime(entry.mtime)}</span>
+                    </button>
+                  </li>
+                ))}
+              </>
             )}
           </ul>
+          {menu ? (
+            <div className="sftp-context-menu" style={{ left: menu.x, top: menu.y }}>
+              <button
+                onClick={() => {
+                  onSftpDownload(menu.path);
+                  setMenu(null);
+                }}
+              >
+                下载文件
+              </button>
+            </div>
+          ) : null}
         </aside>
       </div>
       <footer>{status}</footer>

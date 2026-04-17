@@ -6,6 +6,7 @@ import {
   connectSession,
   createSession,
   deleteSession,
+  downloadSftpFile,
   disconnectSession,
   listSftpDir,
   listSessions,
@@ -14,6 +15,7 @@ import {
   pullOutput,
   resizeTerminal,
   sendInput,
+  testHostReachability,
   updateSession,
 } from "./services/bridge";
 import type { Session, SessionInput, SftpEntry } from "./services/types";
@@ -22,6 +24,14 @@ interface TerminalTab {
   id: string;
   sessionId: string;
   title: string;
+}
+
+interface DownloadTask {
+  id: string;
+  name: string;
+  progress: number;
+  status: "downloading" | "success" | "error";
+  detail?: string;
 }
 
 export default function App() {
@@ -33,15 +43,86 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
   const [status, setStatus] = useState("Idle");
   const [error, setError] = useState<string | null>(null);
+  const [downloadTasks, setDownloadTasks] = useState<DownloadTask[]>([]);
+  const [onlineMap, setOnlineMap] = useState<Record<string, boolean>>({});
+  const [pingingIds, setPingingIds] = useState<string[]>([]);
   const [sftpEntriesMap, setSftpEntriesMap] = useState<Record<string, SftpEntry[]>>({});
   const [sftpPathMap, setSftpPathMap] = useState<Record<string, string>>({});
   const [sftpLoadingId, setSftpLoadingId] = useState<string | null>(null);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
   const tabsRef = useRef<TerminalTab[]>([]);
+  const sessionsRef = useRef<Session[]>([]);
+  const downloadTimerRef = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     tabsRef.current = tabs;
   }, [tabs]);
+
+  useEffect(() => {
+    sessionsRef.current = sessions;
+  }, [sessions]);
+
+  useEffect(() => {
+    return () => {
+      downloadTimerRef.current.forEach((timer) => window.clearInterval(timer));
+      downloadTimerRef.current.clear();
+    };
+  }, []);
+
+  const createDownloadTask = (remotePath: string) => {
+    const normalized = remotePath.replace(/\\/g, "/");
+    const name = normalized.split("/").pop() || normalized;
+    const id = `dl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+    setDownloadTasks((prev) => [...prev, { id, name, progress: 6, status: "downloading" }]);
+    const timer = window.setInterval(() => {
+      setDownloadTasks((prev) =>
+        prev.map((task) => {
+          if (task.id !== id || task.status !== "downloading") return task;
+          const next = Math.min(92, task.progress + Math.floor(Math.random() * 9 + 3));
+          return { ...task, progress: next };
+        })
+      );
+    }, 220);
+    downloadTimerRef.current.set(id, timer);
+    return id;
+  };
+
+  const finishDownloadTask = (id: string, ok: boolean, detail: string) => {
+    const timer = downloadTimerRef.current.get(id);
+    if (timer) {
+      window.clearInterval(timer);
+      downloadTimerRef.current.delete(id);
+    }
+    setDownloadTasks((prev) =>
+      prev.map((task) =>
+        task.id === id
+          ? { ...task, progress: 100, status: ok ? "success" : "error", detail }
+          : task
+      )
+    );
+    window.setTimeout(() => {
+      setDownloadTasks((prev) => prev.filter((task) => task.id !== id));
+    }, ok ? 2200 : 3600);
+  };
+
+  const normalizeEncoding = (encoding?: string) => {
+    const value = (encoding || "utf-8").trim().toLowerCase();
+    if (value === "utf8") return "utf-8";
+    if (value === "gb2312") return "gbk";
+    if (value === "cp936") return "gbk";
+    return value;
+  };
+
+  const decodeOutput = (base64: string, sessionId: string) => {
+    const session = sessionsRef.current.find((item) => item.id === sessionId);
+    const preferredEncoding = normalizeEncoding(session?.encoding);
+    const bytes = Uint8Array.from(atob(base64), (ch) => ch.charCodeAt(0));
+    try {
+      return new TextDecoder(preferredEncoding).decode(bytes);
+    } catch {
+      return new TextDecoder("utf-8").decode(bytes);
+    }
+  };
 
   useEffect(() => {
     void listSessions()
@@ -56,7 +137,7 @@ export default function App() {
         setError(`加载会话失败: ${message}`);
       });
     const unlistenPromise = onTerminalOutput((payload) => {
-      const plain = atob(payload.data);
+      const plain = decodeOutput(payload.data, payload.sessionId);
       console.debug("[frontend][terminal-output]", payload.sessionId, plain.slice(0, 120));
       const relatedTabs = tabsRef.current.filter((tab) => tab.sessionId === payload.sessionId);
       relatedTabs.forEach((tab) => writerMapRef.current.get(tab.id)?.(plain));
@@ -79,7 +160,7 @@ export default function App() {
         void pullOutput(id)
           .then((base64) => {
             if (!base64) return;
-            const plain = atob(base64);
+            const plain = decodeOutput(base64, id);
             const relatedTabs = tabsRef.current.filter((tab) => tab.sessionId === id);
             relatedTabs.forEach((tab) => writerMapRef.current.get(tab.id)?.(plain));
           })
@@ -104,6 +185,22 @@ export default function App() {
       const message = err instanceof Error ? err.message : String(err);
       setError(`创建会话失败: ${message}`);
     }
+  };
+
+  const update = async (id: string, input: SessionInput, secret?: string) => {
+    try {
+      const updated = await updateSession(id, input, secret);
+      setSessions((prev) => prev.map((session) => (session.id === id ? updated : session)));
+      setStatus(`已更新主机: ${updated.name}`);
+      setError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(`更新主机失败: ${message}`);
+    }
+  };
+
+  const testConnect = async (input: SessionInput) => {
+    return testHostReachability(input.host, input.port, 2000);
   };
 
   const connect = async (id?: string) => {
@@ -137,14 +234,14 @@ export default function App() {
 
     if (connectedIds.includes(sessionId)) {
       setStatus(`已连接: ${targetSession?.name ?? sessionId}`);
-      void loadSftp(tabId, sessionId, ".");
+      void loadSftp(tabId, sessionId, "/");
       return;
     }
     try {
       await connectSession(sessionId);
       setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
       setStatus(`已连接: ${targetSession?.name ?? sessionId}`);
-      void loadSftp(tabId, sessionId, ".");
+      void loadSftp(tabId, sessionId, "/");
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes("missing SSH password")) {
@@ -171,7 +268,7 @@ export default function App() {
           setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
           setStatus(`已连接: ${targetSession?.name ?? sessionId}`);
           setError(null);
-          void loadSftp(tabId, sessionId, ".");
+          void loadSftp(tabId, sessionId, "/");
           return;
         } catch (retryErr) {
           const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
@@ -188,21 +285,21 @@ export default function App() {
   const disconnect = async (id?: string) => {
     const targetTabId = id ?? activeTabId;
     if (!targetTabId) return;
-    const targetTab = tabsRef.current.find((tab) => tab.id === targetTabId);
+    const currentTabs = tabsRef.current;
+    const targetIndex = currentTabs.findIndex((tab) => tab.id === targetTabId);
+    const targetTab = currentTabs.find((tab) => tab.id === targetTabId);
     if (!targetTab) return;
     try {
-      const remainTabsSameSession = tabsRef.current.filter(
+      const remainTabsSameSession = currentTabs.filter(
         (tab) => tab.sessionId === targetTab.sessionId && tab.id !== targetTab.id
       );
+      const nextTabs = currentTabs.filter((tab) => tab.id !== targetTab.id);
       if (remainTabsSameSession.length === 0 && connectedIds.includes(targetTab.sessionId)) {
         await disconnectSession(targetTab.sessionId);
         setConnectedIds((prev) => prev.filter((sid) => sid !== targetTab.sessionId));
       }
-      let nextTabs: TerminalTab[] = [];
-      setTabs((prev) => {
-        nextTabs = prev.filter((tab) => tab.id !== targetTab.id);
-        return nextTabs;
-      });
+      tabsRef.current = nextTabs;
+      setTabs(nextTabs);
       writerMapRef.current.delete(targetTab.id);
       setSftpEntriesMap((prev) => {
         const next = { ...prev };
@@ -214,10 +311,13 @@ export default function App() {
         delete next[targetTab.id];
         return next;
       });
+      const nextActiveId =
+        targetIndex > 0
+          ? nextTabs[targetIndex - 1]?.id
+          : nextTabs[targetIndex]?.id ?? nextTabs[nextTabs.length - 1]?.id;
       setActiveTabId((prev) => {
         if (prev !== targetTab.id) return prev;
-        const remain = nextTabs;
-        return remain[remain.length - 1]?.id;
+        return nextActiveId;
       });
       if (nextTabs.length === 0) {
         setCurrentPage("home");
@@ -260,10 +360,15 @@ export default function App() {
     await disconnect(id);
   };
 
+  const normalizeSftpPath = (path?: string) => {
+    if (!path || path === ".") return "/";
+    return path;
+  };
+
   const loadSftp = async (tabId: string, sessionId: string, path?: string) => {
     setSftpLoadingId(tabId);
     try {
-      const nextPath = path ?? sftpPathMap[tabId] ?? ".";
+      const nextPath = normalizeSftpPath(path ?? sftpPathMap[tabId] ?? "/");
       const entries = await listSftpDir(sessionId, nextPath);
       setSftpEntriesMap((prev) => ({ ...prev, [tabId]: entries }));
       setSftpPathMap((prev) => ({ ...prev, [tabId]: nextPath }));
@@ -284,33 +389,76 @@ export default function App() {
     void loadSftp(activeTabId, tab.sessionId);
   }, [activeTabId, connectedIds, sftpEntriesMap, tabs]);
 
+  useEffect(() => {
+    let cancelled = false;
+    if (currentPage !== "home" || sessions.length === 0) return;
+
+    const runPing = async () => {
+      const ids = sessions.map((session) => session.id);
+      if (!cancelled) setPingingIds(ids);
+      const results = await Promise.all(
+        sessions.map(async (session) => {
+          try {
+            const ok = await testHostReachability(session.host, session.port, 1500);
+            return [session.id, ok] as const;
+          } catch {
+            return [session.id, false] as const;
+          }
+        })
+      );
+      if (cancelled) return;
+      setOnlineMap((prev) => {
+        const next = { ...prev };
+        results.forEach(([id, ok]) => {
+          next[id] = ok;
+        });
+        return next;
+      });
+      setPingingIds([]);
+    };
+
+    void runPing();
+    const timer = window.setInterval(() => {
+      void runPing();
+    }, 10000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [currentPage, sessions]);
+
   return (
     <main className="app-shell">
       {currentPage === "home" ? (
         <HomePage
           sessions={sessions}
           selectedId={selectedId}
-          connectedIds={connectedIds}
+          onlineMap={onlineMap}
+          pingingIds={pingingIds}
           connected={connectedIds.length > 0}
           error={error}
           status={status}
           onSelect={setSelectedId}
           onCreate={create}
+          onUpdate={update}
           onDelete={remove}
+          onTestConnect={testConnect}
           onConnect={connect}
         />
       ) : (
         <TerminalPage
           sessions={sessions}
+          selectedId={selectedId}
           activeTabId={activeTabId}
           tabs={tabs}
           connectedIds={connectedIds}
           error={error}
           status={status}
           sftpEntries={activeTabId ? sftpEntriesMap[activeTabId] ?? [] : []}
-          sftpPath={activeTabId ? sftpPathMap[activeTabId] ?? "." : "."}
+          sftpPath={activeTabId ? sftpPathMap[activeTabId] ?? "/" : "/"}
           sftpLoading={Boolean(activeTabId && sftpLoadingId === activeTabId)}
           onOpenSession={(id) => void connect(id)}
+          onSelectSession={setSelectedId}
           onSwitchTab={setActiveTabId}
           onCloseTab={(id) => void closeTab(id)}
           onSftpOpenDir={(path) => {
@@ -325,12 +473,29 @@ export default function App() {
             if (!activeTabId) return;
             const tab = tabs.find((t) => t.id === activeTabId);
             if (!tab) return;
-            const current = sftpPathMap[activeTabId] ?? ".";
-            if (current === "." || current === "/") return;
+            const current = normalizeSftpPath(sftpPathMap[activeTabId] ?? "/");
+            if (current === "/") return;
             const normalized = current.replace(/\/+$/, "");
             const idx = normalized.lastIndexOf("/");
             const parent = idx <= 0 ? "/" : normalized.slice(0, idx);
             void loadSftp(activeTabId, tab.sessionId, parent);
+          }}
+          onSftpDownload={(remotePath: string) => {
+            if (!activeTabId) return;
+            const tab = tabs.find((t) => t.id === activeTabId);
+            if (!tab) return;
+            const taskId = createDownloadTask(remotePath);
+            void downloadSftpFile(tab.sessionId, remotePath)
+              .then((savedPath) => {
+                setStatus(`已下载到: ${savedPath}`);
+                setError(null);
+                finishDownloadTask(taskId, true, savedPath);
+              })
+              .catch((err) => {
+                const message = err instanceof Error ? err.message : String(err);
+                setError(`下载失败: ${message}`);
+                finishDownloadTask(taskId, false, message);
+              });
           }}
           onBackToHome={() => setCurrentPage("home")}
           onDisconnect={(id) => void disconnect(id)}
@@ -364,6 +529,32 @@ export default function App() {
           }))}
         />
       )}
+      {downloadTasks.length > 0 ? (
+        <div className="download-toast-stack">
+          {downloadTasks.map((task) => (
+            <div key={task.id} className={`download-toast ${task.status}`}>
+              <div className="download-title">
+                <span className="download-name" title={task.name}>
+                  {task.name}
+                </span>
+                <span className="download-status">
+                  {task.status === "downloading"
+                    ? "下载中"
+                    : task.status === "success"
+                      ? "完成"
+                      : "失败"}
+                </span>
+              </div>
+              <div className="download-detail" title={task.detail}>
+                {task.detail ?? "正在下载到本地..."}
+              </div>
+              <div className="download-bar">
+                <span style={{ width: `${task.progress}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </main>
   );
 }

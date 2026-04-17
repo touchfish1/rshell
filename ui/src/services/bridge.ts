@@ -46,6 +46,18 @@ export async function listSftpDir(id: string, path?: string): Promise<SftpEntry[
   return invoke("list_sftp_dir", { id, path });
 }
 
+export async function downloadSftpFile(id: string, remotePath: string): Promise<string> {
+  return invoke("download_sftp_file", { id, remotePath });
+}
+
+export async function testHostReachability(
+  host: string,
+  port: number,
+  timeoutMs = 2000
+): Promise<boolean> {
+  return invoke("test_host_reachability", { host, port, timeoutMs });
+}
+
 export function onTerminalOutput(handler: (payload: { sessionId: string; data: string }) => void) {
   return listen<{ sessionId: string; data: string }>("terminal-output", (event) => {
     handler(event.payload);

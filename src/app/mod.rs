@@ -1,4 +1,6 @@
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::copy;
 use std::net::{SocketAddr, TcpStream};
 use std::path::Path;
 use std::sync::Arc;
@@ -250,6 +252,68 @@ impl AppState {
             _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
         });
         Ok(out)
+    }
+
+    pub async fn download_sftp_file(&self, id: Uuid, remote_path: String) -> Result<String, String> {
+        let session = self
+            .sessions
+            .lock()
+            .await
+            .iter()
+            .find(|s| s.id == id)
+            .cloned()
+            .ok_or_else(|| "session not found".to_string())?;
+        if !matches!(session.protocol, Protocol::Ssh) {
+            return Err("download only supports ssh sessions".to_string());
+        }
+        let secret = self
+            .store
+            .get_secret(id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "missing SSH password".to_string())?;
+        let addr = format!("{}:{}", session.host, session.port);
+        let socket_addr: SocketAddr = addr.parse().map_err(|e| format!("invalid address: {e}"))?;
+        let tcp = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(8))
+            .map_err(|e| format!("connect failed: {e}"))?;
+        let mut ssh = Ssh2Session::new().map_err(|e| format!("session init failed: {e}"))?;
+        ssh.set_tcp_stream(tcp);
+        ssh.handshake().map_err(|e| format!("handshake failed: {e}"))?;
+        ssh.userauth_password(&session.username, &secret)
+            .map_err(|e| format!("auth failed: {e}"))?;
+        let sftp = ssh.sftp().map_err(|e| format!("sftp init failed: {e}"))?;
+
+        let remote = Path::new(&remote_path);
+        let file_name = remote
+            .file_name()
+            .and_then(|n| n.to_str())
+            .filter(|n| !n.trim().is_empty())
+            .ok_or_else(|| "invalid remote file name".to_string())?;
+        let mut source = sftp
+            .open(remote)
+            .map_err(|e| format!("open remote file failed: {e}"))?;
+
+        let mut target_dir =
+            dirs::download_dir().unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+        target_dir.push("rshell");
+        std::fs::create_dir_all(&target_dir).map_err(|e| format!("create download dir failed: {e}"))?;
+        let mut target_path = target_dir.join(file_name);
+        let mut idx = 1;
+        while target_path.exists() {
+            let stem = Path::new(file_name)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("file");
+            let ext = Path::new(file_name).extension().and_then(|e| e.to_str());
+            let candidate = match ext {
+                Some(ext) => format!("{stem} ({idx}).{ext}"),
+                None => format!("{stem} ({idx})"),
+            };
+            target_path = target_dir.join(candidate);
+            idx += 1;
+        }
+        let mut output = File::create(&target_path).map_err(|e| format!("create local file failed: {e}"))?;
+        copy(&mut source, &mut output).map_err(|e| format!("write local file failed: {e}"))?;
+        Ok(target_path.to_string_lossy().to_string())
     }
 }
 

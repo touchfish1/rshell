@@ -1,5 +1,7 @@
 use base64::Engine;
 use tauri::{AppHandle, Emitter, State};
+use tokio::net::TcpStream;
+use tokio::time::{timeout, Duration};
 use uuid::Uuid;
 
 use crate::app::AppState;
@@ -163,4 +165,36 @@ pub async fn list_sftp_dir(
         &format!("list dir {}", path.clone().unwrap_or_else(|| ".".to_string())),
     );
     state.list_sftp_dir(id, path).await
+}
+
+#[tauri::command]
+pub async fn download_sftp_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_path: String,
+) -> Result<String, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "sftp_download",
+        &format!("download file {}", remote_path),
+    );
+    state.download_sftp_file(id, remote_path).await
+}
+
+#[tauri::command]
+pub async fn test_host_reachability(
+    host: String,
+    port: u16,
+    timeout_ms: Option<u64>,
+) -> Result<bool, String> {
+    if host.trim().is_empty() {
+        return Err("host is required".to_string());
+    }
+    let addr = format!("{}:{}", host.trim(), port);
+    let duration = Duration::from_millis(timeout_ms.unwrap_or(2000).clamp(100, 10000));
+    let result = timeout(duration, TcpStream::connect(addr)).await;
+    Ok(matches!(result, Ok(Ok(_))))
 }

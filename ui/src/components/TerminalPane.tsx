@@ -31,11 +31,33 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
     const terminal = terminalRef.current;
     const fitAddon = fitAddonRef.current;
     if (!terminal || !fitAddon) return;
-    window.requestAnimationFrame(() => {
+    const resync = () => {
       fitAddon.fit();
+      if (terminal.rows > 0) {
+        terminal.refresh(0, terminal.rows - 1);
+      }
+      terminal.scrollToBottom();
       terminal.focus();
       onResizeRef.current(terminal.cols, terminal.rows);
+    };
+    let raf2 = 0;
+    let t1 = 0;
+    let t2 = 0;
+    let t3 = 0;
+    const raf1 = window.requestAnimationFrame(() => {
+      resync();
+      raf2 = window.requestAnimationFrame(resync);
+      t1 = window.setTimeout(resync, 60);
+      t2 = window.setTimeout(resync, 160);
+      t3 = window.setTimeout(resync, 320);
     });
+    return () => {
+      window.cancelAnimationFrame(raf1);
+      if (raf2) window.cancelAnimationFrame(raf2);
+      if (t1) window.clearTimeout(t1);
+      if (t2) window.clearTimeout(t2);
+      if (t3) window.clearTimeout(t3);
+    };
   }, [isActive]);
 
   useEffect(() => {
