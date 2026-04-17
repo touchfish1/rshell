@@ -153,11 +153,202 @@ body {
 }
 
 .workspace.home-page {
-  grid-template-rows: 64px auto 1fr 40px;
+  grid-template-rows: 64px auto 1fr 30px;
 }
 
 .workspace.terminal-page {
-  grid-template-rows: 56px auto 110px 1fr 40px;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.terminal-error-slot {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.terminal-top {
+  flex: 0 0 56px;
+}
+
+.session-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+  background: rgba(10, 13, 19, 0.32);
+  overflow-x: auto;
+}
+
+.session-tab-empty {
+  color: #8992a6;
+  font-size: 12px;
+  padding: 4px 2px;
+}
+
+.session-tab {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(48, 56, 74, 0.85);
+  border-radius: 9px;
+  background: rgba(18, 24, 35, 0.78);
+}
+
+.session-tab.active {
+  border-color: rgba(79, 131, 255, 0.75);
+}
+
+.session-tab-main {
+  border: none;
+  background: transparent;
+  color: #d7ddea;
+  padding: 6px 10px;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-tab-close {
+  border: none;
+  border-left: 1px solid rgba(48, 56, 74, 0.85);
+  background: transparent;
+  color: #9ba3b3;
+  width: 24px;
+  height: 24px;
+}
+
+.session-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.session-dot.on {
+  background: #56d89a;
+}
+
+.session-dot.off {
+  background: #728099;
+}
+
+.terminal-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr) 280px;
+}
+
+.terminal-hosts,
+.terminal-sftp {
+  border-right: 1px solid rgba(43, 49, 64, 0.7);
+  background: rgba(9, 14, 22, 0.55);
+  overflow: auto;
+}
+
+.terminal-sftp {
+  border-right: none;
+  border-left: 1px solid rgba(43, 49, 64, 0.7);
+}
+
+.panel-title {
+  position: sticky;
+  top: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #95a0b8;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+  background: rgba(9, 14, 22, 0.9);
+}
+
+.terminal-hosts ul,
+.terminal-sftp ul {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+}
+
+.terminal-hosts button {
+  width: 100%;
+  text-align: left;
+  background: rgba(18, 24, 35, 0.65);
+  border: 1px solid rgba(48, 56, 74, 0.85);
+  color: #d7ddea;
+  border-radius: 8px;
+  padding: 7px 9px;
+  margin-bottom: 6px;
+}
+
+.terminal-hosts button.active {
+  border-color: rgba(79, 131, 255, 0.8);
+}
+
+.terminal-sftp li {
+  padding: 6px 8px;
+  color: #c6cfdf;
+  border-radius: 7px;
+}
+
+.terminal-sftp li:hover {
+  background: rgba(22, 30, 44, 0.65);
+}
+
+.sftp-empty {
+  color: #8190aa;
+  font-size: 12px;
+}
+
+.terminal-main {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.terminal-pane-slot {
+  position: absolute;
+  inset: 0;
+  display: none;
+}
+
+.terminal-pane-slot.active {
+  display: flex;
+}
+
+.terminal-main .terminal-pane {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.terminal-main .terminal-pane .xterm {
+  height: 100%;
+}
+
+.terminal-main .terminal-pane .xterm-viewport {
+  height: 100% !important;
+}
+
+@media (max-width: 1200px) {
+  .terminal-workspace {
+    grid-template-columns: 200px minmax(0, 1fr) 220px;
+  }
+}
+
+@media (max-width: 900px) {
+  .terminal-workspace {
+    grid-template-columns: 1fr;
+  }
+  .terminal-hosts,
+  .terminal-sftp {
+    display: none;
+  }
 }
 
 .workspace header {
@@ -232,9 +423,15 @@ body {
   border-top: 1px solid rgba(43, 49, 64, 0.7);
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 12px;
   color: #9ba3b3;
   background: rgba(10, 13, 19, 0.25);
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.workspace.terminal-page footer {
+  flex: 0 0 30px;
 }
 
 .home-card {

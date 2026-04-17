@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import HomePage from "./pages/HomePage";
 import TerminalPage from "./pages/TerminalPage";
 import TerminalPane from "./components/TerminalPane";
@@ -20,16 +20,17 @@ import type { Session, SessionInput } from "./services/types";
 export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [connectedId, setConnectedId] = useState<string | undefined>();
+  const [connectedIds, setConnectedIds] = useState<string[]>([]);
+  const [activeTabId, setActiveTabId] = useState<string | undefined>();
+  const [tabs, setTabs] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
   const [status, setStatus] = useState("Idle");
   const [error, setError] = useState<string | null>(null);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
-  const [writer, setWriter] = useState<(content: string) => void>(() => () => undefined);
+  const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
 
-  const selectedSession = useMemo(
-    () => sessions.find((session) => session.id === selectedId),
-    [sessions, selectedId]
+  const activeSession = useMemo(
+    () => sessions.find((session) => session.id === activeTabId),
+    [sessions, activeTabId]
   );
 
   useEffect(() => {
@@ -45,39 +46,39 @@ export default function App() {
         setError(`加载会话失败: ${message}`);
       });
     const unlistenPromise = onTerminalOutput((payload) => {
-      // 先不过滤会话，确保任何后端输出都能看见，便于稳定联调。
       const plain = atob(payload.data);
       console.debug("[frontend][terminal-output]", payload.sessionId, plain.slice(0, 120));
-      writer(plain);
+      writerMapRef.current.get(payload.sessionId)?.(plain);
     });
     const unlistenDebugPromise = onDebugLog((payload) => {
       const line = `[${new Date().toLocaleTimeString()}] [${payload.stage}] ${payload.sessionId} ${payload.message}`;
       console.debug("[frontend][debug-log]", line);
-      setDebugLogs((prev) => [...prev.slice(-79), line]);
     });
 
     return () => {
       void unlistenPromise.then((unlisten) => unlisten());
       void unlistenDebugPromise.then((unlisten) => unlisten());
     };
-  }, [connectedId, writer]);
+  }, []);
 
   useEffect(() => {
-    if (!connectedId) return;
+    if (connectedIds.length === 0) return;
     const timer = window.setInterval(() => {
-      void pullOutput(connectedId)
-        .then((base64) => {
-          if (!base64) return;
-          const plain = atob(base64);
-          writer(plain);
-        })
-        .catch((err) => {
-          const message = err instanceof Error ? err.message : String(err);
-          setError(`拉取输出失败: ${message}`);
-        });
+      connectedIds.forEach((id) => {
+        void pullOutput(id)
+          .then((base64) => {
+            if (!base64) return;
+            const plain = atob(base64);
+            writerMapRef.current.get(id)?.(plain);
+          })
+          .catch((err) => {
+            const message = err instanceof Error ? err.message : String(err);
+            setError(`拉取输出失败: ${message}`);
+          });
+      });
     }, 10);
     return () => window.clearInterval(timer);
-  }, [connectedId, writer]);
+  }, [connectedIds]);
 
   const create = async (input: SessionInput, secret?: string) => {
     try {
@@ -99,9 +100,18 @@ export default function App() {
       return;
     }
     const targetSession = sessions.find((session) => session.id === targetId);
+    if (connectedIds.includes(targetId)) {
+      setActiveTabId(targetId);
+      setCurrentPage("terminal");
+      setStatus(`已连接: ${targetSession?.name ?? targetId}`);
+      setError(null);
+      return;
+    }
     try {
       await connectSession(targetId);
-      setConnectedId(targetId);
+      setConnectedIds((prev) => (prev.includes(targetId) ? prev : [...prev, targetId]));
+      setTabs((prev) => (prev.includes(targetId) ? prev : [...prev, targetId]));
+      setActiveTabId(targetId);
       setCurrentPage("terminal");
       setStatus(`已连接: ${targetSession?.name ?? targetId}`);
       setError(null);
@@ -127,7 +137,9 @@ export default function App() {
             await updateSession(targetId, sessionInput, input);
           }
           await connectSession(targetId, input);
-          setConnectedId(targetId);
+          setConnectedIds((prev) => (prev.includes(targetId) ? prev : [...prev, targetId]));
+          setTabs((prev) => (prev.includes(targetId) ? prev : [...prev, targetId]));
+          setActiveTabId(targetId);
           setCurrentPage("terminal");
           setStatus(`已连接: ${targetSession?.name ?? targetId}`);
           setError(null);
@@ -142,14 +154,28 @@ export default function App() {
     }
   };
 
-  const disconnect = async () => {
-    if (!connectedId) {
+  const disconnect = async (id?: string) => {
+    const targetId = id ?? activeTabId;
+    if (!targetId) {
       return;
     }
     try {
-      await disconnectSession(connectedId);
-      setConnectedId(undefined);
-      setCurrentPage("home");
+      await disconnectSession(targetId);
+      setConnectedIds((prev) => prev.filter((sid) => sid !== targetId));
+      let nextTabs: string[] = [];
+      setTabs((prev) => {
+        nextTabs = prev.filter((sid) => sid !== targetId);
+        return nextTabs;
+      });
+      writerMapRef.current.delete(targetId);
+      setActiveTabId((prev) => {
+        if (prev !== targetId) return prev;
+        const remain = nextTabs;
+        return remain[remain.length - 1];
+      });
+      if (nextTabs.length === 0) {
+        setCurrentPage("home");
+      }
       setStatus("已断开");
       setError(null);
     } catch (err) {
@@ -160,9 +186,11 @@ export default function App() {
 
   const remove = async (id: string) => {
     try {
-      if (connectedId === id) {
+      if (connectedIds.includes(id)) {
         await disconnectSession(id);
-        setConnectedId(undefined);
+        setConnectedIds((prev) => prev.filter((sid) => sid !== id));
+        setTabs((prev) => prev.filter((sid) => sid !== id));
+        writerMapRef.current.delete(id);
       }
       await deleteSession(id);
       const next = sessions.filter((s) => s.id !== id);
@@ -178,14 +206,38 @@ export default function App() {
     }
   };
 
+  const closeTab = async (id: string) => {
+    if (connectedIds.includes(id)) {
+      await disconnect(id);
+      return;
+    }
+    setTabs((prev) => prev.filter((sid) => sid !== id));
+    setActiveTabId((prev) => (prev === id ? undefined : prev));
+  };
+
+  const sftpFiles = useMemo(() => {
+    if (!activeSession) return [];
+    return [
+      ".",
+      "..",
+      "home/",
+      "var/",
+      "etc/",
+      "tmp/",
+      `${activeSession.username}/`,
+      "README.md",
+      "deploy.sh",
+    ];
+  }, [activeSession]);
+
   return (
     <main className="app-shell">
       {currentPage === "home" ? (
         <HomePage
           sessions={sessions}
           selectedId={selectedId}
-          connectedId={connectedId}
-          connected={Boolean(connectedId)}
+          connectedId={activeTabId}
+          connected={connectedIds.length > 0}
           error={error}
           status={status}
           onSelect={setSelectedId}
@@ -195,36 +247,45 @@ export default function App() {
         />
       ) : (
         <TerminalPage
-          sessionName={selectedSession?.name}
-          connected={Boolean(connectedId)}
+          sessions={sessions}
+          activeTabId={activeTabId}
+          tabs={tabs}
+          connectedIds={connectedIds}
           error={error}
           status={status}
-          debugLogs={debugLogs}
+          sftpFiles={sftpFiles}
+          onOpenSession={(id) => void connect(id)}
+          onSwitchTab={setActiveTabId}
+          onCloseTab={(id) => void closeTab(id)}
           onBackToHome={() => setCurrentPage("home")}
-          onDisconnect={disconnect}
-          onClearDebug={() => setDebugLogs([])}
-          terminal={
-            <TerminalPane
-              connected={Boolean(connectedId)}
-              registerWriter={(nextWriter) => setWriter(() => nextWriter)}
-              onInput={(text) => {
-                if (connectedId) {
-                  void sendInput(connectedId, text).catch((err) => {
-                    const message = err instanceof Error ? err.message : String(err);
-                    setError(`发送失败: ${message}`);
-                  });
-                }
-              }}
-              onResize={(cols, rows) => {
-                if (connectedId) {
-                  void resizeTerminal(connectedId, cols, rows).catch((err) => {
-                    const message = err instanceof Error ? err.message : String(err);
-                    setError(`调整终端尺寸失败: ${message}`);
-                  });
-                }
-              }}
-            />
-          }
+          onDisconnect={(id) => void disconnect(id)}
+          terminals={tabs.map((id) => ({
+            id,
+            node: (
+              <TerminalPane
+                connected={connectedIds.includes(id)}
+                registerWriter={(nextWriter) => {
+                  writerMapRef.current.set(id, nextWriter);
+                }}
+                onInput={(text) => {
+                  if (connectedIds.includes(id)) {
+                    void sendInput(id, text).catch((err) => {
+                      const message = err instanceof Error ? err.message : String(err);
+                      setError(`发送失败: ${message}`);
+                    });
+                  }
+                }}
+                onResize={(cols, rows) => {
+                  if (connectedIds.includes(id)) {
+                    void resizeTerminal(id, cols, rows).catch((err) => {
+                      const message = err instanceof Error ? err.message : String(err);
+                      setError(`调整终端尺寸失败: ${message}`);
+                    });
+                  }
+                }}
+              />
+            ),
+          }))}
         />
       )}
     </main>

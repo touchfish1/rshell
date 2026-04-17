@@ -27,7 +27,7 @@ export default function HomePage({
   onConnect,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
-  const canConnect = Boolean(selectedId) && !connected;
+  const canConnect = Boolean(selectedId);
   const hasSessions = sessions.length > 0;
 
   return (
@@ -91,7 +91,7 @@ export default function HomePage({
             <div className="card-actions">
               <button
                 className="btn btn-ghost"
-                disabled={!selectedId || connectedId === selectedId}
+                disabled={!selectedId}
                 onClick={() => void onConnect(selectedId)}
                 title="连接选中的会话"
               >

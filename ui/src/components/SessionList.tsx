@@ -61,7 +61,6 @@ export default function SessionList({
                 <button
                   className="connect"
                   onClick={() => onConnect(session.id)}
-                  disabled={connectedId === session.id}
                   title="Connect"
                 >
                   连
