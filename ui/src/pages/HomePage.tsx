@@ -16,6 +16,8 @@ interface Props {
   onTestConnect: (input: SessionInput) => Promise<boolean>;
   onGetSecret: (id: string) => Promise<string | null>;
   onConnect: (id?: string) => Promise<void>;
+  onOnlineUpgrade: () => Promise<void>;
+  upgradeChecking: boolean;
 }
 
 export default function HomePage({
@@ -33,6 +35,8 @@ export default function HomePage({
   onTestConnect,
   onGetSecret,
   onConnect,
+  onOnlineUpgrade,
+  upgradeChecking,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
@@ -47,6 +51,9 @@ export default function HomePage({
           </div>
         </div>
         <div className="actions">
+          <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
+            {upgradeChecking ? "检查升级中..." : "在线升级"}
+          </button>
           <span className={connected ? "pill pill-ok" : "pill"}>{connected ? "在线" : "离线"}</span>
           <span className="pill pill-muted">{selected ? `当前：${selected.name}` : "未选择主机"}</span>
         </div>
@@ -65,26 +72,25 @@ export default function HomePage({
           </div>
           <div className="home-panel-body">
             <div className="home-list-wrapper">
-              {hasSessions ? (
-                <SessionList
-                  sessions={sessions}
-                  selectedId={selectedId}
-                  onlineMap={onlineMap}
-                  pingingIds={pingingIds}
-                  onSelect={onSelect}
-                  onCreate={onCreate}
-                  onUpdate={onUpdate}
-                  onDelete={onDelete}
-                  onTestConnect={onTestConnect}
-                  onGetSecret={onGetSecret}
-                  onConnect={(id) => void onConnect(id)}
-                />
-              ) : (
+              <SessionList
+                sessions={sessions}
+                selectedId={selectedId}
+                onlineMap={onlineMap}
+                pingingIds={pingingIds}
+                onSelect={onSelect}
+                onCreate={onCreate}
+                onUpdate={onUpdate}
+                onDelete={onDelete}
+                onTestConnect={onTestConnect}
+                onGetSecret={onGetSecret}
+                onConnect={(id) => void onConnect(id)}
+              />
+              {!hasSessions ? (
                 <div className="empty-state" role="note" aria-label="暂无会话">
                   <div className="empty-title">还没有会话</div>
                   <div className="empty-subtitle">添加一个会话后即可连接。</div>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

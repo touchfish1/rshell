@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "rshell",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "identifier": "dev.rshell.app",
   "build": {
     "frontendDist": "ui/dist",
@@ -25,5 +25,15 @@
       "icons/icon.ico"
     ],
     "targets": "all"
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "dialog": false,
+      "endpoints": [
+        "https://github.com/touchfish1/rshell/releases/latest/download/latest.json"
+      ],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ4MzlFMjdFRkQ2RUM2NzIKUldSeXhtNzlmdUk1U05KVjlLNEdhc2tiVXVLeHFybkk5aUI3Smc4UWM5VnhRclVYN05VOGFjV2sK"
+    }
   }
 }

@@ -58,6 +58,10 @@ export async function openInFileManager(path: string): Promise<void> {
   await invoke("open_in_file_manager", { path });
 }
 
+export async function openExternalUrl(url: string): Promise<void> {
+  await invoke("open_external_url", { url });
+}
+
 export async function testHostReachability(
   host: string,
   port: number,

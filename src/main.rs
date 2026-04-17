@@ -7,6 +7,8 @@ use app::AppState;
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![
             api::commands::list_sessions,
@@ -24,6 +26,7 @@ fn main() {
             api::commands::download_sftp_file,
             api::commands::test_host_reachability,
             api::commands::open_in_file_manager,
+            api::commands::open_external_url,
             api::commands::get_host_metrics,
         ])
         .run(tauri::generate_context!())
