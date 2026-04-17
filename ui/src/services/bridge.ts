@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { Session, SessionInput, SftpEntry } from "./types";
+import type { HostMetrics, Session, SessionInput, SftpEntry } from "./types";
 
 export async function listSessions(): Promise<Session[]> {
   return invoke("list_sessions");
@@ -64,6 +64,10 @@ export async function testHostReachability(
   timeoutMs = 2000
 ): Promise<boolean> {
   return invoke("test_host_reachability", { host, port, timeoutMs });
+}
+
+export async function getHostMetrics(id: string): Promise<HostMetrics> {
+  return invoke("get_host_metrics", { id });
 }
 
 export function onTerminalOutput(handler: (payload: { sessionId: string; data: string }) => void) {

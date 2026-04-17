@@ -13,6 +13,7 @@ import {
   onDebugLog,
   onTerminalOutput,
   getSessionSecret,
+  getHostMetrics,
   openInFileManager,
   pullOutput,
   resizeTerminal,
@@ -548,6 +549,8 @@ export default function App() {
           }}
           onBackToHome={() => setCurrentPage("home")}
           onDisconnect={(id) => void disconnect(id)}
+          onUpdateHost={update}
+          onGetHostMetrics={(session) => getHostMetrics(session.id)}
           terminals={tabs.map((tab) => ({
             id: tab.id,
             node: (

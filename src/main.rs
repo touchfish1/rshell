@@ -24,6 +24,7 @@ fn main() {
             api::commands::download_sftp_file,
             api::commands::test_host_reachability,
             api::commands::open_in_file_manager,
+            api::commands::get_host_metrics,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

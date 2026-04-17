@@ -1,8 +1,9 @@
 name: release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
@@ -91,7 +92,7 @@ jobs:
       - name: Upload assets to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+          tag_name: ${{ github.event.release.tag_name || github.event.inputs.tag || github.ref_name }}
           files: |
             ${{ matrix.bundle_pattern }}
             release-assets/*.zip

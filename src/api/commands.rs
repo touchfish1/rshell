@@ -7,6 +7,7 @@ use tokio::time::{timeout, Duration};
 use uuid::Uuid;
 
 use crate::app::AppState;
+use crate::app::HostMetrics;
 use crate::app::SftpEntry;
 use crate::domain::session::{Session, SessionInput};
 
@@ -252,4 +253,15 @@ pub async fn open_in_file_manager(path: String) -> Result<(), String> {
 
     #[allow(unreachable_code)]
     Err("unsupported platform".to_string())
+}
+
+#[tauri::command]
+pub async fn get_host_metrics(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<HostMetrics, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(&app, Some(id), "metrics", "collect host metrics");
+    state.get_host_metrics(id).await
 }

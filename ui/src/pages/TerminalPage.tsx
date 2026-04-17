@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import type { Session, SftpEntry } from "../services/types";
+import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry } from "../services/types";
 
 interface TerminalTab {
   id: string;
@@ -32,6 +32,8 @@ interface Props {
   onSftpDownload: (path: string) => void;
   onBackToHome: () => void;
   onDisconnect: (id?: string) => void;
+  onUpdateHost: (id: string, input: SessionInput, secret?: string) => Promise<void>;
+  onGetHostMetrics: (session: Session) => Promise<HostMetrics>;
 }
 
 export default function TerminalPage({
@@ -59,6 +61,8 @@ export default function TerminalPage({
   onSftpDownload,
   onBackToHome,
   onDisconnect,
+  onUpdateHost,
+  onGetHostMetrics,
 }: Props) {
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<{
@@ -71,6 +75,23 @@ export default function TerminalPage({
   const [sftpWidth, setSftpWidth] = useState(320);
   const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
   const [tabMenu, setTabMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
+  const [hostMenu, setHostMenu] = useState<{ x: number; y: number; session: Session } | null>(null);
+  const [editHost, setEditHost] = useState<Session | null>(null);
+  const [editForm, setEditForm] = useState<SessionInput>({
+    name: "",
+    protocol: "ssh",
+    host: "",
+    port: 22,
+    username: "",
+    encoding: "utf-8",
+    keepalive_secs: 30,
+  });
+  const [editSecret, setEditSecret] = useState("");
+  const [monitorHost, setMonitorHost] = useState<Session | null>(null);
+  const [monitorMetrics, setMonitorMetrics] = useState<HostMetrics | null>(null);
+  const [monitorError, setMonitorError] = useState<string | null>(null);
+  const [monitorChecking, setMonitorChecking] = useState(false);
+  const [monitorCheckedAt, setMonitorCheckedAt] = useState<string>("");
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
   const menuTabIndex = tabMenu ? tabs.findIndex((tab) => tab.id === tabMenu.tabId) : -1;
@@ -133,13 +154,55 @@ export default function TerminalPage({
   useEffect(() => {
     const closeMenu = () => setMenu(null);
     const closeTabMenu = () => setTabMenu(null);
+    const closeHostMenu = () => setHostMenu(null);
     window.addEventListener("click", closeMenu);
     window.addEventListener("click", closeTabMenu);
+    window.addEventListener("click", closeHostMenu);
     return () => {
       window.removeEventListener("click", closeMenu);
       window.removeEventListener("click", closeTabMenu);
+      window.removeEventListener("click", closeHostMenu);
     };
   }, []);
+
+  useEffect(() => {
+    if (!monitorHost) return;
+    let cancelled = false;
+    const run = async () => {
+      setMonitorChecking(true);
+      try {
+        const metrics = await onGetHostMetrics(monitorHost);
+        if (cancelled) return;
+        setMonitorMetrics(metrics);
+        setMonitorError(null);
+        setMonitorCheckedAt(new Date().toLocaleTimeString());
+      } catch (err) {
+        if (cancelled) return;
+        setMonitorError(err instanceof Error ? err.message : String(err));
+        setMonitorMetrics(null);
+      } finally {
+        if (!cancelled) setMonitorChecking(false);
+      }
+    };
+    void run();
+    const timer = window.setInterval(() => void run(), 10000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, [monitorHost, onGetHostMetrics]);
+
+  const formatBytes = (bytes: number) => {
+    if (!bytes || bytes <= 0) return "0 B";
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    let value = bytes;
+    let idx = 0;
+    while (value >= 1024 && idx < units.length - 1) {
+      value /= 1024;
+      idx += 1;
+    }
+    return `${value.toFixed(idx === 0 ? 0 : 1)} ${units[idx]}`;
+  };
 
   const workspaceStyle = {
     "--host-width": `${hostsWidth}px`,
@@ -239,6 +302,40 @@ export default function TerminalPage({
           </button>
         </div>
       ) : null}
+      {hostMenu ? (
+        <div className="host-context-menu" style={{ left: hostMenu.x, top: hostMenu.y }}>
+          <button
+            onClick={() => {
+              const session = hostMenu.session;
+              setEditHost(session);
+              setEditForm({
+                name: session.name,
+                protocol: session.protocol,
+                host: session.host,
+                port: session.port,
+                username: session.username,
+                encoding: session.encoding,
+                keepalive_secs: session.keepalive_secs,
+              });
+              setEditSecret("");
+              setHostMenu(null);
+            }}
+          >
+            修改主机信息
+          </button>
+          <button
+            onClick={() => {
+              setMonitorHost(hostMenu.session);
+              setMonitorMetrics(null);
+              setMonitorError(null);
+              setMonitorCheckedAt("");
+              setHostMenu(null);
+            }}
+          >
+            查看主机监控
+          </button>
+        </div>
+      ) : null}
       <div className="terminal-error-slot">{error ? <div className="error-banner">{error}</div> : null}</div>
       <div className="terminal-workspace" ref={workspaceRef} style={workspaceStyle}>
         <aside className="terminal-hosts">
@@ -253,6 +350,11 @@ export default function TerminalPage({
                     className={`${selected ? "active" : ""} ${hasActiveTab ? "has-tab" : ""}`.trim()}
                     onClick={() => onSelectSession(session.id)}
                     onDoubleClick={() => onOpenSession(session.id)}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setHostMenu({ x: e.clientX, y: e.clientY, session });
+                    }}
                     title="单击选中，双击打开新的会话标签"
                   >
                     {session.name}
@@ -362,6 +464,133 @@ export default function TerminalPage({
           ) : null}
         </aside>
       </div>
+      {editHost ? (
+        <div className="modal-backdrop" onClick={() => setEditHost(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h4>修改主机信息</h4>
+              <button className="modal-close" onClick={() => setEditHost(null)} title="关闭">
+                ×
+              </button>
+            </div>
+            <div className="session-form">
+              <input
+                placeholder="Name"
+                value={editForm.name}
+                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              />
+              <select
+                value={editForm.protocol}
+                onChange={(e) => {
+                  const protocol = e.target.value as Protocol;
+                  setEditForm({ ...editForm, protocol, port: protocol === "ssh" ? 22 : 23 });
+                }}
+              >
+                <option value="ssh">SSH</option>
+                <option value="telnet">Telnet</option>
+              </select>
+              <input
+                placeholder="Host"
+                value={editForm.host}
+                onChange={(e) => setEditForm({ ...editForm, host: e.target.value })}
+              />
+              <input
+                placeholder="Port"
+                type="number"
+                value={editForm.port}
+                onChange={(e) => setEditForm({ ...editForm, port: Number(e.target.value) })}
+              />
+              <input
+                placeholder="Username"
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              />
+              <input
+                placeholder="SSH Password (optional)"
+                type="password"
+                value={editSecret}
+                onChange={(e) => setEditSecret(e.target.value)}
+              />
+              <div className="modal-actions">
+                <button className="btn btn-ghost" onClick={() => setEditHost(null)}>
+                  取消
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => {
+                    void onUpdateHost(editHost.id, editForm, editSecret.trim() ? editSecret : undefined).then(
+                      () => setEditHost(null)
+                    );
+                  }}
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {monitorHost ? (
+        <div className="modal-backdrop" onClick={() => setMonitorHost(null)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h4>主机监控</h4>
+              <button className="modal-close" onClick={() => setMonitorHost(null)} title="关闭">
+                ×
+              </button>
+            </div>
+            <div className="session-form">
+              <div className="placeholder-row">主机：{monitorHost.host}:{monitorHost.port}</div>
+              <div className="placeholder-row">用户：{monitorHost.username || "-"}</div>
+              <div className="placeholder-row">
+                CPU：{monitorMetrics ? `${monitorMetrics.cpu_percent.toFixed(1)}%` : "-"}
+              </div>
+              <div className="placeholder-row">
+                内存：{monitorMetrics
+                  ? `${formatBytes(monitorMetrics.memory_used_bytes)} / ${formatBytes(
+                      monitorMetrics.memory_total_bytes
+                    )} (${monitorMetrics.memory_percent.toFixed(1)}%)`
+                  : "-"}
+              </div>
+              <div className="placeholder-row">
+                磁盘：{monitorMetrics
+                  ? `${formatBytes(monitorMetrics.disk_used_bytes)} / ${formatBytes(
+                      monitorMetrics.disk_total_bytes
+                    )} (${monitorMetrics.disk_percent.toFixed(1)}%)`
+                  : "-"}
+              </div>
+              {monitorError ? <div className="placeholder-row">指标读取失败：{monitorError}</div> : null}
+              <div className="placeholder-row">最近检测：{monitorCheckedAt || "-"}</div>
+              <div className="modal-actions">
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => {
+                    setMonitorChecking(true);
+                    void onGetHostMetrics(monitorHost)
+                      .then((metrics) => {
+                        setMonitorMetrics(metrics);
+                        setMonitorError(null);
+                        setMonitorCheckedAt(new Date().toLocaleTimeString());
+                      })
+                      .catch((err) => {
+                        setMonitorError(err instanceof Error ? err.message : String(err));
+                        setMonitorMetrics(null);
+                      })
+                      .finally(() => {
+                        setMonitorChecking(false);
+                      });
+                  }}
+                >
+                  {monitorChecking ? "检测中..." : "立即检测"}
+                </button>
+                <button className="btn btn-primary" onClick={() => setMonitorHost(null)}>
+                  关闭
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <footer>{status}</footer>
     </section>
   );
