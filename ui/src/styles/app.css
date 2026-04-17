@@ -419,10 +419,10 @@ body {
 .session-tabs {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 6px;
+  padding: 6px 10px;
   border-bottom: 1px solid rgba(43, 49, 64, 0.7);
-  background: rgba(10, 13, 19, 0.32);
+  background: #0b1018;
   overflow-x: auto;
 }
 
@@ -435,34 +435,49 @@ body {
 .session-tab {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(48, 56, 74, 0.85);
-  border-radius: 10px;
-  background: rgba(18, 24, 35, 0.78);
+  border: 1px solid rgba(52, 62, 84, 0.7);
+  border-radius: 8px;
+  background: transparent;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.session-tab:hover {
+  border-color: rgba(79, 131, 255, 0.42);
+  background: rgba(28, 36, 50, 0.45);
 }
 
 .session-tab.active {
-  border-color: rgba(79, 131, 255, 0.75);
+  border-color: rgba(89, 145, 255, 0.72);
+  background: rgba(35, 47, 66, 0.62);
 }
 
 .session-tab-main {
   border: none;
   background: transparent;
-  color: #d7ddea;
-  padding: 8px 12px;
+  color: #d6ddec;
+  padding: 6px 10px;
   font-size: 13px;
+  font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .session-tab-close {
   border: none;
-  border-left: 1px solid rgba(48, 56, 74, 0.85);
+  border-left: 1px solid rgba(56, 66, 89, 0.68);
   background: transparent;
-  color: #9ba3b3;
-  width: 28px;
-  height: 28px;
-  font-size: 14px;
+  color: #9aa5bb;
+  width: 24px;
+  height: 24px;
+  font-size: 13px;
+  border-radius: 0 8px 8px 0;
+  transition: color 120ms ease, background 120ms ease;
+}
+
+.session-tab-close:hover {
+  color: #d6e0f4;
+  background: rgba(47, 58, 78, 0.5);
 }
 
 .session-dot {
@@ -473,7 +488,7 @@ body {
 }
 
 .session-dot.on {
-  background: #56d89a;
+  background: #5fd3a0;
 }
 
 .session-dot.off {
