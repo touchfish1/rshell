@@ -50,6 +50,10 @@ export async function downloadSftpFile(id: string, remotePath: string): Promise<
   return invoke("download_sftp_file", { id, remotePath });
 }
 
+export async function openInFileManager(path: string): Promise<void> {
+  await invoke("open_in_file_manager", { path });
+}
+
 export async function testHostReachability(
   host: string,
   port: number,

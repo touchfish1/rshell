@@ -12,6 +12,7 @@ import {
   listSessions,
   onDebugLog,
   onTerminalOutput,
+  openInFileManager,
   pullOutput,
   resizeTerminal,
   sendInput,
@@ -32,6 +33,7 @@ interface DownloadTask {
   progress: number;
   status: "downloading" | "success" | "error";
   detail?: string;
+  localPath?: string;
 }
 
 export default function App() {
@@ -87,7 +89,7 @@ export default function App() {
     return id;
   };
 
-  const finishDownloadTask = (id: string, ok: boolean, detail: string) => {
+  const finishDownloadTask = (id: string, ok: boolean, detail: string, localPath?: string) => {
     const timer = downloadTimerRef.current.get(id);
     if (timer) {
       window.clearInterval(timer);
@@ -96,7 +98,7 @@ export default function App() {
     setDownloadTasks((prev) =>
       prev.map((task) =>
         task.id === id
-          ? { ...task, progress: 100, status: ok ? "success" : "error", detail }
+          ? { ...task, progress: 100, status: ok ? "success" : "error", detail, localPath }
           : task
       )
     );
@@ -489,7 +491,7 @@ export default function App() {
               .then((savedPath) => {
                 setStatus(`已下载到: ${savedPath}`);
                 setError(null);
-                finishDownloadTask(taskId, true, savedPath);
+                finishDownloadTask(taskId, true, savedPath, savedPath);
               })
               .catch((err) => {
                 const message = err instanceof Error ? err.message : String(err);
@@ -544,6 +546,20 @@ export default function App() {
                       ? "完成"
                       : "失败"}
                 </span>
+                {task.status === "success" && task.localPath ? (
+                  <button
+                    className="download-open-btn"
+                    title="打开文件目录"
+                    onClick={() => {
+                      void openInFileManager(task.localPath!).catch((err) => {
+                        const message = err instanceof Error ? err.message : String(err);
+                        setError(`打开目录失败: ${message}`);
+                      });
+                    }}
+                  >
+                    📂
+                  </button>
+                ) : null}
               </div>
               <div className="download-detail" title={task.detail}>
                 {task.detail ?? "正在下载到本地..."}

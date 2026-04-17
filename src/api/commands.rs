@@ -1,4 +1,6 @@
 use base64::Engine;
+use std::path::Path;
+use std::process::Command;
 use tauri::{AppHandle, Emitter, State};
 use tokio::net::TcpStream;
 use tokio::time::{timeout, Duration};
@@ -197,4 +199,54 @@ pub async fn test_host_reachability(
     let duration = Duration::from_millis(timeout_ms.unwrap_or(2000).clamp(100, 10000));
     let result = timeout(duration, TcpStream::connect(addr)).await;
     Ok(matches!(result, Ok(Ok(_))))
+}
+
+#[tauri::command]
+pub async fn open_in_file_manager(path: String) -> Result<(), String> {
+    let p = Path::new(&path);
+    if !p.exists() {
+        return Err("path does not exist".to_string());
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let status = Command::new("explorer")
+            .arg("/select,")
+            .arg(&path)
+            .status()
+            .map_err(|e| format!("open explorer failed: {e}"))?;
+        if status.success() {
+            return Ok(());
+        }
+        return Err("open explorer failed".to_string());
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let status = Command::new("open")
+            .arg("-R")
+            .arg(&path)
+            .status()
+            .map_err(|e| format!("open finder failed: {e}"))?;
+        if status.success() {
+            return Ok(());
+        }
+        return Err("open finder failed".to_string());
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        let parent = p.parent().ok_or_else(|| "invalid parent path".to_string())?;
+        let status = Command::new("xdg-open")
+            .arg(parent)
+            .status()
+            .map_err(|e| format!("open file manager failed: {e}"))?;
+        if status.success() {
+            return Ok(());
+        }
+        return Err("open file manager failed".to_string());
+    }
+
+    #[allow(unreachable_code)]
+    Err("unsupported platform".to_string())
 }
