@@ -210,15 +210,12 @@ pub async fn open_in_file_manager(path: String) -> Result<(), String> {
 
     #[cfg(target_os = "windows")]
     {
-        let status = Command::new("explorer")
+        Command::new("explorer")
             .arg("/select,")
             .arg(&path)
-            .status()
+            .spawn()
             .map_err(|e| format!("open explorer failed: {e}"))?;
-        if status.success() {
-            return Ok(());
-        }
-        return Err("open explorer failed".to_string());
+        return Ok(());
     }
 
     #[cfg(target_os = "macos")]

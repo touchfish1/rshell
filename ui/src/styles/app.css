@@ -399,8 +399,8 @@ body {
 .session-tabs {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
+  gap: 8px;
+  padding: 8px 12px;
   border-bottom: 1px solid rgba(43, 49, 64, 0.7);
   background: rgba(10, 13, 19, 0.32);
   overflow-x: auto;
@@ -416,7 +416,7 @@ body {
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(48, 56, 74, 0.85);
-  border-radius: 9px;
+  border-radius: 10px;
   background: rgba(18, 24, 35, 0.78);
 }
 
@@ -428,11 +428,11 @@ body {
   border: none;
   background: transparent;
   color: #d7ddea;
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 8px 12px;
+  font-size: 13px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 .session-tab-close {
@@ -440,8 +440,9 @@ body {
   border-left: 1px solid rgba(48, 56, 74, 0.85);
   background: transparent;
   color: #9ba3b3;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
 }
 
 .session-dot {
@@ -962,6 +963,11 @@ body {
   margin-left: 4px;
   width: 24px;
   height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
   border-radius: 6px;
   border: 1px solid rgba(72, 86, 116, 0.9);
   background: rgba(25, 34, 48, 0.85);
