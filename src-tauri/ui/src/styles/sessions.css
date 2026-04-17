@@ -1,4 +1,6 @@
 .session-list {
+  --session-col-name: 140px;
+  --session-col-host: 220px;
   padding: 0;
   background: #0b1018;
   border: 1px solid rgba(48, 56, 74, 0.6);
@@ -24,14 +26,55 @@
 
 .session-table-head {
   display: grid;
-  grid-template-columns: 140px minmax(170px, 1fr) 110px 80px 70px 80px 260px;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr) 260px;
   align-items: center;
   padding: 8px 12px;
   color: #7e8aa3;
   font-size: 11px;
   border-bottom: 1px solid rgba(48, 56, 74, 0.6);
   background: #0b1018;
+}
+
+.session-table-head-main {
+  display: grid;
+  grid-template-columns: var(--session-col-name) var(--session-col-host) 110px 80px 70px 80px;
+  gap: 8px;
+  min-width: 0;
+}
+
+.session-table-head-actions {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+.resizable-head-cell {
+  position: relative;
+  min-width: 0;
+}
+
+.col-resize-handle {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  width: 12px;
+  height: calc(100% + 16px);
+  cursor: col-resize;
+}
+
+.col-resize-handle::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 9px;
+  transform: translateX(-50%);
+  width: 1px;
+  height: calc(100% - 18px);
+  background: rgba(112, 125, 148, 0.45);
+}
+
+.col-resize-handle:hover::before {
+  background: rgba(140, 160, 190, 0.9);
 }
 
 .session-table-body {
@@ -59,7 +102,7 @@
   text-align: left;
   padding: 0 12px;
   display: grid;
-  grid-template-columns: 140px minmax(170px, 1fr) 110px 80px 70px 80px;
+  grid-template-columns: var(--session-col-name) var(--session-col-host) 110px 80px 70px 80px;
   gap: 8px;
   align-items: center;
 }
@@ -129,6 +172,34 @@
 
 .session-col.host {
   color: #c9d2e5;
+  gap: 6px;
+}
+
+.host-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-icon-btn {
+  border: none;
+  background: transparent;
+  color: #92a2be;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  flex: 0 0 auto;
+}
+
+.copy-icon-btn:hover {
+  color: #ced9ed;
+}
+
+.copy-success-text {
+  font-size: 11px;
+  color: #6ce2ab;
 }
 
 .session-col.proto,

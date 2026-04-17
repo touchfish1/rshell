@@ -32,12 +32,17 @@ export type I18nKey =
   | "session.statusOffline"
   | "session.connect"
   | "session.editHost"
+  | "session.copy"
+  | "session.copySuffix"
+  | "session.deleteConfirm"
   | "session.more"
   | "session.moreViewDetail"
   | "session.moreCopyConfig"
   | "session.moreExport"
   | "session.delete"
   | "session.connectTitle"
+  | "session.copyIp"
+  | "session.copied"
   | "modal.close"
   | "modal.cancel"
   | "modal.save"
@@ -84,6 +89,8 @@ export type I18nKey =
   | "sftp.refreshing"
   | "sftp.refresh"
   | "sftp.notConnected"
+  | "sftp.copyIp"
+  | "sftp.copied"
   | "sftp.memory"
   | "sftp.cpu"
   | "sftp.disk"
@@ -169,12 +176,17 @@ const zhCN: Dict = {
   "session.statusOffline": "离线",
   "session.connect": "连接",
   "session.editHost": "编辑",
-  "session.more": "更多",
+  "session.copy": "复制",
+  "session.copySuffix": "副本",
+  "session.deleteConfirm": "确定删除主机“{name}”吗？",
+  "session.more": "复制",
   "session.moreViewDetail": "查看详情（占位）",
   "session.moreCopyConfig": "复制配置（占位）",
   "session.moreExport": "导出（占位）",
   "session.delete": "删除",
   "session.connectTitle": "连接 {name}",
+  "session.copyIp": "复制 IP",
+  "session.copied": "已复制",
   "modal.close": "关闭",
   "modal.cancel": "取消",
   "modal.save": "保存",
@@ -221,6 +233,8 @@ const zhCN: Dict = {
   "sftp.refreshing": "刷新中...",
   "sftp.refresh": "刷新",
   "sftp.notConnected": "未连接会话",
+  "sftp.copyIp": "复制 IP",
+  "sftp.copied": "已复制",
   "sftp.memory": "内存",
   "sftp.cpu": "CPU",
   "sftp.disk": "磁盘",
@@ -305,12 +319,17 @@ const enUS: Dict = {
   "session.statusOffline": "Offline",
   "session.connect": "Connect",
   "session.editHost": "Edit",
-  "session.more": "More",
+  "session.copy": "Duplicate",
+  "session.copySuffix": "copy",
+  "session.deleteConfirm": "Are you sure you want to delete host \"{name}\"?",
+  "session.more": "Copy IP",
   "session.moreViewDetail": "View Details (placeholder)",
   "session.moreCopyConfig": "Copy Config (placeholder)",
   "session.moreExport": "Export (placeholder)",
   "session.delete": "Delete",
   "session.connectTitle": "Connect {name}",
+  "session.copyIp": "Copy IP",
+  "session.copied": "Copied",
   "modal.close": "Close",
   "modal.cancel": "Cancel",
   "modal.save": "Save",
@@ -357,6 +376,8 @@ const enUS: Dict = {
   "sftp.refreshing": "Refreshing...",
   "sftp.refresh": "Refresh",
   "sftp.notConnected": "No active session",
+  "sftp.copyIp": "Copy IP",
+  "sftp.copied": "Copied",
   "sftp.memory": "Memory",
   "sftp.cpu": "CPU",
   "sftp.disk": "Disk",

@@ -35,10 +35,8 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
   const [editSecretDirty, setEditSecretDirty] = useState(false);
   const [editTesting, setEditTesting] = useState(false);
   const [editTestResult, setEditTestResult] = useState<string | null>(null);
-  const [moreOpenId, setMoreOpenId] = useState<string | null>(null);
 
   const hostInputRef = useRef<HTMLInputElement | null>(null);
-  const moreMenuRef = useRef<HTMLDivElement | null>(null);
 
   const createProtocolPort = useMemo(() => (createForm.protocol === "ssh" ? 22 : 23), [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
@@ -144,18 +142,6 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
     }
   }, [showCreateModal]);
 
-  useEffect(() => {
-    const onPointerDown = (event: MouseEvent) => {
-      if (!moreMenuRef.current) return;
-      const target = event.target as Node;
-      if (!moreMenuRef.current.contains(target)) {
-        setMoreOpenId(null);
-      }
-    };
-    window.addEventListener("mousedown", onPointerDown);
-    return () => window.removeEventListener("mousedown", onPointerDown);
-  }, []);
-
   return {
     createForm,
     setCreateForm,
@@ -174,10 +160,7 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
     editSecretLoading,
     editTesting,
     editTestResult,
-    moreOpenId,
-    setMoreOpenId,
     hostInputRef,
-    moreMenuRef,
     createProtocolPort,
     editProtocolPort,
     submitCreate,

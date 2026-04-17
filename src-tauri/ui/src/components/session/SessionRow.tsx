@@ -1,7 +1,8 @@
-import type { RefObject } from "react";
 import type { Session } from "../../services/types";
 import { resolveOs } from "./resolveOs";
 import { useI18n } from "../../i18n-context";
+import { useEffect, useRef, useState } from "react";
+import type { MouseEvent } from "react";
 
 interface Props {
   session: Session;
@@ -11,11 +12,8 @@ interface Props {
   onSelectAndConnect: (id: string) => void;
   onConnect?: (id: string) => void;
   onEdit: (session: Session) => void;
+  onDuplicate: (session: Session) => void;
   onDelete: (id: string) => void;
-  moreOpenId: string | null;
-  onToggleMore: (id: string) => void;
-  onCloseMore: () => void;
-  moreMenuRef: RefObject<HTMLDivElement | null>;
 }
 
 export function SessionRow({
@@ -26,14 +24,39 @@ export function SessionRow({
   onSelectAndConnect,
   onConnect,
   onEdit,
+  onDuplicate,
   onDelete,
-  moreOpenId,
-  onToggleMore,
-  onCloseMore,
-  moreMenuRef,
 }: Props) {
   const { tr } = useI18n();
   const os = resolveOs(session);
+  const [copied, setCopied] = useState(false);
+  const resetTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+    };
+  }, []);
+
+  const showCopied = () => {
+    setCopied(true);
+    if (resetTimerRef.current) window.clearTimeout(resetTimerRef.current);
+    resetTimerRef.current = window.setTimeout(() => {
+      setCopied(false);
+      resetTimerRef.current = null;
+    }, 1500);
+  };
+
+  const copyIp = async (event: MouseEvent<HTMLSpanElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(session.host);
+      showCopied();
+    } catch {
+      // Silently ignore clipboard failures to avoid interrupting row actions.
+    }
+  };
 
   return (
     <li key={session.id} className={`session-line ${selected ? "active" : ""}`}>
@@ -48,7 +71,34 @@ export function SessionRow({
           </span>
           <span className="session-name-text">{session.name}</span>
         </span>
-        <span className="session-col host">{session.host}</span>
+        <span className="session-col host">
+          <span className="host-text">{session.host}</span>
+          <span
+            className="copy-icon-btn"
+            role="button"
+            tabIndex={0}
+            title={tr("session.copyIp")}
+            aria-label={tr("session.copyIp")}
+            onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={copyIp}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                event.stopPropagation();
+                void navigator.clipboard
+                  .writeText(session.host)
+                  .then(() => showCopied())
+                  .catch(() => undefined);
+              }
+            }}
+          >
+            {copied ? "✅" : "📋"}
+          </span>
+          {copied ? <span className="copy-success-text">{tr("session.copied")}</span> : null}
+        </span>
         <span className="session-col user">{session.username || "-"}</span>
         <span className="session-col proto">{session.protocol.toUpperCase()}</span>
         <span className="session-col port">{session.port}</span>
@@ -66,18 +116,13 @@ export function SessionRow({
         <button className="edit" onClick={() => onEdit(session)} title={tr("session.editHost")}>
           {tr("session.editHost")}
         </button>
-        <div className="session-more-wrap" ref={moreOpenId === session.id ? moreMenuRef : undefined}>
-          <button className="more" onClick={() => onToggleMore(session.id)} title={tr("session.more")}>
-            {tr("session.more")}
-          </button>
-          {moreOpenId === session.id ? (
-            <div className="session-more-menu">
-              <button onClick={onCloseMore}>{tr("session.moreViewDetail")}</button>
-              <button onClick={onCloseMore}>{tr("session.moreCopyConfig")}</button>
-              <button onClick={onCloseMore}>{tr("session.moreExport")}</button>
-            </div>
-          ) : null}
-        </div>
+        <button
+          className="more"
+          onClick={() => onDuplicate(session)}
+          title={tr("session.copy")}
+        >
+          {tr("session.copy")}
+        </button>
         <button className="danger" onClick={() => onDelete(session.id)} title={tr("session.delete")}>
           {tr("session.delete")}
         </button>

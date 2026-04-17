@@ -308,8 +308,30 @@
 
 .sftp-monitor-host {
   margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 11px;
   color: #8fa0bd;
+}
+
+.sftp-monitor-host .copy-icon-btn {
+  border: none;
+  background: transparent;
+  color: #8fa0bd;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sftp-monitor-host .copy-icon-btn:hover {
+  color: #ced9ed;
+}
+
+.sftp-monitor-host .copy-success-text {
+  font-size: 11px;
+  color: #6ce2ab;
 }
 
 .sftp-monitor-error {

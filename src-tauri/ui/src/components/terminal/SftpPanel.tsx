@@ -5,6 +5,7 @@ import { useI18n } from "../../i18n-context";
 
 interface Props {
   activeHostLabel: string;
+  activeHostIp?: string;
   monitorSupported: boolean;
   monitorMetrics: HostMetrics | null;
   monitorError: string | null;
@@ -22,6 +23,7 @@ interface Props {
 
 export function SftpPanel({
   activeHostLabel,
+  activeHostIp,
   monitorSupported,
   monitorMetrics,
   monitorError,
@@ -37,12 +39,35 @@ export function SftpPanel({
 }: Props) {
   const { tr } = useI18n();
   const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
+  const [copied, setCopied] = useState(false);
+  const [copyTimer, setCopyTimer] = useState<number | null>(null);
+  const copyHostIp = async () => {
+    if (!activeHostIp) return;
+    try {
+      await navigator.clipboard.writeText(activeHostIp);
+      setCopied(true);
+      if (copyTimer) window.clearTimeout(copyTimer);
+      const timer = window.setTimeout(() => {
+        setCopied(false);
+        setCopyTimer(null);
+      }, 1500);
+      setCopyTimer(timer);
+    } catch {
+      // Ignore clipboard failures to keep monitor interactions lightweight.
+    }
+  };
 
   useEffect(() => {
     const closeMenu = () => setMenu(null);
     window.addEventListener("click", closeMenu);
     return () => window.removeEventListener("click", closeMenu);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (copyTimer) window.clearTimeout(copyTimer);
+    };
+  }, [copyTimer]);
 
   const normalizedPath = sftpPath === "." ? "/" : sftpPath;
   const canGoUp = normalizedPath !== "/";
@@ -63,7 +88,21 @@ export function SftpPanel({
             {monitorChecking ? tr("sftp.refreshing") : tr("sftp.refresh")}
           </button>
         </div>
-        <div className="sftp-monitor-host">{activeHostLabel || tr("sftp.notConnected")}</div>
+        <div className="sftp-monitor-host">
+          <span>{activeHostLabel || tr("sftp.notConnected")}</span>
+          {activeHostIp ? (
+            <button
+              className="copy-icon-btn"
+              type="button"
+              title={tr("sftp.copyIp")}
+              aria-label={tr("sftp.copyIp")}
+              onClick={copyHostIp}
+            >
+              {copied ? "✅" : "📋"}
+            </button>
+          ) : null}
+          {copied ? <span className="copy-success-text">{tr("sftp.copied")}</span> : null}
+        </div>
         {monitorError ? <div className="sftp-monitor-error">{monitorError}</div> : null}
         <div className="sftp-monitor-row">
           <span>{tr("sftp.cpu")}</span>

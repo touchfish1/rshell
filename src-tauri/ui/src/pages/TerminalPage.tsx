@@ -231,6 +231,7 @@ export default function TerminalPage({
         />
         <SftpPanel
           activeHostLabel={activeSession ? `${activeSession.host}:${activeSession.port}` : ""}
+          activeHostIp={activeSession?.host}
           monitorSupported={Boolean(activeSession && monitorSupported)}
           monitorMetrics={monitorMetrics}
           monitorError={monitorError}

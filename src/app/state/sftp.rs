@@ -7,6 +7,17 @@ use uuid::Uuid;
 use crate::app::state::{AppState, SftpEntry};
 use crate::domain::session::Protocol;
 
+fn describe_io_error(error: &std::io::Error, stage: &str, target_path: &Path) -> String {
+    let raw = error.to_string();
+    let target = target_path.to_string_lossy();
+    if raw.eq_ignore_ascii_case("failure") {
+        return format!(
+            "{stage} failed: remote transfer aborted (target: {target}). Check remote file permissions, file locks, and available disk space."
+        );
+    }
+    format!("{stage} failed: {raw} (target: {target})")
+}
+
 impl AppState {
     pub async fn list_sftp_dir(&self, id: Uuid, path: Option<String>) -> Result<Vec<SftpEntry>, String> {
         let session = self.find_session(id).await?;
@@ -70,6 +81,14 @@ impl AppState {
             .and_then(|n| n.to_str())
             .filter(|n| !n.trim().is_empty())
             .ok_or_else(|| "invalid remote file name".to_string())?;
+        let remote_stat = sftp
+            .stat(remote)
+            .map_err(|e| format!("stat remote path failed: {e}"))?;
+        if remote_stat.is_dir() {
+            return Err(format!(
+                "download failed: remote path is a directory, not a file ({remote_path})"
+            ));
+        }
         let mut source = sftp
             .open(remote)
             .map_err(|e| format!("open remote file failed: {e}"))?;
@@ -93,8 +112,10 @@ impl AppState {
             target_path = target_dir.join(candidate);
             idx += 1;
         }
-        let mut output = File::create(&target_path).map_err(|e| format!("create local file failed: {e}"))?;
-        copy(&mut source, &mut output).map_err(|e| format!("write local file failed: {e}"))?;
+        let mut output = File::create(&target_path)
+            .map_err(|e| describe_io_error(&e, "create local file", &target_path))?;
+        copy(&mut source, &mut output)
+            .map_err(|e| describe_io_error(&e, "write local file", &target_path))?;
         Ok(target_path.to_string_lossy().to_string())
     }
 }
