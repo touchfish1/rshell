@@ -1,5 +1,7 @@
 @media (max-width: 980px) {
-  .session-table-head,
+  .session-table-head {
+    grid-template-columns: 120px minmax(170px, 1fr) 90px 68px 60px 70px 220px;
+  }
   .session-main {
     grid-template-columns: 120px minmax(170px, 1fr) 90px 68px 60px 70px;
   }

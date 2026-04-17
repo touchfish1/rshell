@@ -24,7 +24,7 @@
 
 .session-table-head {
   display: grid;
-  grid-template-columns: 140px minmax(170px, 1fr) 110px 80px 70px 80px 130px;
+  grid-template-columns: 140px minmax(170px, 1fr) 110px 80px 70px 80px 260px;
   gap: 8px;
   align-items: center;
   padding: 8px 12px;
