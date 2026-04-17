@@ -73,6 +73,10 @@ export default function TerminalPage({
   const [tabMenu, setTabMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
+  const menuTabIndex = tabMenu ? tabs.findIndex((tab) => tab.id === tabMenu.tabId) : -1;
+  const hasLeftTabs = menuTabIndex > 0;
+  const hasRightTabs = menuTabIndex >= 0 && menuTabIndex < tabs.length - 1;
+  const hasOtherTabs = tabs.length > 1;
   const normalizedPath = sftpPath === "." ? "/" : sftpPath;
   const canGoUp = normalizedPath !== "/";
   const getDisplayName = (entry: SftpEntry) => {
@@ -204,7 +208,9 @@ export default function TerminalPage({
             复制 session
           </button>
           <button
+            disabled={!hasRightTabs}
             onClick={() => {
+              if (!hasRightTabs) return;
               onCloseTabsToRight(tabMenu.tabId);
               setTabMenu(null);
             }}
@@ -212,7 +218,9 @@ export default function TerminalPage({
             关闭右边
           </button>
           <button
+            disabled={!hasLeftTabs}
             onClick={() => {
+              if (!hasLeftTabs) return;
               onCloseTabsToLeft(tabMenu.tabId);
               setTabMenu(null);
             }}
@@ -220,7 +228,9 @@ export default function TerminalPage({
             关闭左边
           </button>
           <button
+            disabled={!hasOtherTabs}
             onClick={() => {
+              if (!hasOtherTabs) return;
               onCloseOtherTabs(tabMenu.tabId);
               setTabMenu(null);
             }}

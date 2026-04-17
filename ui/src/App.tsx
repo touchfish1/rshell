@@ -169,6 +169,9 @@ export default function App() {
           })
           .catch((err) => {
             const message = err instanceof Error ? err.message : String(err);
+            if (message.includes("inactive session")) {
+              return;
+            }
             setError(`拉取输出失败: ${message}`);
           });
       });
