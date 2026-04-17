@@ -25,8 +25,19 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            bundle_pattern: |
+              target/release/bundle/**/*.deb
+              target/release/bundle/**/*.rpm
+              target/release/bundle/**/*.AppImage
           - os: windows-latest
+            bundle_pattern: |
+              target/release/bundle/**/*.msi
+              target/release/bundle/**/*.exe
           - os: macos-latest
+            bundle_pattern: |
+              target/release/bundle/**/*.dmg
+              target/release/bundle/**/*.pkg
+              target/release/bundle/**/*.app.tar.gz
 
     steps:
       - name: Checkout
@@ -64,16 +75,8 @@ jobs:
         run: npm ci
         working-directory: ui
 
-      - name: Build and upload bundles
-        uses: tauri-apps/tauri-action@v0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tagName: ${{ env.TAG_NAME }}
-          releaseName: rshell ${{ env.TAG_NAME }}
-          releaseBody: Automated release for ${{ env.TAG_NAME }}.
-          releaseDraft: false
-          prerelease: false
+      - name: Build Tauri bundles
+        run: npx @tauri-apps/cli@2 build
 
       - name: Create Windows zip
         if: runner.os == 'Windows'
@@ -93,6 +96,7 @@ jobs:
         with:
           tag_name: ${{ env.TAG_NAME }}
           files: |
+            ${{ matrix.bundle_pattern }}
             release-assets/*.zip
           fail_on_unmatched_files: false
         env:
