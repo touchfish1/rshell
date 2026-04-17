@@ -19,6 +19,7 @@ fn main() {
             api::commands::disconnect_session,
             api::commands::send_input,
             api::commands::resize_terminal,
+            api::commands::list_sftp_dir,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

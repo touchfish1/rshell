@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { Session, SessionInput } from "./types";
+import type { Session, SessionInput, SftpEntry } from "./types";
 
 export async function listSessions(): Promise<Session[]> {
   return invoke("list_sessions");
@@ -40,6 +40,10 @@ export async function sendInput(id: string, input: string): Promise<void> {
 
 export async function resizeTerminal(id: string, cols: number, rows: number): Promise<void> {
   await invoke("resize_terminal", { id, cols, rows });
+}
+
+export async function listSftpDir(id: string, path?: string): Promise<SftpEntry[]> {
+  return invoke("list_sftp_dir", { id, path });
 }
 
 export function onTerminalOutput(handler: (payload: { sessionId: string; data: string }) => void) {

@@ -3,6 +3,7 @@ use tauri::{AppHandle, Emitter, State};
 use uuid::Uuid;
 
 use crate::app::AppState;
+use crate::app::SftpEntry;
 use crate::domain::session::{Session, SessionInput};
 
 fn emit_debug(app: &AppHandle, session_id: Option<Uuid>, stage: &str, message: &str) {
@@ -145,4 +146,21 @@ pub async fn resize_terminal(
         &format!("resize to {}x{}", cols, rows),
     );
     state.resize_terminal(id, cols, rows).await
+}
+
+#[tauri::command]
+pub async fn list_sftp_dir(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    path: Option<String>,
+) -> Result<Vec<SftpEntry>, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "sftp",
+        &format!("list dir {}", path.clone().unwrap_or_else(|| ".".to_string())),
+    );
+    state.list_sftp_dir(id, path).await
 }

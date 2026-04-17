@@ -1,6 +1,10 @@
 use std::collections::HashMap;
+use std::net::{SocketAddr, TcpStream};
+use std::path::Path;
 use std::sync::Arc;
+use std::time::Duration;
 
+use ssh2::Session as Ssh2Session;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
@@ -12,6 +16,15 @@ use crate::infra::telnet_client::TelnetClient;
 
 pub struct ActiveTerminal {
     pub client: Mutex<Box<dyn TerminalClient>>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SftpEntry {
+    pub name: String,
+    pub path: String,
+    pub is_dir: bool,
+    pub size: u64,
+    pub mtime: u64,
 }
 
 pub struct AppState {
@@ -179,6 +192,64 @@ impl AppState {
             .await
             .map_err(|e| e.to_string());
         result
+    }
+
+    pub async fn list_sftp_dir(&self, id: Uuid, path: Option<String>) -> Result<Vec<SftpEntry>, String> {
+        let session = self
+            .sessions
+            .lock()
+            .await
+            .iter()
+            .find(|s| s.id == id)
+            .cloned()
+            .ok_or_else(|| "session not found".to_string())?;
+        if !matches!(session.protocol, Protocol::Ssh) {
+            return Err("sftp only supports ssh sessions".to_string());
+        }
+        let secret = self
+            .store
+            .get_secret(id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "missing SSH password".to_string())?;
+        let addr = format!("{}:{}", session.host, session.port);
+        let socket_addr: SocketAddr = addr.parse().map_err(|e| format!("invalid address: {e}"))?;
+        let tcp = TcpStream::connect_timeout(&socket_addr, Duration::from_secs(8))
+            .map_err(|e| format!("connect failed: {e}"))?;
+        let mut ssh = Ssh2Session::new().map_err(|e| format!("session init failed: {e}"))?;
+        ssh.set_tcp_stream(tcp);
+        ssh.handshake().map_err(|e| format!("handshake failed: {e}"))?;
+        ssh.userauth_password(&session.username, &secret)
+            .map_err(|e| format!("auth failed: {e}"))?;
+        let sftp = ssh.sftp().map_err(|e| format!("sftp init failed: {e}"))?;
+
+        let target = path.unwrap_or_else(|| ".".to_string());
+        let entries = sftp
+            .readdir(Path::new(&target))
+            .map_err(|e| format!("sftp readdir failed: {e}"))?;
+        let mut out = entries
+            .into_iter()
+            .filter_map(|(p, stat)| {
+                let name = p.file_name()?.to_string_lossy().to_string();
+                if name == "." || name == ".." {
+                    return None;
+                }
+                let is_dir = stat.is_dir();
+                let full = p.to_string_lossy().replace('\\', "/");
+                Some(SftpEntry {
+                    name,
+                    path: full,
+                    is_dir,
+                    size: stat.size.unwrap_or(0),
+                    mtime: stat.mtime.unwrap_or(0),
+                })
+            })
+            .collect::<Vec<_>>();
+        out.sort_by(|a, b| match (a.is_dir, b.is_dir) {
+            (true, false) => std::cmp::Ordering::Less,
+            (false, true) => std::cmp::Ordering::Greater,
+            _ => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+        });
+        Ok(out)
     }
 }
 

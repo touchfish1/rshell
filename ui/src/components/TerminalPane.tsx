@@ -4,22 +4,39 @@ import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
 
 interface Props {
+  isActive: boolean;
   connected: boolean;
   onInput: (text: string) => void;
   onResize: (cols: number, rows: number) => void;
   registerWriter: (writer: (content: string) => void) => void;
 }
 
-export default function TerminalPane({ connected, onInput, onResize, registerWriter }: Props) {
+export default function TerminalPane({ isActive, connected, onInput, onResize, registerWriter }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const connectedRef = useRef(connected);
+  const activeRef = useRef(isActive);
   const onInputRef = useRef(onInput);
   const onResizeRef = useRef(onResize);
   const registerWriterRef = useRef(registerWriter);
+  const terminalRef = useRef<Terminal | null>(null);
+  const fitAddonRef = useRef<FitAddon | null>(null);
 
   useEffect(() => {
     connectedRef.current = connected;
   }, [connected]);
+
+  useEffect(() => {
+    activeRef.current = isActive;
+    if (!isActive) return;
+    const terminal = terminalRef.current;
+    const fitAddon = fitAddonRef.current;
+    if (!terminal || !fitAddon) return;
+    window.requestAnimationFrame(() => {
+      fitAddon.fit();
+      terminal.focus();
+      onResizeRef.current(terminal.cols, terminal.rows);
+    });
+  }, [isActive]);
 
   useEffect(() => {
     onInputRef.current = onInput;
@@ -44,6 +61,8 @@ export default function TerminalPane({ connected, onInput, onResize, registerWri
       theme: { background: "#101219" },
     });
     const fitAddon = new FitAddon();
+    terminalRef.current = terminal;
+    fitAddonRef.current = fitAddon;
     terminal.loadAddon(fitAddon);
     terminal.open(containerRef.current);
     terminal.attachCustomKeyEventHandler((event) => {
@@ -70,7 +89,9 @@ export default function TerminalPane({ connected, onInput, onResize, registerWri
     const onWindowResize = () => {
       syncPaneHeight();
       fitAddon.fit();
-      onResizeRef.current(terminal.cols, terminal.rows);
+      if (activeRef.current) {
+        onResizeRef.current(terminal.cols, terminal.rows);
+      }
     };
     let fitScheduled = false;
     const scheduleFit = () => {
@@ -84,7 +105,9 @@ export default function TerminalPane({ connected, onInput, onResize, registerWri
 
     registerWriterRef.current((content) => {
       terminal.write(content);
-      scheduleFit();
+      if (connectedRef.current) {
+        scheduleFit();
+      }
     });
 
     const disposeInput = terminal.onData((value) => {
@@ -117,6 +140,8 @@ export default function TerminalPane({ connected, onInput, onResize, registerWri
       resizeObserver.disconnect();
       delayedFits.forEach((id) => window.clearTimeout(id));
       disposeInput.dispose();
+      terminalRef.current = null;
+      fitAddonRef.current = null;
       terminal.dispose();
     };
   }, []);
