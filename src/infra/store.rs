@@ -1,14 +1,15 @@
 use std::fs;
 use std::path::PathBuf;
 
-use keyring::Entry;
-use keyring::Error as KeyringError;
 use thiserror::Error;
 use uuid::Uuid;
 
 use crate::domain::session::Session;
 
-const SERVICE_NAME: &str = "rshell";
+#[derive(Default, serde::Serialize, serde::Deserialize)]
+struct SecretsFile {
+    secrets: std::collections::HashMap<String, String>,
+}
 
 #[derive(Debug, Error)]
 pub enum StoreError {
@@ -16,13 +17,12 @@ pub enum StoreError {
     Io(String),
     #[error("serialization error: {0}")]
     Serialize(String),
-    #[error("secret storage error: {0}")]
-    Secret(String),
 }
 
 #[derive(Clone)]
 pub struct SessionStore {
     db_path: PathBuf,
+    secret_path: PathBuf,
 }
 
 impl SessionStore {
@@ -33,6 +33,7 @@ impl SessionStore {
         fs::create_dir_all(&base).map_err(|e| StoreError::Io(e.to_string()))?;
         Ok(Self {
             db_path: base.join("sessions.json"),
+            secret_path: base.join("secrets.json"),
         })
     }
 
@@ -50,27 +51,35 @@ impl SessionStore {
         fs::write(&self.db_path, content).map_err(|e| StoreError::Io(e.to_string()))
     }
 
+    fn read_secrets(&self) -> Result<SecretsFile, StoreError> {
+        if !self.secret_path.exists() {
+            return Ok(SecretsFile::default());
+        }
+        let content =
+            fs::read_to_string(&self.secret_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))
+    }
+
+    fn write_secrets(&self, data: &SecretsFile) -> Result<(), StoreError> {
+        let content =
+            serde_json::to_string_pretty(data).map_err(|e| StoreError::Serialize(e.to_string()))?;
+        fs::write(&self.secret_path, content).map_err(|e| StoreError::Io(e.to_string()))
+    }
+
     pub fn set_secret(&self, session_id: Uuid, secret: &str) -> Result<(), StoreError> {
-        Entry::new(SERVICE_NAME, &session_id.to_string())
-            .map_err(|e| StoreError::Secret(e.to_string()))?
-            .set_password(secret)
-            .map_err(|e| StoreError::Secret(e.to_string()))
+        let mut data = self.read_secrets()?;
+        data.secrets.insert(session_id.to_string(), secret.to_string());
+        self.write_secrets(&data)
     }
 
     pub fn get_secret(&self, session_id: Uuid) -> Result<Option<String>, StoreError> {
-        let entry = Entry::new(SERVICE_NAME, &session_id.to_string())
-            .map_err(|e| StoreError::Secret(e.to_string()))?;
-        match entry.get_password() {
-            Ok(secret) => Ok(Some(secret)),
-            Err(KeyringError::NoEntry) => Ok(None),
-            Err(e) => Err(StoreError::Secret(e.to_string())),
-        }
+        let data = self.read_secrets()?;
+        Ok(data.secrets.get(&session_id.to_string()).cloned())
     }
 
     pub fn delete_secret(&self, session_id: Uuid) -> Result<(), StoreError> {
-        let entry = Entry::new(SERVICE_NAME, &session_id.to_string())
-            .map_err(|e| StoreError::Secret(e.to_string()))?;
-        let _ = entry.delete_credential();
-        Ok(())
+        let mut data = self.read_secrets()?;
+        data.secrets.remove(&session_id.to_string());
+        self.write_secrets(&data)
     }
 }

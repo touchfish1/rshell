@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import SessionList from "./components/SessionList";
+import HomePage from "./pages/HomePage";
+import TerminalPage from "./pages/TerminalPage";
 import TerminalPane from "./components/TerminalPane";
 import {
   connectSession,
@@ -20,6 +21,7 @@ export default function App() {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [connectedId, setConnectedId] = useState<string | undefined>();
+  const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
   const [status, setStatus] = useState("Idle");
   const [error, setError] = useState<string | null>(null);
   const [debugLogs, setDebugLogs] = useState<string[]>([]);
@@ -91,39 +93,43 @@ export default function App() {
     }
   };
 
-  const connect = async () => {
-    if (!selectedId) {
+  const connect = async (id?: string) => {
+    const targetId = id ?? selectedId;
+    if (!targetId) {
       return;
     }
+    const targetSession = sessions.find((session) => session.id === targetId);
     try {
-      await connectSession(selectedId);
-      setConnectedId(selectedId);
-      setStatus(`已连接: ${selectedSession?.name ?? selectedId}`);
+      await connectSession(targetId);
+      setConnectedId(targetId);
+      setCurrentPage("terminal");
+      setStatus(`已连接: ${targetSession?.name ?? targetId}`);
       setError(null);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       if (message.includes("missing SSH password")) {
-        const input = window.prompt("请输入 SSH 密码（会保存到系统凭据管理器）");
+        const input = window.prompt("请输入 SSH 密码（将保存到本地配置文件）");
         if (!input) {
           setError("连接失败: 缺少 SSH 密码");
           return;
         }
         try {
-          if (selectedSession) {
+          if (targetSession) {
             const sessionInput: SessionInput = {
-              name: selectedSession.name,
-              protocol: selectedSession.protocol,
-              host: selectedSession.host,
-              port: selectedSession.port,
-              username: selectedSession.username,
-              encoding: selectedSession.encoding,
-              keepalive_secs: selectedSession.keepalive_secs,
+              name: targetSession.name,
+              protocol: targetSession.protocol,
+              host: targetSession.host,
+              port: targetSession.port,
+              username: targetSession.username,
+              encoding: targetSession.encoding,
+              keepalive_secs: targetSession.keepalive_secs,
             };
-            await updateSession(selectedId, sessionInput, input);
+            await updateSession(targetId, sessionInput, input);
           }
-          await connectSession(selectedId, input);
-          setConnectedId(selectedId);
-          setStatus(`已连接: ${selectedSession?.name ?? selectedId}`);
+          await connectSession(targetId, input);
+          setConnectedId(targetId);
+          setCurrentPage("terminal");
+          setStatus(`已连接: ${targetSession?.name ?? targetId}`);
           setError(null);
           return;
         } catch (retryErr) {
@@ -143,6 +149,7 @@ export default function App() {
     try {
       await disconnectSession(connectedId);
       setConnectedId(undefined);
+      setCurrentPage("home");
       setStatus("已断开");
       setError(null);
     } catch (err) {
@@ -173,57 +180,53 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <SessionList
-        sessions={sessions}
-        selectedId={selectedId}
-        onSelect={setSelectedId}
-        onCreate={create}
-        onDelete={remove}
-      />
-      <section className="workspace">
-        <header>
-          <h2>{selectedSession?.name ?? "No session selected"}</h2>
-          <div className="actions">
-            <button disabled={!selectedId || !!connectedId} onClick={connect}>
-              Connect
-            </button>
-            <button disabled={!connectedId} onClick={disconnect}>
-              Disconnect
-            </button>
-          </div>
-        </header>
-        {error ? <div className="error-banner">{error}</div> : null}
-        <div className="debug-panel">
-          <div className="debug-panel-header">
-            <span>Debug Logs</span>
-            <button onClick={() => setDebugLogs([])}>Clear</button>
-          </div>
-          <div className="debug-panel-body">
-            {debugLogs.length === 0 ? "暂无日志" : debugLogs.join("\n")}
-          </div>
-        </div>
-        <TerminalPane
+      {currentPage === "home" ? (
+        <HomePage
+          sessions={sessions}
+          selectedId={selectedId}
+          connectedId={connectedId}
           connected={Boolean(connectedId)}
-          registerWriter={(nextWriter) => setWriter(() => nextWriter)}
-          onInput={(text) => {
-            if (connectedId) {
-              void sendInput(connectedId, text).catch((err) => {
-                const message = err instanceof Error ? err.message : String(err);
-                setError(`发送失败: ${message}`);
-              });
-            }
-          }}
-          onResize={(cols, rows) => {
-            if (connectedId) {
-              void resizeTerminal(connectedId, cols, rows).catch((err) => {
-                const message = err instanceof Error ? err.message : String(err);
-                setError(`调整终端尺寸失败: ${message}`);
-              });
-            }
-          }}
+          error={error}
+          status={status}
+          onSelect={setSelectedId}
+          onCreate={create}
+          onDelete={remove}
+          onConnect={connect}
         />
-        <footer>{status}</footer>
-      </section>
+      ) : (
+        <TerminalPage
+          sessionName={selectedSession?.name}
+          connected={Boolean(connectedId)}
+          error={error}
+          status={status}
+          debugLogs={debugLogs}
+          onBackToHome={() => setCurrentPage("home")}
+          onDisconnect={disconnect}
+          onClearDebug={() => setDebugLogs([])}
+          terminal={
+            <TerminalPane
+              connected={Boolean(connectedId)}
+              registerWriter={(nextWriter) => setWriter(() => nextWriter)}
+              onInput={(text) => {
+                if (connectedId) {
+                  void sendInput(connectedId, text).catch((err) => {
+                    const message = err instanceof Error ? err.message : String(err);
+                    setError(`发送失败: ${message}`);
+                  });
+                }
+              }}
+              onResize={(cols, rows) => {
+                if (connectedId) {
+                  void resizeTerminal(connectedId, cols, rows).catch((err) => {
+                    const message = err instanceof Error ? err.message : String(err);
+                    setError(`调整终端尺寸失败: ${message}`);
+                  });
+                }
+              }}
+            />
+          }
+        />
+      )}
     </main>
   );
 }

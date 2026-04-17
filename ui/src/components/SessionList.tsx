@@ -4,9 +4,11 @@ import type { Protocol, Session, SessionInput } from "../services/types";
 interface Props {
   sessions: Session[];
   selectedId?: string;
+  connectedId?: string;
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
+  onConnect?: (id: string) => void;
 }
 
 const defaultForm: SessionInput = {
@@ -19,7 +21,15 @@ const defaultForm: SessionInput = {
   keepalive_secs: 30,
 };
 
-export default function SessionList({ sessions, selectedId, onSelect, onCreate, onDelete }: Props) {
+export default function SessionList({
+  sessions,
+  selectedId,
+  connectedId,
+  onSelect,
+  onCreate,
+  onDelete,
+  onConnect,
+}: Props) {
   const [form, setForm] = useState<SessionInput>(defaultForm);
   const [secret, setSecret] = useState("");
 
@@ -47,6 +57,16 @@ export default function SessionList({ sessions, selectedId, onSelect, onCreate, 
               >
                 {session.name} ({session.protocol})
               </button>
+              {onConnect ? (
+                <button
+                  className="connect"
+                  onClick={() => onConnect(session.id)}
+                  disabled={connectedId === session.id}
+                  title="Connect"
+                >
+                  连
+                </button>
+              ) : null}
               <button
                 className="danger"
                 onClick={() => void onDelete(session.id)}
