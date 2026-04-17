@@ -67,26 +67,37 @@
 在仓库根目录：
 
 ```bash
-cargo check
-cd ui
 npm install
+npm --prefix src-tauri/ui install
+cargo check
 ```
 
 ### 3) 本地开发
 
-推荐双终端：
+推荐直接在仓库根目录启动（会自动拉起前端 + 桌面端）：
+
+```bash
+npm run dev:tauri
+```
+
+如需分开调试，可用双终端：
 
 终端 A（前端热更新）：
 
 ```bash
-cd ui
-npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+npm --prefix src-tauri/ui run dev
 ```
 
 终端 B（桌面应用）：
 
 ```bash
 cargo run
+```
+
+如需单独启动前端构建脚本（走根目录 npm scripts）：
+
+```bash
+npm run dev:ui
 ```
 
 ---

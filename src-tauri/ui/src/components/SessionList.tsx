@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Protocol, Session, SessionInput } from "../services/types";
+import { HostCreateModal } from "./session/HostCreateModal";
+import { HostEditModal } from "./session/HostEditModal";
+import { resolveOs } from "./session/resolveOs";
 
 interface Props {
   sessions: Session[];
@@ -172,14 +175,6 @@ export default function SessionList({
     return () => window.removeEventListener("mousedown", onPointerDown);
   }, []);
 
-  const resolveOs = (session: Session) => {
-    const text = `${session.name} ${session.host}`.toLowerCase();
-    if (text.includes("ubuntu")) return { label: "Ubuntu", code: "U", cls: "ubuntu" };
-    if (text.includes("debian")) return { label: "Debian", code: "D", cls: "debian" };
-    if (text.includes("centos")) return { label: "CentOS", code: "C", cls: "centos" };
-    return { label: "Linux", code: "L", cls: "linux" };
-  };
-
   return (
     <aside className="session-list">
       <div className="session-list-header">
@@ -276,182 +271,37 @@ export default function SessionList({
           );
         })}
       </ul>
-      {showCreateModal ? (
-        <div className="modal-backdrop" onClick={() => setShowCreateModal(false)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>新增主机</h4>
-              <button className="modal-close" onClick={() => setShowCreateModal(false)} title="关闭">
-                ×
-              </button>
-            </div>
-            <div className="session-form">
-              <input
-                placeholder="Name"
-                value={createForm.name}
-                onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-              />
-              <select
-                value={createForm.protocol}
-                onChange={(e) => {
-                  const protocol = e.target.value as Protocol;
-                  setCreateForm({ ...createForm, protocol, port: protocol === "ssh" ? 22 : 23 });
-                }}
-              >
-                <option value="ssh">SSH</option>
-                <option value="telnet">Telnet</option>
-              </select>
-              <input
-                ref={hostInputRef}
-                placeholder="Host"
-                value={createForm.host}
-                onChange={(e) => {
-                  const host = e.target.value;
-                  setCreateForm((prev) => ({
-                    ...prev,
-                    host,
-                    name: prev.name || host,
-                  }));
-                }}
-              />
-              <input
-                placeholder="Port"
-                type="number"
-                value={createForm.port || createProtocolPort}
-                onChange={(e) => setCreateForm({ ...createForm, port: Number(e.target.value) })}
-              />
-              <input
-                placeholder="Username"
-                value={createForm.username}
-                onChange={(e) => setCreateForm({ ...createForm, username: e.target.value })}
-              />
-              <input
-                placeholder={createForm.protocol === "ssh" ? "SSH Password (saved)" : "Secret (optional)"}
-                type="password"
-                value={createSecret}
-                onChange={(e) => setCreateSecret(e.target.value)}
-              />
-              {createTestResult ? <div className="placeholder-row">{createTestResult}</div> : null}
-              <div className="modal-actions">
-                <button className="btn btn-ghost" onClick={() => setShowCreateModal(false)}>
-                  取消
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => void testCreateConnect()}
-                  disabled={createTesting || !createForm.host.trim() || !createForm.port}
-                >
-                  {createTesting ? "测试中..." : "测试连接"}
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={submitCreate}
-                  disabled={
-                    !createForm.host.trim() ||
-                    !createForm.username.trim() ||
-                    (createForm.protocol === "ssh" && !createSecret.trim())
-                  }
-                >
-                  添加
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-      {editSession ? (
-        <div className="modal-backdrop" onClick={() => setEditSession(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>编辑主机</h4>
-              <button className="modal-close" onClick={() => setEditSession(null)} title="关闭">
-                ×
-              </button>
-            </div>
-            <div className="session-form">
-              <input
-                placeholder="Name"
-                value={editForm.name}
-                onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              />
-              <select
-                value={editForm.protocol}
-                onChange={(e) => {
-                  const protocol = e.target.value as Protocol;
-                  setEditForm({ ...editForm, protocol, port: protocol === "ssh" ? 22 : 23 });
-                }}
-              >
-                <option value="ssh">SSH</option>
-                <option value="telnet">Telnet</option>
-              </select>
-              <input
-                placeholder="Host"
-                value={editForm.host}
-                onChange={(e) => setEditForm({ ...editForm, host: e.target.value })}
-              />
-              <input
-                placeholder="Port"
-                type="number"
-                value={editForm.port || editProtocolPort}
-                onChange={(e) => setEditForm({ ...editForm, port: Number(e.target.value) })}
-              />
-              <input
-                placeholder="Username"
-                value={editForm.username}
-                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
-              />
-              <input
-                placeholder="Encoding (utf-8/gbk)"
-                value={editForm.encoding ?? "utf-8"}
-                onChange={(e) => setEditForm({ ...editForm, encoding: e.target.value })}
-              />
-              <input
-                placeholder="Keepalive Seconds"
-                type="number"
-                value={editForm.keepalive_secs ?? 30}
-                onChange={(e) => setEditForm({ ...editForm, keepalive_secs: Number(e.target.value) })}
-              />
-              <div className="password-input-wrap">
-                <input
-                  placeholder="SSH Password"
-                  type={editSecretVisible ? "text" : "password"}
-                  value={editSecretVisible ? editSecret : "*********"}
-                  readOnly={!editSecretVisible}
-                  onChange={(e) => {
-                    setEditSecret(e.target.value);
-                    setEditSecretDirty(true);
-                  }}
-                />
-                <button
-                  type="button"
-                  className="password-toggle-btn"
-                  onClick={() => void toggleEditSecretVisible()}
-                  title={editSecretVisible ? "隐藏密码" : "显示密码"}
-                  disabled={editSecretLoading}
-                >
-                  {editSecretLoading ? "…" : editSecretVisible ? "🙈" : "👁"}
-                </button>
-              </div>
-              {editTestResult ? <div className="placeholder-row">{editTestResult}</div> : null}
-              <div className="modal-actions">
-                <button className="btn btn-ghost" onClick={() => setEditSession(null)}>
-                  取消
-                </button>
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => void testEditConnect()}
-                  disabled={editTesting || !editForm.host.trim() || !editForm.port}
-                >
-                  {editTesting ? "测试中..." : "测试连接"}
-                </button>
-                <button className="btn btn-primary" onClick={submitEdit} disabled={!editForm.host.trim()}>
-                  保存
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <HostCreateModal
+        open={showCreateModal}
+        form={createForm}
+        secret={createSecret}
+        testing={createTesting}
+        testResult={createTestResult}
+        hostInputRef={hostInputRef}
+        protocolPort={createProtocolPort}
+        onClose={() => setShowCreateModal(false)}
+        onChangeForm={setCreateForm}
+        onChangeSecret={setCreateSecret}
+        onTest={() => void testCreateConnect()}
+        onSubmit={() => void submitCreate()}
+      />
+      <HostEditModal
+        session={editSession}
+        form={editForm}
+        secret={editSecret}
+        secretVisible={editSecretVisible}
+        secretLoading={editSecretLoading}
+        testResult={editTestResult}
+        testing={editTesting}
+        protocolPort={editProtocolPort}
+        onClose={() => setEditSession(null)}
+        onChangeForm={setEditForm}
+        onChangeSecret={setEditSecret}
+        onChangeSecretVisible={() => void toggleEditSecretVisible()}
+        onTest={() => void testEditConnect()}
+        onSubmit={() => void submitEdit()}
+        onMarkSecretDirty={() => setEditSecretDirty(true)}
+      />
     </aside>
   );
 }

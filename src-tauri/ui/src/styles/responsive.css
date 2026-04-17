@@ -1,0 +1,16 @@
+@media (max-width: 980px) {
+  .session-table-head,
+  .session-main {
+    grid-template-columns: 120px minmax(170px, 1fr) 90px 68px 60px 70px;
+  }
+  .session-line {
+    grid-template-columns: minmax(0, 1fr) 220px;
+  }
+  .home-hero {
+    grid-template-columns: 1fr;
+  }
+  .home-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

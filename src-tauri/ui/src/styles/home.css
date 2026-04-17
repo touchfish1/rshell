@@ -1,0 +1,257 @@
+.home-card {
+  margin: 12px;
+  padding: 14px;
+  border: 1px solid #30384a;
+  background: #0f141d;
+  color: #d4d9e5;
+}
+
+.home-list-wrapper {
+  margin: 0;
+  border: none;
+  overflow: auto;
+}
+
+.home-card h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.home-card p {
+  margin: 0;
+  color: #a8b2c3;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.topbar-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  color: #e7e8ea;
+  border: 1px solid rgba(48, 56, 74, 0.8);
+  background: linear-gradient(180deg, rgba(79, 131, 255, 0.25), rgba(15, 20, 29, 0.75));
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+}
+
+.topbar-title-line {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.topbar-subtitle {
+  font-size: 12px;
+  color: #9ba3b3;
+  margin-top: 2px;
+}
+
+.home-simple {
+  margin: 12px 12px 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.home-panel {
+  border: 1px solid rgba(48, 56, 74, 0.55);
+  border-radius: 8px;
+  background: #090d15;
+  overflow: hidden;
+}
+
+.home-panel-header {
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(48, 56, 74, 0.55);
+}
+
+.home-panel-body {
+  padding: 0;
+}
+
+.home-header-status {
+  color: #8f9bb2;
+  font-size: 12px;
+}
+
+.home-hero {
+  margin: 16px 16px 0;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 12px;
+}
+
+.home-hero-main {
+  padding: 18px 18px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(48, 56, 74, 0.7);
+  background: linear-gradient(180deg, rgba(22, 27, 37, 0.55), rgba(15, 20, 29, 0.35));
+}
+
+.home-title {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+}
+
+.home-lead {
+  margin: 8px 0 0;
+  color: #b2bbcc;
+  line-height: 1.5;
+}
+
+.home-hero-side {
+  display: grid;
+}
+
+.status-card {
+  padding: 14px 14px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(48, 56, 74, 0.7);
+  background: rgba(15, 20, 29, 0.55);
+  backdrop-filter: blur(10px);
+}
+
+.status-label {
+  font-size: 12px;
+  color: #9ba3b3;
+}
+
+.status-value {
+  margin-top: 6px;
+  font-weight: 750;
+  letter-spacing: 0.2px;
+}
+
+.status-meta {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(48, 56, 74, 0.8);
+  background: rgba(22, 27, 37, 0.55);
+  color: #b2bbcc;
+  box-sizing: border-box;
+}
+
+.pill-ok {
+  border-color: rgba(109, 242, 186, 0.5);
+  background: rgba(16, 43, 33, 0.55);
+  color: #bdf7df;
+}
+
+.pill-muted {
+  color: #9ba3b3;
+}
+
+.home-grid {
+  margin: 12px 16px 16px;
+  display: grid;
+  grid-template-columns: 1.35fr 0.65fr;
+  gap: 12px;
+  align-items: start;
+}
+
+.card {
+  border-radius: 16px;
+  border: 1px solid rgba(48, 56, 74, 0.7);
+  background: rgba(15, 20, 29, 0.5);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+
+.card-soft {
+  background: rgba(15, 20, 29, 0.45);
+}
+
+.card-header {
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(48, 56, 74, 0.55);
+}
+
+.card-title {
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: #9ba3b3;
+  margin-top: 2px;
+}
+
+.card-body {
+  padding: 12px;
+}
+
+.hint-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #b2bbcc;
+  line-height: 1.55;
+}
+
+.hint-list li + li {
+  margin-top: 10px;
+}
+
+.empty-state {
+  padding: 18px 14px;
+  border-radius: 14px;
+  border: 1px dashed rgba(48, 56, 74, 0.85);
+  background: rgba(10, 13, 19, 0.25);
+  text-align: left;
+}
+
+.empty-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(48, 56, 74, 0.8);
+  background: rgba(22, 27, 37, 0.5);
+  color: rgba(207, 228, 255, 0.9);
+}
+
+.empty-title {
+  margin-top: 10px;
+  font-weight: 850;
+  letter-spacing: 0.2px;
+}
+
+.empty-subtitle {
+  margin-top: 6px;
+  color: #9ba3b3;
+  line-height: 1.5;
+}
+

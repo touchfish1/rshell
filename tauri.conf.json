@@ -4,10 +4,10 @@
   "version": "0.1.1",
   "identifier": "dev.rshell.app",
   "build": {
-    "frontendDist": "ui/dist",
+    "frontendDist": "src-tauri/ui/dist",
     "devUrl": "http://localhost:5173",
-    "beforeDevCommand": "npm --prefix ui run dev",
-    "beforeBuildCommand": "npm --prefix ui run build"
+    "beforeDevCommand": "npm --prefix src-tauri/ui run dev",
+    "beforeBuildCommand": "npm --prefix src-tauri/ui run build"
   },
   "app": {
     "windows": [
