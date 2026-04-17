@@ -25,6 +25,8 @@ fn main() {
             api::commands::resize_terminal,
             api::commands::list_sftp_dir,
             api::commands::download_sftp_file,
+            api::commands::read_sftp_text_file,
+            api::commands::save_sftp_text_file,
             api::commands::test_host_reachability,
             api::commands::open_in_file_manager,
             api::commands::open_external_url,

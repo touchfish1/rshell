@@ -500,6 +500,131 @@
   background: rgba(29, 40, 59, 0.72);
 }
 
+.sftp-context-menu button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sftp-context-menu button:disabled:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
+.sftp-editor-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(3, 7, 12, 0.72);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.sftp-editor-dialog {
+  width: min(900px, 100%);
+  height: min(640px, 92vh);
+  border-radius: 10px;
+  border: 1px solid rgba(56, 65, 86, 0.92);
+  background: #0c121b;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sftp-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+  color: #d0dbef;
+}
+
+.sftp-editor-path {
+  min-width: 0;
+  font-size: 12px;
+  color: #8ea1c2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sftp-editor-meta {
+  padding: 6px 12px 0;
+  font-size: 11px;
+  color: #8195b8;
+}
+
+.sftp-editor-warning,
+.sftp-editor-error {
+  margin: 6px 12px 0;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.sftp-editor-warning {
+  border: 1px solid rgba(112, 132, 169, 0.55);
+  color: #c8d7ef;
+  background: rgba(34, 47, 67, 0.6);
+}
+
+.sftp-editor-error {
+  border: 1px solid rgba(145, 64, 87, 0.72);
+  color: #ffc6d5;
+  background: rgba(52, 21, 33, 0.72);
+}
+
+.sftp-editor-textarea {
+  margin: 10px 12px;
+  flex: 1 1 auto;
+  width: calc(100% - 24px);
+  border: 1px solid rgba(56, 65, 86, 0.8);
+  border-radius: 8px;
+  background: #0a1018;
+  color: #dce6f8;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: none;
+  outline: none;
+  padding: 10px;
+}
+
+.sftp-editor-textarea:focus {
+  border-color: rgba(79, 131, 255, 0.66);
+}
+
+.sftp-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(43, 49, 64, 0.7);
+}
+
+.sftp-editor-actions button {
+  border: 1px solid rgba(56, 65, 86, 0.9);
+  border-radius: 7px;
+  background: rgba(18, 24, 35, 0.72);
+  color: #d7ddea;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.sftp-editor-actions .primary {
+  border-color: rgba(56, 126, 89, 0.9);
+  background: #1e8f58;
+  color: #ebf9f1;
+}
+
+.sftp-editor-actions button:disabled,
+.sftp-editor-actions .primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .sftp-empty {
   color: #8190aa;
   font-size: 12px;

@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry } from "../services/types";
+import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextReadResult } from "../services/types";
 import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
 import { HostsPanel } from "../components/terminal/HostsPanel";
@@ -37,6 +37,8 @@ interface Props {
   onSftpOpenDir: (path: string) => void;
   onSftpUp: () => void;
   onSftpDownload: (path: string) => void;
+  onSftpReadText: (path: string) => Promise<SftpTextReadResult>;
+  onSftpSaveText: (path: string, content: string) => Promise<void>;
   onBackToHome: () => void;
   onDisconnect: (id?: string) => void;
   onUpdateHost: (id: string, input: SessionInput, secret?: string) => Promise<void>;
@@ -67,6 +69,8 @@ export default function TerminalPage({
   onSftpOpenDir,
   onSftpUp,
   onSftpDownload,
+  onSftpReadText,
+  onSftpSaveText,
   onBackToHome,
   onDisconnect,
   onUpdateHost,
@@ -248,6 +252,8 @@ export default function TerminalPage({
           onSftpUp={onSftpUp}
           onSftpOpenDir={onSftpOpenDir}
           onSftpDownload={onSftpDownload}
+          onSftpReadText={onSftpReadText}
+          onSftpSaveText={onSftpSaveText}
         />
       </div>
       <EditHostModal

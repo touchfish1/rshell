@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { HostMetrics, Session, SessionInput, SftpEntry } from "./types";
+import type { HostMetrics, Session, SessionInput, SftpEntry, SftpTextReadResult } from "./types";
 
 export async function listSessions(): Promise<Session[]> {
   return invoke("list_sessions");
@@ -52,6 +52,14 @@ export async function listSftpDir(id: string, path?: string): Promise<SftpEntry[
 
 export async function downloadSftpFile(id: string, remotePath: string): Promise<string> {
   return invoke("download_sftp_file", { id, remotePath });
+}
+
+export async function readSftpTextFile(id: string, remotePath: string): Promise<SftpTextReadResult> {
+  return invoke("read_sftp_text_file", { id, remotePath });
+}
+
+export async function saveSftpTextFile(id: string, remotePath: string, content: string): Promise<void> {
+  await invoke("save_sftp_text_file", { id, remotePath, content });
 }
 
 export async function openInFileManager(path: string): Promise<void> {

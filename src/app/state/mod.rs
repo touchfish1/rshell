@@ -4,6 +4,7 @@ mod sftp;
 mod ssh_helpers;
 mod terminal_io;
 mod convert;
+pub use self::sftp::SftpTextReadResult;
 
 use std::collections::HashMap;
 use std::sync::Arc;

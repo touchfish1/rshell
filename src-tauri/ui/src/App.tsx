@@ -6,7 +6,9 @@ import { DownloadToastStack } from "./components/download/DownloadToastStack";
 import {
   downloadSftpFile,
   getHostMetrics,
+  readSftpTextFile,
   resizeTerminal,
+  saveSftpTextFile,
   sendInput,
 } from "./services/bridge";
 import type { Session, SessionInput } from "./services/types";
@@ -200,6 +202,18 @@ export default function App() {
                 setError(tr("error.downloadFailed", { message }));
                 finishDownloadTask(taskId, false, message);
               });
+          }}
+          onSftpReadText={async (remotePath: string) => {
+            if (!activeTabId) throw new Error("no active terminal tab");
+            const tab = tabs.find((t) => t.id === activeTabId);
+            if (!tab) throw new Error("active terminal tab not found");
+            return readSftpTextFile(tab.sessionId, remotePath);
+          }}
+          onSftpSaveText={async (remotePath: string, content: string) => {
+            if (!activeTabId) throw new Error("no active terminal tab");
+            const tab = tabs.find((t) => t.id === activeTabId);
+            if (!tab) throw new Error("active terminal tab not found");
+            await saveSftpTextFile(tab.sessionId, remotePath, content);
           }}
           onBackToHome={() => setCurrentPage("home")}
           onDisconnect={(id) => void disconnect(id)}

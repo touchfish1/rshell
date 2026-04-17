@@ -105,6 +105,17 @@ export type I18nKey =
   | "sftp.backToParent"
   | "sftp.parent"
   | "sftp.downloadFile"
+  | "sftp.editTextFile"
+  | "sftp.textEditor"
+  | "sftp.editorPlaceholder"
+  | "sftp.editorSave"
+  | "sftp.editorSaving"
+  | "sftp.editorSaved"
+  | "sftp.editorMeta"
+  | "sftp.editorTooLarge"
+  | "sftp.editorTruncatedReadonly"
+  | "sftp.editorLoadFailed"
+  | "sftp.editorSaveFailed"
   | "sftp.unnamed"
   | "error.loadSessionsFailed"
   | "error.createSessionFailed"
@@ -249,6 +260,17 @@ const zhCN: Dict = {
   "sftp.backToParent": "返回上一级目录",
   "sftp.parent": "上一级",
   "sftp.downloadFile": "下载文件",
+  "sftp.editTextFile": "编辑文本",
+  "sftp.textEditor": "文本编辑器",
+  "sftp.editorPlaceholder": "此处显示文件内容",
+  "sftp.editorSave": "保存",
+  "sftp.editorSaving": "保存中...",
+  "sftp.editorSaved": "已保存",
+  "sftp.editorMeta": "已加载 {loaded} / {total}",
+  "sftp.editorTooLarge": "文件过大（{size}），为避免卡顿已禁用编辑。",
+  "sftp.editorTruncatedReadonly": "仅加载前 {loaded} / {total}，当前为只读预览。",
+  "sftp.editorLoadFailed": "加载文本失败: {message}",
+  "sftp.editorSaveFailed": "保存文本失败: {message}",
   "sftp.unnamed": "(未命名)",
   "error.loadSessionsFailed": "加载会话失败: {message}",
   "error.createSessionFailed": "创建会话失败: {message}",
@@ -392,6 +414,17 @@ const enUS: Dict = {
   "sftp.backToParent": "Back to parent directory",
   "sftp.parent": "Parent",
   "sftp.downloadFile": "Download file",
+  "sftp.editTextFile": "Edit text",
+  "sftp.textEditor": "Text Editor",
+  "sftp.editorPlaceholder": "File content appears here",
+  "sftp.editorSave": "Save",
+  "sftp.editorSaving": "Saving...",
+  "sftp.editorSaved": "Saved",
+  "sftp.editorMeta": "Loaded {loaded} / {total}",
+  "sftp.editorTooLarge": "File is too large ({size}), editing is disabled to keep performance stable.",
+  "sftp.editorTruncatedReadonly": "Loaded first {loaded} / {total}. Editor is read-only preview.",
+  "sftp.editorLoadFailed": "Load text failed: {message}",
+  "sftp.editorSaveFailed": "Save text failed: {message}",
   "sftp.unnamed": "(unnamed)",
   "error.loadSessionsFailed": "Load sessions failed: {message}",
   "error.createSessionFailed": "Create session failed: {message}",

@@ -1,7 +1,7 @@
 use tauri::{AppHandle, State};
 use uuid::Uuid;
 
-use crate::app::{AppState, SftpEntry};
+use crate::app::{AppState, SftpEntry, SftpTextReadResult};
 
 use super::common::emit_debug;
 
@@ -35,5 +35,38 @@ pub async fn download_sftp_file(
         &format!("download file {}", remote_path),
     );
     state.download_sftp_file(id, remote_path).await
+}
+
+pub async fn read_sftp_text_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_path: String,
+) -> Result<SftpTextReadResult, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "sftp_text_read",
+        &format!("open text file {}", remote_path),
+    );
+    state.read_sftp_text_file(id, remote_path).await
+}
+
+pub async fn save_sftp_text_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_path: String,
+    content: String,
+) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "sftp_text_save",
+        &format!("save text file {}", remote_path),
+    );
+    state.save_sftp_text_file(id, remote_path, content).await
 }
 

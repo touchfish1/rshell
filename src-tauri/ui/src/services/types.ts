@@ -38,3 +38,11 @@ export interface HostMetrics {
   disk_total_bytes: number;
   disk_percent: number;
 }
+
+export interface SftpTextReadResult {
+  content: string;
+  total_bytes: number;
+  loaded_bytes: number;
+  truncated: boolean;
+  too_large: boolean;
+}

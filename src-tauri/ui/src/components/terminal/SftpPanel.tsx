@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { HostMetrics, SftpEntry } from "../../services/types";
+import { useEffect, useMemo, useState } from "react";
+import type { HostMetrics, SftpEntry, SftpTextReadResult } from "../../services/types";
 import { formatBytes, formatMtime, formatSize } from "./formatters";
 import { useI18n } from "../../i18n-context";
 
@@ -19,6 +19,8 @@ interface Props {
   onSftpUp: () => void;
   onSftpOpenDir: (path: string) => void;
   onSftpDownload: (path: string) => void;
+  onSftpReadText: (path: string) => Promise<SftpTextReadResult>;
+  onSftpSaveText: (path: string, content: string) => Promise<void>;
 }
 
 export function SftpPanel({
@@ -36,11 +38,73 @@ export function SftpPanel({
   onSftpUp,
   onSftpOpenDir,
   onSftpDownload,
+  onSftpReadText,
+  onSftpSaveText,
 }: Props) {
   const { tr } = useI18n();
-  const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; path: string; isText: boolean } | null>(null);
   const [copied, setCopied] = useState(false);
   const [copyTimer, setCopyTimer] = useState<number | null>(null);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorPath, setEditorPath] = useState("");
+  const [editorText, setEditorText] = useState("");
+  const [editorOriginalText, setEditorOriginalText] = useState("");
+  const [editorLoading, setEditorLoading] = useState(false);
+  const [editorSaving, setEditorSaving] = useState(false);
+  const [editorError, setEditorError] = useState<string | null>(null);
+  const [editorWarning, setEditorWarning] = useState<string | null>(null);
+  const [editorReadOnly, setEditorReadOnly] = useState(false);
+  const [editorMeta, setEditorMeta] = useState<{ loadedBytes: number; totalBytes: number } | null>(null);
+
+  const textExtSet = useMemo(
+    () =>
+      new Set([
+        "txt",
+        "log",
+        "md",
+        "json",
+        "yaml",
+        "yml",
+        "toml",
+        "ini",
+        "conf",
+        "cfg",
+        "xml",
+        "csv",
+        "sh",
+        "bash",
+        "zsh",
+        "ps1",
+        "bat",
+        "cmd",
+        "js",
+        "ts",
+        "tsx",
+        "jsx",
+        "css",
+        "scss",
+        "html",
+        "rs",
+        "go",
+        "py",
+        "java",
+        "c",
+        "h",
+        "cpp",
+        "hpp",
+        "sql",
+        "env",
+      ]),
+    []
+  );
+
+  const detectIsTextFile = (path: string) => {
+    const fileName = path.split("/").pop() ?? "";
+    const lastDotIdx = fileName.lastIndexOf(".");
+    if (lastDotIdx <= 0 || lastDotIdx === fileName.length - 1) return false;
+    const ext = fileName.slice(lastDotIdx + 1).toLowerCase();
+    return textExtSet.has(ext);
+  };
   const copyHostIp = async () => {
     if (!activeHostIp) return;
     try {
@@ -69,6 +133,17 @@ export function SftpPanel({
     };
   }, [copyTimer]);
 
+  useEffect(() => {
+    if (!editorOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setEditorOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [editorOpen]);
+
   const normalizedPath = sftpPath === "." ? "/" : sftpPath;
   const canGoUp = normalizedPath !== "/";
 
@@ -78,6 +153,62 @@ export function SftpPanel({
     const fallback = normalized.split("/").pop();
     return fallback && fallback.trim() ? fallback : tr("sftp.unnamed");
   };
+
+  const openEditor = async (path: string) => {
+    setEditorOpen(true);
+    setEditorPath(path);
+    setEditorText("");
+    setEditorOriginalText("");
+    setEditorError(null);
+    setEditorWarning(null);
+    setEditorReadOnly(false);
+    setEditorMeta(null);
+    setEditorLoading(true);
+    try {
+      const result = await onSftpReadText(path);
+      if (result.too_large) {
+        setEditorReadOnly(true);
+        setEditorWarning(tr("sftp.editorTooLarge", { size: formatBytes(result.total_bytes) }));
+        setEditorMeta({ loadedBytes: result.loaded_bytes, totalBytes: result.total_bytes });
+        return;
+      }
+      setEditorText(result.content);
+      setEditorOriginalText(result.content);
+      setEditorMeta({ loadedBytes: result.loaded_bytes, totalBytes: result.total_bytes });
+      if (result.truncated) {
+        setEditorReadOnly(true);
+        setEditorWarning(
+          tr("sftp.editorTruncatedReadonly", {
+            loaded: formatBytes(result.loaded_bytes),
+            total: formatBytes(result.total_bytes),
+          })
+        );
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setEditorError(tr("sftp.editorLoadFailed", { message }));
+    } finally {
+      setEditorLoading(false);
+    }
+  };
+
+  const saveEditor = async () => {
+    if (editorReadOnly || editorLoading || editorSaving) return;
+    setEditorSaving(true);
+    setEditorError(null);
+    try {
+      await onSftpSaveText(editorPath, editorText);
+      setEditorOriginalText(editorText);
+      setEditorWarning(tr("sftp.editorSaved"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setEditorError(tr("sftp.editorSaveFailed", { message }));
+    } finally {
+      setEditorSaving(false);
+    }
+  };
+
+  const editorDirty = editorText !== editorOriginalText;
 
   return (
     <aside className="terminal-sftp">
@@ -179,7 +310,12 @@ export function SftpPanel({
                       if (entry.is_dir) return;
                       e.preventDefault();
                       e.stopPropagation();
-                      setMenu({ x: e.clientX, y: e.clientY, path: entry.path });
+                      setMenu({
+                        x: e.clientX,
+                        y: e.clientY,
+                        path: entry.path,
+                        isText: detectIsTextFile(entry.path),
+                      });
                     }}
                     title={entry.path}
                   >
@@ -209,6 +345,55 @@ export function SftpPanel({
           >
             {tr("sftp.downloadFile")}
           </button>
+          <button
+            disabled={!menu.isText}
+            onClick={() => {
+              void openEditor(menu.path);
+              setMenu(null);
+            }}
+          >
+            {tr("sftp.editTextFile")}
+          </button>
+        </div>
+      ) : null}
+      {editorOpen ? (
+        <div className="sftp-editor-mask" onClick={() => setEditorOpen(false)}>
+          <div className="sftp-editor-dialog" onClick={(event) => event.stopPropagation()}>
+            <div className="sftp-editor-head">
+              <strong>{tr("sftp.textEditor")}</strong>
+              <span className="sftp-editor-path" title={editorPath}>
+                {editorPath}
+              </span>
+            </div>
+            {editorMeta ? (
+              <div className="sftp-editor-meta">
+                {tr("sftp.editorMeta", {
+                  loaded: formatBytes(editorMeta.loadedBytes),
+                  total: formatBytes(editorMeta.totalBytes),
+                })}
+              </div>
+            ) : null}
+            {editorWarning ? <div className="sftp-editor-warning">{editorWarning}</div> : null}
+            {editorError ? <div className="sftp-editor-error">{editorError}</div> : null}
+            <textarea
+              className="sftp-editor-textarea"
+              value={editorText}
+              onChange={(event) => setEditorText(event.target.value)}
+              readOnly={editorReadOnly || editorLoading}
+              spellCheck={false}
+              placeholder={editorLoading ? tr("sftp.loading") : tr("sftp.editorPlaceholder")}
+            />
+            <div className="sftp-editor-actions">
+              <button onClick={() => setEditorOpen(false)}>{tr("modal.close")}</button>
+              <button
+                className="primary"
+                disabled={editorReadOnly || editorLoading || editorSaving || !editorDirty}
+                onClick={() => void saveEditor()}
+              >
+                {editorSaving ? tr("sftp.editorSaving") : tr("sftp.editorSave")}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
     </aside>

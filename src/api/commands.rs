@@ -7,7 +7,7 @@ mod terminal;
 
 use tauri::{AppHandle, State};
 
-use crate::app::{AppState, HostMetrics, SftpEntry};
+use crate::app::{AppState, HostMetrics, SftpEntry, SftpTextReadResult};
 use crate::domain::session::{Session, SessionInput};
 use tokio::net::TcpStream;
 use tokio::time::{timeout, Duration};
@@ -105,6 +105,27 @@ pub async fn download_sftp_file(
     remote_path: String,
 ) -> Result<String, String> {
     sftp::download_sftp_file(app, state, id, remote_path).await
+}
+
+#[tauri::command]
+pub async fn read_sftp_text_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_path: String,
+) -> Result<SftpTextReadResult, String> {
+    sftp::read_sftp_text_file(app, state, id, remote_path).await
+}
+
+#[tauri::command]
+pub async fn save_sftp_text_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_path: String,
+    content: String,
+) -> Result<(), String> {
+    sftp::save_sftp_text_file(app, state, id, remote_path, content).await
 }
 
 #[tauri::command]
