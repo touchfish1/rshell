@@ -576,6 +576,9 @@ body {
 .terminal-sftp {
   border-right: 1px solid rgba(43, 49, 64, 0.7);
   background: #0d121a;
+}
+
+.terminal-hosts {
   overflow: auto;
 }
 
@@ -593,6 +596,10 @@ body {
 .terminal-sftp {
   border-right: none;
   border-left: 1px solid rgba(43, 49, 64, 0.7);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .panel-title {
@@ -611,6 +618,26 @@ body {
   list-style: none;
   margin: 0;
   padding: 6px;
+}
+
+.terminal-sftp ul {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sftp-file-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sftp-file-list ul {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 
 .terminal-hosts button {
@@ -643,6 +670,75 @@ body {
   gap: 8px;
   padding: 8px;
   border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+}
+
+.sftp-monitor-card {
+  margin: 8px;
+  border: 1px solid rgba(48, 56, 74, 0.72);
+  border-radius: 8px;
+  background: rgba(15, 21, 31, 0.82);
+  padding: 8px;
+}
+
+.sftp-monitor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #c9d4e9;
+}
+
+.sftp-monitor-head button {
+  border: 1px solid rgba(48, 56, 74, 0.85);
+  background: rgba(18, 24, 35, 0.75);
+  color: #d7ddea;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.sftp-monitor-host {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #8fa0bd;
+}
+
+.sftp-monitor-error {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #f3a2b5;
+}
+
+.sftp-monitor-row {
+  margin-top: 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #9fafc8;
+}
+
+.sftp-monitor-bar {
+  margin-top: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(45, 55, 73, 0.8);
+  overflow: hidden;
+}
+
+.sftp-monitor-bar i {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4f83ff 0%, #78ccff 100%);
+}
+
+.sftp-monitor-time {
+  margin-top: 8px;
+  font-size: 10px;
+  color: #7f8dab;
 }
 
 .sftp-head {

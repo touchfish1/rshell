@@ -70,11 +70,8 @@ jobs:
         run: npm ci
         working-directory: ui
 
-      - name: Install Tauri CLI
-        run: cargo install tauri-cli --locked
-
       - name: Build Tauri bundles
-        run: cargo tauri build
+        run: npx @tauri-apps/cli@2 build
 
       - name: Create Windows zip
         if: runner.os == 'Windows'

@@ -87,13 +87,13 @@ export default function TerminalPage({
     keepalive_secs: 30,
   });
   const [editSecret, setEditSecret] = useState("");
-  const [monitorHost, setMonitorHost] = useState<Session | null>(null);
   const [monitorMetrics, setMonitorMetrics] = useState<HostMetrics | null>(null);
   const [monitorError, setMonitorError] = useState<string | null>(null);
   const [monitorChecking, setMonitorChecking] = useState(false);
   const [monitorCheckedAt, setMonitorCheckedAt] = useState<string>("");
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
+  const monitorSupported = activeSession?.protocol === "ssh";
   const menuTabIndex = tabMenu ? tabs.findIndex((tab) => tab.id === tabMenu.tabId) : -1;
   const hasLeftTabs = menuTabIndex > 0;
   const hasRightTabs = menuTabIndex >= 0 && menuTabIndex < tabs.length - 1;
@@ -165,13 +165,33 @@ export default function TerminalPage({
     };
   }, []);
 
+  const refreshMetrics = async (session: Session) => {
+    setMonitorChecking(true);
+    try {
+      const metrics = await onGetHostMetrics(session);
+      setMonitorMetrics(metrics);
+      setMonitorError(null);
+      setMonitorCheckedAt(new Date().toLocaleTimeString());
+    } catch (err) {
+      setMonitorError(err instanceof Error ? err.message : String(err));
+      setMonitorMetrics(null);
+    } finally {
+      setMonitorChecking(false);
+    }
+  };
+
   useEffect(() => {
-    if (!monitorHost) return;
+    if (!activeSession || !monitorSupported) {
+      setMonitorMetrics(null);
+      setMonitorError(activeSession && activeSession.protocol !== "ssh" ? "仅 SSH 会话支持监控指标" : null);
+      setMonitorCheckedAt("");
+      return;
+    }
     let cancelled = false;
     const run = async () => {
       setMonitorChecking(true);
       try {
-        const metrics = await onGetHostMetrics(monitorHost);
+        const metrics = await onGetHostMetrics(activeSession);
         if (cancelled) return;
         setMonitorMetrics(metrics);
         setMonitorError(null);
@@ -190,7 +210,7 @@ export default function TerminalPage({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [monitorHost, onGetHostMetrics]);
+  }, [activeSession, monitorSupported, onGetHostMetrics]);
 
   const formatBytes = (bytes: number) => {
     if (!bytes || bytes <= 0) return "0 B";
@@ -325,14 +345,13 @@ export default function TerminalPage({
           </button>
           <button
             onClick={() => {
-              setMonitorHost(hostMenu.session);
-              setMonitorMetrics(null);
-              setMonitorError(null);
-              setMonitorCheckedAt("");
+              if (activeSession && monitorSupported) {
+                void refreshMetrics(activeSession);
+              }
               setHostMenu(null);
             }}
           >
-            查看主机监控
+            刷新主机监控
           </button>
         </div>
       ) : null}
@@ -390,66 +409,119 @@ export default function TerminalPage({
         />
 
         <aside className="terminal-sftp">
-          <div className="panel-title">SFTP 文件列表</div>
-          <div className="sftp-toolbar">
-            <button onClick={onSftpUp} disabled={!canGoUp}>
-              上级
-            </button>
-            <span className="sftp-path" title={normalizedPath}>
-              {normalizedPath}
-            </span>
+          <div className="sftp-monitor-card">
+            <div className="sftp-monitor-head">
+              <span>主机监控</span>
+              <button
+                onClick={() => {
+                  if (activeSession && monitorSupported) {
+                    void refreshMetrics(activeSession);
+                  }
+                }}
+                disabled={!activeSession || !monitorSupported || monitorChecking}
+              >
+                {monitorChecking ? "刷新中..." : "刷新"}
+              </button>
+            </div>
+            <div className="sftp-monitor-host">
+              {activeSession ? `${activeSession.host}:${activeSession.port}` : "未连接会话"}
+            </div>
+            {monitorError ? <div className="sftp-monitor-error">{monitorError}</div> : null}
+            <div className="sftp-monitor-row">
+              <span>CPU</span>
+              <span>{monitorMetrics ? `${monitorMetrics.cpu_percent.toFixed(1)}%` : "-"}</span>
+            </div>
+            <div className="sftp-monitor-bar">
+              <i style={{ width: `${monitorMetrics ? monitorMetrics.cpu_percent.toFixed(1) : 0}%` }} />
+            </div>
+            <div className="sftp-monitor-row">
+              <span>内存</span>
+              <span>
+                {monitorMetrics
+                  ? `${formatBytes(monitorMetrics.memory_used_bytes)} / ${formatBytes(
+                      monitorMetrics.memory_total_bytes
+                    )}`
+                  : "-"}
+              </span>
+            </div>
+            <div className="sftp-monitor-bar">
+              <i style={{ width: `${monitorMetrics ? monitorMetrics.memory_percent.toFixed(1) : 0}%` }} />
+            </div>
+            <div className="sftp-monitor-row">
+              <span>磁盘</span>
+              <span>
+                {monitorMetrics
+                  ? `${formatBytes(monitorMetrics.disk_used_bytes)} / ${formatBytes(monitorMetrics.disk_total_bytes)}`
+                  : "-"}
+              </span>
+            </div>
+            <div className="sftp-monitor-bar">
+              <i style={{ width: `${monitorMetrics ? monitorMetrics.disk_percent.toFixed(1) : 0}%` }} />
+            </div>
+            <div className="sftp-monitor-time">最近更新：{monitorCheckedAt || "-"}</div>
           </div>
-          <div className="sftp-head">
-            <span>名称</span>
-            <span>大小</span>
-            <span>修改时间</span>
-          </div>
-          <ul>
-            {sftpLoading ? (
-              <li className="sftp-empty">加载中...</li>
-            ) : sftpEntries.length === 0 ? (
-              <li className="sftp-empty">目录为空或无权限</li>
-            ) : (
-              <>
-                {canGoUp ? (
-                  <li className="sftp-row">
-                    <button className="sftp-dir sftp-parent" onClick={onSftpUp} title="返回上一级目录">
-                      <span className="sftp-col-name">
-                        <span className="sftp-kind-icon folder">📁</span>
-                        <span className="sftp-name-text">..</span>
-                      </span>
-                      <span className="sftp-col-size">-</span>
-                      <span className="sftp-col-time">上一级</span>
-                    </button>
-                  </li>
-                ) : null}
-                {sftpEntries.map((entry) => (
-                  <li key={`${entry.path}:${entry.name}`} className="sftp-row">
-                    <button
-                      className={entry.is_dir ? "sftp-dir" : "sftp-file"}
-                      onClick={() => entry.is_dir && onSftpOpenDir(entry.path)}
-                      onContextMenu={(e) => {
-                        if (entry.is_dir) return;
-                        e.preventDefault();
-                        e.stopPropagation();
-                        setMenu({ x: e.clientX, y: e.clientY, path: entry.path });
-                      }}
-                      title={entry.path}
-                    >
-                      <span className="sftp-col-name">
-                        <span className={`sftp-kind-icon ${entry.is_dir ? "folder" : "file"}`}>
-                          {entry.is_dir ? "📁" : "📄"}
+          <div className="sftp-file-list">
+            <div className="panel-title">SFTP 文件列表</div>
+            <div className="sftp-toolbar">
+              <button onClick={onSftpUp} disabled={!canGoUp}>
+                上级
+              </button>
+              <span className="sftp-path" title={normalizedPath}>
+                {normalizedPath}
+              </span>
+            </div>
+            <div className="sftp-head">
+              <span>名称</span>
+              <span>大小</span>
+              <span>修改时间</span>
+            </div>
+            <ul>
+              {sftpLoading ? (
+                <li className="sftp-empty">加载中...</li>
+              ) : sftpEntries.length === 0 ? (
+                <li className="sftp-empty">目录为空或无权限</li>
+              ) : (
+                <>
+                  {canGoUp ? (
+                    <li className="sftp-row">
+                      <button className="sftp-dir sftp-parent" onClick={onSftpUp} title="返回上一级目录">
+                        <span className="sftp-col-name">
+                          <span className="sftp-kind-icon folder">📁</span>
+                          <span className="sftp-name-text">..</span>
                         </span>
-                        <span className="sftp-name-text">{getDisplayName(entry)}</span>
-                      </span>
-                      <span className="sftp-col-size">{entry.is_dir ? "-" : formatSize(entry.size)}</span>
-                      <span className="sftp-col-time">{formatMtime(entry.mtime)}</span>
-                    </button>
-                  </li>
-                ))}
-              </>
-            )}
-          </ul>
+                        <span className="sftp-col-size">-</span>
+                        <span className="sftp-col-time">上一级</span>
+                      </button>
+                    </li>
+                  ) : null}
+                  {sftpEntries.map((entry) => (
+                    <li key={`${entry.path}:${entry.name}`} className="sftp-row">
+                      <button
+                        className={entry.is_dir ? "sftp-dir" : "sftp-file"}
+                        onClick={() => entry.is_dir && onSftpOpenDir(entry.path)}
+                        onContextMenu={(e) => {
+                          if (entry.is_dir) return;
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setMenu({ x: e.clientX, y: e.clientY, path: entry.path });
+                        }}
+                        title={entry.path}
+                      >
+                        <span className="sftp-col-name">
+                          <span className={`sftp-kind-icon ${entry.is_dir ? "folder" : "file"}`}>
+                            {entry.is_dir ? "📁" : "📄"}
+                          </span>
+                          <span className="sftp-name-text">{getDisplayName(entry)}</span>
+                        </span>
+                        <span className="sftp-col-size">{entry.is_dir ? "-" : formatSize(entry.size)}</span>
+                        <span className="sftp-col-time">{formatMtime(entry.mtime)}</span>
+                      </button>
+                    </li>
+                  ))}
+                </>
+              )}
+            </ul>
+          </div>
           {menu ? (
             <div className="sftp-context-menu" style={{ left: menu.x, top: menu.y }}>
               <button
@@ -524,67 +596,6 @@ export default function TerminalPage({
                   }}
                 >
                   保存
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      ) : null}
-      {monitorHost ? (
-        <div className="modal-backdrop" onClick={() => setMonitorHost(null)}>
-          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>主机监控</h4>
-              <button className="modal-close" onClick={() => setMonitorHost(null)} title="关闭">
-                ×
-              </button>
-            </div>
-            <div className="session-form">
-              <div className="placeholder-row">主机：{monitorHost.host}:{monitorHost.port}</div>
-              <div className="placeholder-row">用户：{monitorHost.username || "-"}</div>
-              <div className="placeholder-row">
-                CPU：{monitorMetrics ? `${monitorMetrics.cpu_percent.toFixed(1)}%` : "-"}
-              </div>
-              <div className="placeholder-row">
-                内存：{monitorMetrics
-                  ? `${formatBytes(monitorMetrics.memory_used_bytes)} / ${formatBytes(
-                      monitorMetrics.memory_total_bytes
-                    )} (${monitorMetrics.memory_percent.toFixed(1)}%)`
-                  : "-"}
-              </div>
-              <div className="placeholder-row">
-                磁盘：{monitorMetrics
-                  ? `${formatBytes(monitorMetrics.disk_used_bytes)} / ${formatBytes(
-                      monitorMetrics.disk_total_bytes
-                    )} (${monitorMetrics.disk_percent.toFixed(1)}%)`
-                  : "-"}
-              </div>
-              {monitorError ? <div className="placeholder-row">指标读取失败：{monitorError}</div> : null}
-              <div className="placeholder-row">最近检测：{monitorCheckedAt || "-"}</div>
-              <div className="modal-actions">
-                <button
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    setMonitorChecking(true);
-                    void onGetHostMetrics(monitorHost)
-                      .then((metrics) => {
-                        setMonitorMetrics(metrics);
-                        setMonitorError(null);
-                        setMonitorCheckedAt(new Date().toLocaleTimeString());
-                      })
-                      .catch((err) => {
-                        setMonitorError(err instanceof Error ? err.message : String(err));
-                        setMonitorMetrics(null);
-                      })
-                      .finally(() => {
-                        setMonitorChecking(false);
-                      });
-                  }}
-                >
-                  {monitorChecking ? "检测中..." : "立即检测"}
-                </button>
-                <button className="btn btn-primary" onClick={() => setMonitorHost(null)}>
-                  关闭
                 </button>
               </div>
             </div>
