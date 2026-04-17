@@ -46,3 +46,14 @@ export interface SftpTextReadResult {
   truncated: boolean;
   too_large: boolean;
 }
+
+export interface AuditRecord {
+  id: string;
+  timestamp_ms: number;
+  session_id?: string | null;
+  session_name?: string | null;
+  host?: string | null;
+  event_type: string;
+  command?: string | null;
+  detail: string;
+}

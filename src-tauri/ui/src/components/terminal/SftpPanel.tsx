@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { HostMetrics, SftpEntry, SftpTextReadResult } from "../../services/types";
 import { formatBytes, formatMtime, formatSize } from "./formatters";
 import { useI18n } from "../../i18n-context";
@@ -42,7 +42,7 @@ export function SftpPanel({
   onSftpSaveText,
 }: Props) {
   const { tr } = useI18n();
-  const [menu, setMenu] = useState<{ x: number; y: number; path: string; isText: boolean } | null>(null);
+  const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [copyTimer, setCopyTimer] = useState<number | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
@@ -55,56 +55,8 @@ export function SftpPanel({
   const [editorWarning, setEditorWarning] = useState<string | null>(null);
   const [editorReadOnly, setEditorReadOnly] = useState(false);
   const [editorMeta, setEditorMeta] = useState<{ loadedBytes: number; totalBytes: number } | null>(null);
+  const editorTextRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const textExtSet = useMemo(
-    () =>
-      new Set([
-        "txt",
-        "log",
-        "md",
-        "json",
-        "yaml",
-        "yml",
-        "toml",
-        "ini",
-        "conf",
-        "cfg",
-        "xml",
-        "csv",
-        "sh",
-        "bash",
-        "zsh",
-        "ps1",
-        "bat",
-        "cmd",
-        "js",
-        "ts",
-        "tsx",
-        "jsx",
-        "css",
-        "scss",
-        "html",
-        "rs",
-        "go",
-        "py",
-        "java",
-        "c",
-        "h",
-        "cpp",
-        "hpp",
-        "sql",
-        "env",
-      ]),
-    []
-  );
-
-  const detectIsTextFile = (path: string) => {
-    const fileName = path.split("/").pop() ?? "";
-    const lastDotIdx = fileName.lastIndexOf(".");
-    if (lastDotIdx <= 0 || lastDotIdx === fileName.length - 1) return false;
-    const ext = fileName.slice(lastDotIdx + 1).toLowerCase();
-    return textExtSet.has(ext);
-  };
   const copyHostIp = async () => {
     if (!activeHostIp) return;
     try {
@@ -143,6 +95,17 @@ export function SftpPanel({
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [editorOpen]);
+
+  useEffect(() => {
+    if (!editorOpen) return;
+    if (editorLoading) return;
+    const node = editorTextRef.current;
+    if (!node) return;
+    node.focus();
+    // Avoid accidental full-text selection caused by double-click focus transfer.
+    const pos = Math.min(node.value.length, 0);
+    node.setSelectionRange(pos, pos);
+  }, [editorOpen, editorLoading]);
 
   const normalizedPath = sftpPath === "." ? "/" : sftpPath;
   const canGoUp = normalizedPath !== "/";
@@ -310,12 +273,13 @@ export function SftpPanel({
                       if (entry.is_dir) return;
                       e.preventDefault();
                       e.stopPropagation();
-                      setMenu({
-                        x: e.clientX,
-                        y: e.clientY,
-                        path: entry.path,
-                        isText: detectIsTextFile(entry.path),
-                      });
+                      setMenu({ x: e.clientX, y: e.clientY, path: entry.path });
+                    }}
+                    onDoubleClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (entry.is_dir) return;
+                      void openEditor(entry.path);
                     }}
                     title={entry.path}
                   >
@@ -346,7 +310,6 @@ export function SftpPanel({
             {tr("sftp.downloadFile")}
           </button>
           <button
-            disabled={!menu.isText}
             onClick={() => {
               void openEditor(menu.path);
               setMenu(null);
@@ -376,6 +339,7 @@ export function SftpPanel({
             {editorWarning ? <div className="sftp-editor-warning">{editorWarning}</div> : null}
             {editorError ? <div className="sftp-editor-error">{editorError}</div> : null}
             <textarea
+              ref={editorTextRef}
               className="sftp-editor-textarea"
               value={editorText}
               onChange={(event) => setEditorText(event.target.value)}

@@ -18,6 +18,17 @@ export type I18nKey =
   | "home.emptyTitle"
   | "home.emptySubtitle"
   | "home.ariaNoSession"
+  | "home.audit"
+  | "home.auditTitle"
+  | "home.auditRefresh"
+  | "home.auditEmpty"
+  | "home.auditFilterAll"
+  | "home.auditFilterConnect"
+  | "home.auditFilterCommand"
+  | "home.auditFilterDisconnect"
+  | "home.auditSearchPlaceholder"
+  | "home.auditExportCsv"
+  | "home.auditExportJson"
   | "session.management"
   | "session.addHost"
   | "session.name"
@@ -173,6 +184,17 @@ const zhCN: Dict = {
   "home.emptyTitle": "还没有会话",
   "home.emptySubtitle": "添加一个会话后即可连接。",
   "home.ariaNoSession": "暂无会话",
+  "home.audit": "审计日志",
+  "home.auditTitle": "主机审计日志",
+  "home.auditRefresh": "刷新",
+  "home.auditEmpty": "暂无审计记录",
+  "home.auditFilterAll": "全部",
+  "home.auditFilterConnect": "连接",
+  "home.auditFilterCommand": "命令",
+  "home.auditFilterDisconnect": "断开",
+  "home.auditSearchPlaceholder": "搜索主机、会话或命令",
+  "home.auditExportCsv": "导出 CSV",
+  "home.auditExportJson": "导出 JSON",
   "session.management": "主机管理",
   "session.addHost": "新增主机",
   "session.name": "名称",
@@ -327,6 +349,17 @@ const enUS: Dict = {
   "home.emptyTitle": "No sessions yet",
   "home.emptySubtitle": "Add one session to start connecting.",
   "home.ariaNoSession": "No session",
+  "home.audit": "Audit",
+  "home.auditTitle": "Host Audit Logs",
+  "home.auditRefresh": "Refresh",
+  "home.auditEmpty": "No audit records yet",
+  "home.auditFilterAll": "All",
+  "home.auditFilterConnect": "Connect",
+  "home.auditFilterCommand": "Command",
+  "home.auditFilterDisconnect": "Disconnect",
+  "home.auditSearchPlaceholder": "Search by host, session, or command",
+  "home.auditExportCsv": "Export CSV",
+  "home.auditExportJson": "Export JSON",
   "session.management": "Host Management",
   "session.addHost": "Add Host",
   "session.name": "Name",

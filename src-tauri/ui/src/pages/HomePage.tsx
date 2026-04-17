@@ -1,5 +1,7 @@
 import SessionList from "../components/SessionList";
+import AuditLogModal from "../components/AuditLogModal";
 import type { Session, SessionInput } from "../services/types";
+import type { AuditRecord } from "../services/types";
 import type { I18nKey, Lang } from "../i18n";
 
 interface Props {
@@ -18,6 +20,12 @@ interface Props {
   onGetSecret: (id: string) => Promise<string | null>;
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
+  auditOpen: boolean;
+  auditLoading: boolean;
+  audits: AuditRecord[];
+  onOpenAudit: () => void;
+  onCloseAudit: () => void;
+  onRefreshAudit: () => void;
   upgradeChecking: boolean;
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
@@ -40,6 +48,12 @@ export default function HomePage({
   onGetSecret,
   onConnect,
   onOnlineUpgrade,
+  auditOpen,
+  auditLoading,
+  audits,
+  onOpenAudit,
+  onCloseAudit,
+  onRefreshAudit,
   upgradeChecking,
   lang,
   onSwitchLang,
@@ -76,6 +90,9 @@ export default function HomePage({
           </div>
           <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
             {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
+          </button>
+          <button className="btn btn-ghost" onClick={onOpenAudit}>
+            {tr("home.audit")}
           </button>
           <span className={connected ? "pill pill-ok" : "pill"}>
             {connected ? tr("top.online") : tr("top.offline")}
@@ -124,6 +141,14 @@ export default function HomePage({
       </div>
 
       <footer>{status}</footer>
+      <AuditLogModal
+        open={auditOpen}
+        loading={auditLoading}
+        records={audits}
+        tr={tr}
+        onClose={onCloseAudit}
+        onRefresh={onRefreshAudit}
+      />
     </section>
   );
 }

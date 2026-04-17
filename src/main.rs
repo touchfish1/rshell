@@ -31,6 +31,7 @@ fn main() {
             api::commands::open_in_file_manager,
             api::commands::open_external_url,
             api::commands::get_host_metrics,
+            api::commands::list_audits,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

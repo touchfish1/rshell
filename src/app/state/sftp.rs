@@ -172,9 +172,14 @@ impl AppState {
             .take(EDITOR_READ_CHUNK_BYTES)
             .read_to_end(&mut bytes)
             .map_err(|e| format!("read remote file failed: {e}"))?;
+        if bytes.contains(&0) {
+            return Err("target file is not recognized as text (binary data detected)".to_string());
+        }
+        let content = std::str::from_utf8(&bytes)
+            .map_err(|_| "target file is not recognized as UTF-8 text".to_string())?
+            .to_string();
         let loaded_bytes = bytes.len() as u64;
         let truncated = total_bytes > loaded_bytes;
-        let content = String::from_utf8_lossy(&bytes).to_string();
         Ok(SftpTextReadResult {
             content,
             total_bytes,

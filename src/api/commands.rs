@@ -7,7 +7,7 @@ mod terminal;
 
 use tauri::{AppHandle, State};
 
-use crate::app::{AppState, HostMetrics, SftpEntry, SftpTextReadResult};
+use crate::app::{AppState, AuditRecord, HostMetrics, SftpEntry, SftpTextReadResult};
 use crate::domain::session::{Session, SessionInput};
 use tokio::net::TcpStream;
 use tokio::time::{timeout, Duration};
@@ -152,4 +152,9 @@ pub async fn test_host_reachability(host: String, port: u16, timeout_ms: Option<
     let duration = Duration::from_millis(timeout_ms.unwrap_or(2000).clamp(100, 10000));
     let result = timeout(duration, TcpStream::connect(addr)).await;
     Ok(matches!(result, Ok(Ok(_))))
+}
+
+#[tauri::command]
+pub async fn list_audits(state: State<'_, AppState>, limit: Option<usize>) -> Result<Vec<AuditRecord>, String> {
+    state.list_audits(limit).await
 }

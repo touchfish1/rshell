@@ -4,6 +4,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 use uuid::Uuid;
 
+use crate::domain::audit::AuditRecord;
 use crate::domain::session::Session;
 
 #[derive(Default, serde::Serialize, serde::Deserialize)]
@@ -23,6 +24,7 @@ pub enum StoreError {
 pub struct SessionStore {
     db_path: PathBuf,
     secret_path: PathBuf,
+    audit_path: PathBuf,
 }
 
 impl SessionStore {
@@ -34,6 +36,7 @@ impl SessionStore {
         Ok(Self {
             db_path: base.join("sessions.json"),
             secret_path: base.join("secrets.json"),
+            audit_path: base.join("audit.json"),
         })
     }
 
@@ -81,5 +84,34 @@ impl SessionStore {
         let mut data = self.read_secrets()?;
         data.secrets.remove(&session_id.to_string());
         self.write_secrets(&data)
+    }
+
+    pub fn list_audits(&self, limit: Option<usize>) -> Result<Vec<AuditRecord>, StoreError> {
+        if !self.audit_path.exists() {
+            return Ok(vec![]);
+        }
+        let content = fs::read_to_string(&self.audit_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        let mut records: Vec<AuditRecord> =
+            serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))?;
+        records.sort_by(|a, b| b.timestamp_ms.cmp(&a.timestamp_ms));
+        if let Some(limit) = limit {
+            if records.len() > limit {
+                records.truncate(limit);
+            }
+        }
+        Ok(records)
+    }
+
+    pub fn append_audit(&self, record: AuditRecord, max_keep: usize) -> Result<(), StoreError> {
+        let mut records = self.list_audits(None)?;
+        records.push(record);
+        records.sort_by(|a, b| a.timestamp_ms.cmp(&b.timestamp_ms));
+        if records.len() > max_keep {
+            let to_drop = records.len() - max_keep;
+            records.drain(0..to_drop);
+        }
+        let content =
+            serde_json::to_string_pretty(&records).map_err(|e| StoreError::Serialize(e.to_string()))?;
+        fs::write(&self.audit_path, content).map_err(|e| StoreError::Io(e.to_string()))
     }
 }

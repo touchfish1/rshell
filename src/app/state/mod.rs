@@ -1,6 +1,7 @@
 mod metrics;
 mod sessions;
 mod sftp;
+mod audit;
 mod ssh_helpers;
 mod terminal_io;
 mod convert;

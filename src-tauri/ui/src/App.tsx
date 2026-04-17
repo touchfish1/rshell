@@ -6,12 +6,13 @@ import { DownloadToastStack } from "./components/download/DownloadToastStack";
 import {
   downloadSftpFile,
   getHostMetrics,
+  listAudits,
   readSftpTextFile,
   resizeTerminal,
   saveSftpTextFile,
   sendInput,
 } from "./services/bridge";
-import type { Session, SessionInput } from "./services/types";
+import type { AuditRecord, Session, SessionInput } from "./services/types";
 import { useDownloadTasks } from "./hooks/useDownloadTasks";
 import { useSessionPing } from "./hooks/useSessionPing";
 import { useSessionActions } from "./hooks/useSessionActions";
@@ -29,6 +30,9 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [audits, setAudits] = useState<AuditRecord[]>([]);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
   const { downloadTasks, createDownloadTask, finishDownloadTask } = useDownloadTasks();
   const tr = useMemo(
@@ -137,6 +141,19 @@ export default function App() {
     tr,
   });
 
+  const loadAudits = async () => {
+    setAuditLoading(true);
+    try {
+      const data = await listAudits(300);
+      setAudits(data);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setError(message);
+    } finally {
+      setAuditLoading(false);
+    }
+  };
+
 
   return (
     <I18nProvider value={{ lang, tr }}>
@@ -158,6 +175,17 @@ export default function App() {
           onGetSecret={getSecret}
           onConnect={connect}
           onOnlineUpgrade={checkOnlineUpgrade}
+          auditOpen={auditOpen}
+          auditLoading={auditLoading}
+          audits={audits}
+          onOpenAudit={() => {
+            setAuditOpen(true);
+            void loadAudits();
+          }}
+          onCloseAudit={() => setAuditOpen(false)}
+          onRefreshAudit={() => {
+            void loadAudits();
+          }}
           upgradeChecking={upgradeChecking}
           lang={lang}
           onSwitchLang={switchLang}

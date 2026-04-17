@@ -100,9 +100,86 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           files: |
             ${{ matrix.bundle_pattern }}
-            target/release/bundle/**/latest*.json
             target/release/bundle/**/*.sig
             release-assets/*.zip
+          fail_on_unmatched_files: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Collect updater manifest files
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          mkdir -p updater-manifest
+          found=0
+          for file in target/release/bundle/**/latest*.json; do
+            found=1
+            base="$(basename "$file")"
+            cp "$file" "updater-manifest/${base}"
+            if [ -f "${file}.sig" ]; then
+              cp "${file}.sig" "updater-manifest/${base}.sig"
+            fi
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No updater manifest generated on ${{ runner.os }}"
+          fi
+
+      - name: Upload updater manifest artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: updater-manifest
+          path: updater-manifest/*
+          if-no-files-found: ignore
+
+  upload-updater-manifest:
+    name: Upload latest.json to Release
+    runs-on: ubuntu-latest
+    needs: build-and-upload
+    env:
+      TAG_NAME: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - name: Download updater manifest artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: updater-manifest
+          path: updater-manifest
+
+      - name: Ensure updater manifest exists
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(updater-manifest/*latest*.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No latest.json artifact found from build jobs."
+            exit 1
+          fi
+          printf 'Found updater manifests:\n%s\n' "${files[@]}"
+
+      - name: Log latest.json path and summary
+        shell: bash
+        run: |
+          shopt -s nullglob
+          files=(updater-manifest/*latest*.json)
+          echo "==== latest.json diagnostics ===="
+          for file in "${files[@]}"; do
+            echo "Path: $file"
+            echo "Size(bytes): $(wc -c < "$file")"
+            echo "SHA256: $(sha256sum "$file" | awk '{print $1}')"
+            echo "Preview(first 400 chars):"
+            head -c 400 "$file" || true
+            echo
+            echo "----"
+          done
+
+      - name: Upload updater manifest to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          files: |
+            updater-manifest/*latest*.json
+            updater-manifest/*latest*.json.sig
           fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

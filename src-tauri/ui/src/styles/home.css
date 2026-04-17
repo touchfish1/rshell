@@ -271,3 +271,98 @@
   line-height: 1.5;
 }
 
+.audit-modal-card {
+  width: min(980px, calc(100vw - 28px));
+  max-height: calc(100vh - 28px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.audit-modal-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audit-toolbar {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.audit-toolbar select,
+.audit-toolbar input {
+  background: rgba(15, 20, 29, 0.75);
+  border: 1px solid rgba(48, 56, 74, 0.9);
+  color: #e7e8ea;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.audit-export-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.audit-list {
+  border: 1px solid rgba(48, 56, 74, 0.7);
+  border-radius: 10px;
+  background: rgba(9, 14, 22, 0.55);
+  overflow: auto;
+  min-height: 220px;
+  max-height: 62vh;
+  padding: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.audit-item {
+  border: 1px solid rgba(48, 56, 74, 0.72);
+  border-radius: 8px;
+  background: rgba(14, 19, 29, 0.72);
+  padding: 8px 10px;
+}
+
+.audit-item-head,
+.audit-item-main {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+
+.audit-item-head {
+  color: #98a7c2;
+}
+
+.audit-item-main {
+  margin-top: 4px;
+  color: #cbd7ec;
+}
+
+.audit-command {
+  margin-top: 6px;
+  border: 1px solid rgba(56, 65, 86, 0.8);
+  border-radius: 6px;
+  background: rgba(8, 12, 20, 0.85);
+  color: #d6e4ff;
+  padding: 6px 8px;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.audit-detail {
+  margin-top: 6px;
+  color: #9dacca;
+  font-size: 12px;
+}
+
+.audit-empty {
+  color: #8f9db8;
+  padding: 10px 8px;
+  font-size: 12px;
+}
+
