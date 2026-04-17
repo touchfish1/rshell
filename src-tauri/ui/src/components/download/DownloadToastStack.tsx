@@ -1,5 +1,6 @@
 import { openInFileManager } from "../../services/bridge";
 import type { DownloadTask } from "../../hooks/useDownloadTasks";
+import { useI18n } from "../../i18n-context";
 
 interface Props {
   tasks: DownloadTask[];
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export function DownloadToastStack({ tasks, onError }: Props) {
+  const { tr } = useI18n();
   if (tasks.length === 0) return null;
 
   return (
@@ -18,16 +20,16 @@ export function DownloadToastStack({ tasks, onError }: Props) {
               {task.name}
             </span>
             <span className="download-status">
-              {task.status === "downloading" ? "下载中" : task.status === "success" ? "完成" : "失败"}
+              {task.status === "downloading" ? tr("toast.downloading") : task.status === "success" ? tr("toast.done") : tr("toast.failed")}
             </span>
             {task.status === "success" && task.localPath ? (
               <button
                 className="download-open-btn"
-                title="打开文件目录"
+                title={tr("toast.openFolder")}
                 onClick={() => {
                   void openInFileManager(task.localPath!).catch((err) => {
                     const message = err instanceof Error ? err.message : String(err);
-                    onError(`打开目录失败: ${message}`);
+                    onError(tr("error.openFolderFailed", { message }));
                   });
                 }}
               >
@@ -36,7 +38,7 @@ export function DownloadToastStack({ tasks, onError }: Props) {
             ) : null}
           </div>
           <div className="download-detail" title={task.detail}>
-            {task.detail ?? "正在下载到本地..."}
+            {task.detail ?? tr("toast.downloadingHint")}
           </div>
           <div className="download-bar">
             <span style={{ width: `${task.progress}%` }} />

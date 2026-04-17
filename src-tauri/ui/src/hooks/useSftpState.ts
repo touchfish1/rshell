@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { listSftpDir } from "../services/bridge";
 import type { SftpEntry } from "../services/types";
+import type { I18nKey } from "../i18n";
 
 function normalizeSftpPath(path?: string) {
   if (!path || path === ".") return "/";
@@ -12,8 +13,9 @@ export function useSftpState(opts: {
   tabs: Array<{ id: string; sessionId: string }>;
   connectedIds: string[];
   onError: (message: string) => void;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }) {
-  const { activeTabId, tabs, connectedIds, onError } = opts;
+  const { activeTabId, tabs, connectedIds, onError, tr } = opts;
   const [sftpEntriesMap, setSftpEntriesMap] = useState<Record<string, SftpEntry[]>>({});
   const [sftpPathMap, setSftpPathMap] = useState<Record<string, string>>({});
   const [sftpLoadingId, setSftpLoadingId] = useState<string | null>(null);
@@ -28,12 +30,12 @@ export function useSftpState(opts: {
         setSftpPathMap((prev) => ({ ...prev, [tabId]: nextPath }));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        onError(`SFTP 列表读取失败: ${message}`);
+        onError(tr("error.sftpListFailed", { message }));
       } finally {
         setSftpLoadingId((prev) => (prev === tabId ? null : prev));
       }
     },
-    [onError, sftpPathMap]
+    [onError, sftpPathMap, tr]
   );
 
   useEffect(() => {

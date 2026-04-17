@@ -169,6 +169,22 @@
   color: #9ba3b3;
 }
 
+.lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.lang-switch .btn {
+  min-width: 52px;
+}
+
+.lang-switch .lang-active {
+  border-color: rgba(79, 131, 255, 0.8);
+  background: rgba(28, 47, 80, 0.7);
+  color: #eaf2ff;
+}
+
 .home-grid {
   margin: 12px 16px 16px;
   display: grid;

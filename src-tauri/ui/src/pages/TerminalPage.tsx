@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry } from "../services/types";
+import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
 import { HostsPanel } from "../components/terminal/HostsPanel";
 import { SessionTabs } from "../components/terminal/SessionTabs";
@@ -20,6 +21,7 @@ interface Props {
   connectedIds: string[];
   error: string | null;
   status: string;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
   terminals: Array<{ id: string; node: ReactNode }>;
   sftpEntries: SftpEntry[];
   sftpPath: string;
@@ -49,6 +51,7 @@ export default function TerminalPage({
   connectedIds,
   error,
   status,
+  tr,
   terminals,
   sftpEntries,
   sftpPath,
@@ -120,7 +123,7 @@ export default function TerminalPage({
   useEffect(() => {
     if (!activeSession || !monitorSupported) {
       setMonitorMetrics(null);
-      setMonitorError(activeSession && activeSession.protocol !== "ssh" ? "仅 SSH 会话支持监控指标" : null);
+      setMonitorError(activeSession && activeSession.protocol !== "ssh" ? tr("terminal.onlySshMonitor") : null);
       setMonitorCheckedAt("");
       return;
     }
@@ -147,16 +150,16 @@ export default function TerminalPage({
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [activeSession, monitorSupported, onGetHostMetrics]);
+  }, [activeSession, monitorSupported, onGetHostMetrics, tr]);
 
   return (
     <section className="workspace terminal-page">
       <header className="terminal-top">
-        <h2>{activeSession?.name ?? "Terminal Workspace"}</h2>
+        <h2>{activeSession?.name ?? tr("terminal.workspace")}</h2>
         <div className="actions">
-          <button onClick={onBackToHome}>Back</button>
+          <button onClick={onBackToHome}>{tr("terminal.back")}</button>
           <button disabled={!activeTabId} onClick={() => onDisconnect(activeTabId)}>
-            Disconnect
+            {tr("terminal.disconnect")}
           </button>
         </div>
       </header>
@@ -205,7 +208,7 @@ export default function TerminalPage({
         <div
           className="terminal-splitter"
           role="separator"
-          aria-label="调整主机列表宽度"
+          aria-label={tr("terminal.ariaResizeHosts")}
           onMouseDown={(e) => onDragStartHosts(e.clientX)}
         />
 
@@ -223,7 +226,7 @@ export default function TerminalPage({
         <div
           className="terminal-splitter"
           role="separator"
-          aria-label="调整文件列表宽度"
+          aria-label={tr("terminal.ariaResizeFiles")}
           onMouseDown={(e) => onDragStartSftp(e.clientX)}
         />
         <SftpPanel

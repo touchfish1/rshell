@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { connectSession, disconnectSession, updateSession } from "../services/bridge";
 import type { Session, SessionInput } from "../services/types";
+import type { I18nKey } from "../i18n";
 
 interface TerminalTab {
   id: string;
@@ -16,8 +17,9 @@ export function useWorkspaceTabs(opts: {
   setError: (text: string | null) => void;
   loadSftp: (tabId: string, sessionId: string, path?: string) => Promise<void> | void;
   clearSftpTab: (tabId: string) => void;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }) {
-  const { sessions, selectedId, writerMapRef, setStatus, setError, loadSftp, clearSftpTab } = opts;
+  const { sessions, selectedId, writerMapRef, setStatus, setError, loadSftp, clearSftpTab, tr } = opts;
 
   const [connectedIds, setConnectedIds] = useState<string[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | undefined>();
@@ -45,7 +47,7 @@ export function useWorkspaceTabs(opts: {
       setTabs((prev) => [...prev, { id: tabId, sessionId, title: tabTitle }]);
       setActiveTabId(tabId);
       setCurrentPage("terminal");
-      setStatus(`连接中: ${targetSession?.name ?? sessionId}`);
+      setStatus(tr("status.connecting", { name: targetSession?.name ?? sessionId }));
       setError(null);
 
       const rollbackTab = () => {
@@ -56,7 +58,7 @@ export function useWorkspaceTabs(opts: {
       };
 
       if (connectedIds.includes(sessionId)) {
-        setStatus(`已连接: ${targetSession?.name ?? sessionId}`);
+        setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
         void loadSftp(tabId, sessionId, "/");
         return;
       }
@@ -64,14 +66,14 @@ export function useWorkspaceTabs(opts: {
       try {
         await connectSession(sessionId);
         setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
-        setStatus(`已连接: ${targetSession?.name ?? sessionId}`);
+        setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
         void loadSftp(tabId, sessionId, "/");
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (message.includes("missing SSH password")) {
-          const input = window.prompt("请输入 SSH 密码（将保存到本地配置文件）");
+          const input = window.prompt(tr("prompt.inputSshPassword"));
           if (!input) {
-            setError("连接失败: 缺少 SSH 密码");
+            setError(tr("error.connectMissingPassword"));
             rollbackTab();
             return;
           }
@@ -90,22 +92,22 @@ export function useWorkspaceTabs(opts: {
             }
             await connectSession(sessionId, input);
             setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
-            setStatus(`已连接: ${targetSession?.name ?? sessionId}`);
+            setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
             setError(null);
             void loadSftp(tabId, sessionId, "/");
             return;
           } catch (retryErr) {
             const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-            setError(`连接失败: ${retryMsg}`);
+            setError(tr("error.connectFailed", { message: retryMsg }));
             rollbackTab();
             return;
           }
         }
-        setError(`连接失败: ${message}`);
+        setError(tr("error.connectFailed", { message }));
         rollbackTab();
       }
     },
-    [clearSftpTab, connectedIds, loadSftp, selectedId, sessions, setError, setStatus, writerMapRef]
+    [clearSftpTab, connectedIds, loadSftp, selectedId, sessions, setError, setStatus, tr, writerMapRef]
   );
 
   const disconnect = useCallback(
@@ -140,14 +142,14 @@ export function useWorkspaceTabs(opts: {
         if (nextTabs.length === 0) {
           setCurrentPage("home");
         }
-        setStatus("已断开");
+        setStatus(tr("status.disconnected"));
         setError(null);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        setError(`断开失败: ${message}`);
+        setError(tr("error.disconnectFailed", { message }));
       }
     },
-    [activeTabId, clearSftpTab, connectedIds, setError, setStatus, writerMapRef]
+    [activeTabId, clearSftpTab, connectedIds, setError, setStatus, tr, writerMapRef]
   );
 
   const duplicateTab = useCallback(

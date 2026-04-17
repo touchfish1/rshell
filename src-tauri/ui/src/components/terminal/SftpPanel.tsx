@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { HostMetrics, SftpEntry } from "../../services/types";
 import { formatBytes, formatMtime, formatSize } from "./formatters";
+import { useI18n } from "../../i18n-context";
 
 interface Props {
   activeHostLabel: string;
@@ -34,6 +35,7 @@ export function SftpPanel({
   onSftpOpenDir,
   onSftpDownload,
 }: Props) {
+  const { tr } = useI18n();
   const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
 
   useEffect(() => {
@@ -49,29 +51,29 @@ export function SftpPanel({
     if (entry.name && entry.name.trim()) return entry.name;
     const normalized = entry.path.replace(/\\/g, "/").replace(/\/+$/, "");
     const fallback = normalized.split("/").pop();
-    return fallback && fallback.trim() ? fallback : "(unnamed)";
+    return fallback && fallback.trim() ? fallback : tr("sftp.unnamed");
   };
 
   return (
     <aside className="terminal-sftp">
       <div className="sftp-monitor-card">
         <div className="sftp-monitor-head">
-          <span>主机监控</span>
+          <span>{tr("sftp.hostMonitor")}</span>
           <button onClick={onRefreshMetrics} disabled={!monitorSupported || monitorChecking}>
-            {monitorChecking ? "刷新中..." : "刷新"}
+            {monitorChecking ? tr("sftp.refreshing") : tr("sftp.refresh")}
           </button>
         </div>
-        <div className="sftp-monitor-host">{activeHostLabel || "未连接会话"}</div>
+        <div className="sftp-monitor-host">{activeHostLabel || tr("sftp.notConnected")}</div>
         {monitorError ? <div className="sftp-monitor-error">{monitorError}</div> : null}
         <div className="sftp-monitor-row">
-          <span>CPU</span>
+          <span>{tr("sftp.cpu")}</span>
           <span>{monitorMetrics ? `${monitorMetrics.cpu_percent.toFixed(1)}%` : "-"}</span>
         </div>
         <div className="sftp-monitor-bar">
           <i style={{ width: `${monitorMetrics ? monitorMetrics.cpu_percent.toFixed(1) : 0}%` }} />
         </div>
         <div className="sftp-monitor-row">
-          <span>内存</span>
+          <span>{tr("sftp.memory")}</span>
           <span>
             {monitorMetrics
               ? `${formatBytes(monitorMetrics.memory_used_bytes)} / ${formatBytes(monitorMetrics.memory_total_bytes)}`
@@ -82,7 +84,7 @@ export function SftpPanel({
           <i style={{ width: `${monitorMetrics ? monitorMetrics.memory_percent.toFixed(1) : 0}%` }} />
         </div>
         <div className="sftp-monitor-row">
-          <span>磁盘</span>
+          <span>{tr("sftp.disk")}</span>
           <span>
             {monitorMetrics
               ? `${formatBytes(monitorMetrics.disk_used_bytes)} / ${formatBytes(monitorMetrics.disk_total_bytes)}`
@@ -92,40 +94,40 @@ export function SftpPanel({
         <div className="sftp-monitor-bar">
           <i style={{ width: `${monitorMetrics ? monitorMetrics.disk_percent.toFixed(1) : 0}%` }} />
         </div>
-        <div className="sftp-monitor-time">最近更新：{monitorCheckedAt || "-"}</div>
+        <div className="sftp-monitor-time">{tr("sftp.lastUpdated", { time: monitorCheckedAt || "-" })}</div>
       </div>
 
       <div className="sftp-file-list">
-        <div className="panel-title">SFTP 文件列表</div>
+        <div className="panel-title">{tr("sftp.fileList")}</div>
         <div className="sftp-toolbar">
           <button onClick={onSftpUp} disabled={!canGoUp}>
-            上级
+            {tr("sftp.up")}
           </button>
           <span className="sftp-path" title={normalizedPath}>
             {normalizedPath}
           </span>
         </div>
         <div className="sftp-head">
-          <span>名称</span>
-          <span>大小</span>
-          <span>修改时间</span>
+          <span>{tr("sftp.fileName")}</span>
+          <span>{tr("sftp.fileSize")}</span>
+          <span>{tr("sftp.modifiedAt")}</span>
         </div>
         <ul>
           {sftpLoading ? (
-            <li className="sftp-empty">加载中...</li>
+            <li className="sftp-empty">{tr("sftp.loading")}</li>
           ) : sftpEntries.length === 0 ? (
-            <li className="sftp-empty">目录为空或无权限</li>
+            <li className="sftp-empty">{tr("sftp.emptyOrNoPermission")}</li>
           ) : (
             <>
               {canGoUp ? (
                 <li className="sftp-row">
-                  <button className="sftp-dir sftp-parent" onClick={onSftpUp} title="返回上一级目录">
+                  <button className="sftp-dir sftp-parent" onClick={onSftpUp} title={tr("sftp.backToParent")}>
                     <span className="sftp-col-name">
                       <span className="sftp-kind-icon folder">📁</span>
                       <span className="sftp-name-text">..</span>
                     </span>
                     <span className="sftp-col-size">-</span>
-                    <span className="sftp-col-time">上一级</span>
+                    <span className="sftp-col-time">{tr("sftp.parent")}</span>
                   </button>
                 </li>
               ) : null}
@@ -166,7 +168,7 @@ export function SftpPanel({
               setMenu(null);
             }}
           >
-            下载文件
+            {tr("sftp.downloadFile")}
           </button>
         </div>
       ) : null}

@@ -1,5 +1,6 @@
 import SessionList from "../components/SessionList";
 import type { Session, SessionInput } from "../services/types";
+import type { I18nKey, Lang } from "../i18n";
 
 interface Props {
   sessions: Session[];
@@ -18,6 +19,9 @@ interface Props {
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   upgradeChecking: boolean;
+  lang: Lang;
+  onSwitchLang: (lang: Lang) => void;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
 export default function HomePage({
@@ -37,6 +41,9 @@ export default function HomePage({
   onConnect,
   onOnlineUpgrade,
   upgradeChecking,
+  lang,
+  onSwitchLang,
+  tr,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
@@ -47,15 +54,35 @@ export default function HomePage({
         <div className="topbar-title">
           <div className="topbar-title-text">
             <div className="topbar-title-line">rshell</div>
-            <div className="topbar-subtitle">SSH / Telnet 会话管理</div>
+            <div className="topbar-subtitle">{tr("top.subtitle")}</div>
           </div>
         </div>
         <div className="actions">
+          <div className="lang-switch" role="group" aria-label={tr("top.ariaLanguageSwitch")}>
+            <button
+              className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
+              onClick={() => onSwitchLang("zh-CN")}
+              title={tr("lang.switchToZh")}
+            >
+              {tr("lang.zh")}
+            </button>
+            <button
+              className={`btn btn-ghost ${lang === "en-US" ? "lang-active" : ""}`}
+              onClick={() => onSwitchLang("en-US")}
+              title={tr("lang.switchToEn")}
+            >
+              {tr("lang.en")}
+            </button>
+          </div>
           <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
-            {upgradeChecking ? "检查升级中..." : "在线升级"}
+            {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
           </button>
-          <span className={connected ? "pill pill-ok" : "pill"}>{connected ? "在线" : "离线"}</span>
-          <span className="pill pill-muted">{selected ? `当前：${selected.name}` : "未选择主机"}</span>
+          <span className={connected ? "pill pill-ok" : "pill"}>
+            {connected ? tr("top.online") : tr("top.offline")}
+          </span>
+          <span className="pill pill-muted">
+            {selected ? tr("top.current", { name: selected.name }) : tr("top.noHostSelected")}
+          </span>
         </div>
       </header>
 
@@ -65,8 +92,8 @@ export default function HomePage({
         <div className="home-panel">
           <div className="home-panel-header">
             <div>
-              <div className="card-title">主机列表</div>
-              <div className="card-subtitle">点击行内“连接”或主机名即可新建会话标签</div>
+              <div className="card-title">{tr("home.hostList")}</div>
+              <div className="card-subtitle">{tr("home.hostListHint")}</div>
             </div>
             <div className="home-header-status">{status}</div>
           </div>
@@ -86,9 +113,9 @@ export default function HomePage({
                 onConnect={(id) => void onConnect(id)}
               />
               {!hasSessions ? (
-                <div className="empty-state" role="note" aria-label="暂无会话">
-                  <div className="empty-title">还没有会话</div>
-                  <div className="empty-subtitle">添加一个会话后即可连接。</div>
+                <div className="empty-state" role="note" aria-label={tr("home.ariaNoSession")}>
+                  <div className="empty-title">{tr("home.emptyTitle")}</div>
+                  <div className="empty-subtitle">{tr("home.emptySubtitle")}</div>
                 </div>
               ) : null}
             </div>

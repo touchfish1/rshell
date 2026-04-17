@@ -1,4 +1,5 @@
 import type { Protocol, Session, SessionInput } from "../../services/types";
+import { useI18n } from "../../i18n-context";
 
 interface Props {
   session: Session | null;
@@ -35,19 +36,20 @@ export function HostEditModal({
   onSubmit,
   onMarkSecretDirty,
 }: Props) {
+  const { tr } = useI18n();
   if (!session) return null;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h4>编辑主机</h4>
-          <button className="modal-close" onClick={onClose} title="关闭">
+          <h4>{tr("modal.editHost")}</h4>
+          <button className="modal-close" onClick={onClose} title={tr("modal.close")}>
             ×
           </button>
         </div>
         <div className="session-form">
-          <input placeholder="Name" value={form.name} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
+          <input placeholder={tr("form.name")} value={form.name} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
           <select
             value={form.protocol}
             onChange={(e) => {
@@ -58,32 +60,32 @@ export function HostEditModal({
             <option value="ssh">SSH</option>
             <option value="telnet">Telnet</option>
           </select>
-          <input placeholder="Host" value={form.host} onChange={(e) => onChangeForm({ ...form, host: e.target.value })} />
+          <input placeholder={tr("form.host")} value={form.host} onChange={(e) => onChangeForm({ ...form, host: e.target.value })} />
           <input
-            placeholder="Port"
+            placeholder={tr("form.port")}
             type="number"
             value={form.port || protocolPort}
             onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })}
           />
           <input
-            placeholder="Username"
+            placeholder={tr("form.username")}
             value={form.username}
             onChange={(e) => onChangeForm({ ...form, username: e.target.value })}
           />
           <input
-            placeholder="Encoding (utf-8/gbk)"
+            placeholder={tr("form.encoding")}
             value={form.encoding ?? "utf-8"}
             onChange={(e) => onChangeForm({ ...form, encoding: e.target.value })}
           />
           <input
-            placeholder="Keepalive Seconds"
+            placeholder={tr("form.keepaliveSeconds")}
             type="number"
             value={form.keepalive_secs ?? 30}
             onChange={(e) => onChangeForm({ ...form, keepalive_secs: Number(e.target.value) })}
           />
           <div className="password-input-wrap">
             <input
-              placeholder="SSH Password"
+              placeholder={tr("form.sshPassword")}
               type={secretVisible ? "text" : "password"}
               value={secretVisible ? secret : "*********"}
               readOnly={!secretVisible}
@@ -96,7 +98,7 @@ export function HostEditModal({
               type="button"
               className="password-toggle-btn"
               onClick={onChangeSecretVisible}
-              title={secretVisible ? "隐藏密码" : "显示密码"}
+              title={secretVisible ? tr("form.toggleHidePassword") : tr("form.toggleShowPassword")}
               disabled={secretLoading}
             >
               {secretLoading ? "…" : secretVisible ? "🙈" : "👁"}
@@ -105,17 +107,17 @@ export function HostEditModal({
           {testResult ? <div className="placeholder-row">{testResult}</div> : null}
           <div className="modal-actions">
             <button className="btn btn-ghost" onClick={onClose}>
-              取消
+              {tr("modal.cancel")}
             </button>
             <button
               className="btn btn-ghost"
               onClick={onTest}
               disabled={testing || !form.host.trim() || !form.port}
             >
-              {testing ? "测试中..." : "测试连接"}
+              {testing ? tr("modal.testing") : tr("modal.testConnection")}
             </button>
             <button className="btn btn-primary" onClick={onSubmit} disabled={!form.host.trim()}>
-              保存
+              {tr("modal.save")}
             </button>
           </div>
         </div>

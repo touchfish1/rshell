@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { onDebugLog, onTerminalOutput, pullOutput } from "../services/bridge";
 import type { Session } from "../services/types";
+import type { I18nKey } from "../i18n";
 
 const PULL_OUTPUT_INTERVAL_MS = 80;
 
@@ -29,8 +30,9 @@ export function useTerminalOutput(opts: {
   getTabsBySessionId: (sessionId: string) => Array<{ id: string }>;
   writeToTab: (tabId: string, text: string) => void;
   onError: (message: string) => void;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }) {
-  const { sessions, connectedIds, getTabsBySessionId, writeToTab, onError } = opts;
+  const { sessions, connectedIds, getTabsBySessionId, writeToTab, onError, tr } = opts;
 
   useEffect(() => {
     const unlistenPromise = onTerminalOutput((payload) => {
@@ -66,12 +68,12 @@ export function useTerminalOutput(opts: {
           .catch((err) => {
             const message = err instanceof Error ? err.message : String(err);
             if (message.includes("inactive session")) return;
-            onError(`拉取输出失败: ${message}`);
+            onError(tr("error.pullOutputFailed", { message }));
           });
       });
       inflight = false;
     }, PULL_OUTPUT_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [connectedIds, getTabsBySessionId, onError, sessions, writeToTab]);
+  }, [connectedIds, getTabsBySessionId, onError, sessions, tr, writeToTab]);
 }
 

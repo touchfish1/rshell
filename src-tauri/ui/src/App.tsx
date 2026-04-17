@@ -4,42 +4,42 @@ import TerminalPage from "./pages/TerminalPage";
 import TerminalPane from "./components/TerminalPane";
 import { DownloadToastStack } from "./components/download/DownloadToastStack";
 import {
-  connectSession,
-  createSession,
-  deleteSession,
   downloadSftpFile,
-  disconnectSession,
-  listSessions,
-  getSessionSecret,
   getHostMetrics,
   resizeTerminal,
   sendInput,
-  testHostReachability,
-  updateSession,
 } from "./services/bridge";
 import type { Session, SessionInput } from "./services/types";
 import { useDownloadTasks } from "./hooks/useDownloadTasks";
 import { useSessionPing } from "./hooks/useSessionPing";
+import { useSessionActions } from "./hooks/useSessionActions";
 import { useSftpState } from "./hooks/useSftpState";
 import { useTerminalOutput } from "./hooks/useTerminalOutput";
 import { useUpdater } from "./hooks/useUpdater";
 import { useWorkspaceTabs } from "./hooks/useWorkspaceTabs";
-
-interface TerminalTab {
-  id: string;
-  sessionId: string;
-  title: string;
-}
+import { detectInitialLang, setLangStorage, t, type I18nKey, type Lang } from "./i18n";
+import { I18nProvider } from "./i18n-context";
 
 export default function App() {
+  const [lang, setLang] = useState<Lang>(() => detectInitialLang());
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
   const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
-  const [status, setStatus] = useState("Idle");
+  const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
   const { downloadTasks, createDownloadTask, finishDownloadTask } = useDownloadTasks();
-  const { upgradeChecking, checkOnlineUpgrade } = useUpdater({ setStatus, setError });
+  const tr = useMemo(
+    () => (key: I18nKey, vars?: Record<string, string | number>) => t(lang, key, vars),
+    [lang]
+  );
+
+  const switchLang = (next: Lang) => {
+    setLang(next);
+    setLangStorage(next);
+  };
+
+  const { upgradeChecking, checkOnlineUpgrade } = useUpdater({ setStatus, setError, tr });
   const [activeTabId, setActiveTabId] = useState<string | undefined>();
   const [tabsForSftp, setTabsForSftp] = useState<Array<{ id: string; sessionId: string }>>([]);
   const [connectedIdsForSftp, setConnectedIdsForSftp] = useState<string[]>([]);
@@ -49,6 +49,7 @@ export default function App() {
     tabs: tabsForSftp,
     connectedIds: connectedIdsForSftp,
     onError: (message) => setError(message),
+    tr,
   });
 
   const {
@@ -77,6 +78,7 @@ export default function App() {
     setError,
     loadSftp,
     clearSftpTab: clearTab,
+    tr,
   });
 
   useEffect(() => {
@@ -115,91 +117,28 @@ export default function App() {
     getTabsBySessionId,
     writeToTab,
     onError: (message) => setError(message),
+    tr,
   });
 
-  useEffect(() => {
-    void listSessions()
-      .then((data) => {
-        setSessions(data);
-        if (data.length > 0) {
-          setSelectedId(data[0].id);
-        }
-      })
-      .catch((err) => {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(`加载会话失败: ${message}`);
-      });
-    return;
-  }, []);
-
-  const create = async (input: SessionInput, secret?: string) => {
-    try {
-      const session = await createSession(input, secret);
-      const next = [...sessions, session];
-      setSessions(next);
-      setSelectedId(session.id);
-      setStatus(`已创建会话: ${session.name}`);
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(`创建会话失败: ${message}`);
-    }
-  };
-
-  const update = async (id: string, input: SessionInput, secret?: string) => {
-    try {
-      const updated = await updateSession(id, input, secret);
-      setSessions((prev) => prev.map((session) => (session.id === id ? updated : session)));
-      setStatus(`已更新主机: ${updated.name}`);
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(`更新主机失败: ${message}`);
-    }
-  };
-
-  const testConnect = async (input: SessionInput) => {
-    return testHostReachability(input.host, input.port, 2000);
-  };
-
-  const getSecret = async (id: string) => {
-    return getSessionSecret(id);
-  };
-
-  const remove = async (id: string) => {
-    try {
-      if (connectedIds.includes(id)) {
-        await disconnectSession(id);
-        setConnectedIds((prev) => prev.filter((sid) => sid !== id));
-        tabs
-          .filter((tab) => tab.sessionId === id)
-          .forEach((tab) => {
-            writerMapRef.current.delete(tab.id);
-            clearTab(tab.id);
-          });
-        Array.from(writerMapRef.current.keys()).forEach((key) => {
-          if (key.startsWith(`${id}-`)) {
-            writerMapRef.current.delete(key);
-          }
-        });
-      }
-      await deleteSession(id);
-      const next = sessions.filter((s) => s.id !== id);
-      setSessions(next);
-      if (selectedId === id) {
-        setSelectedId(next[0]?.id);
-      }
-      setStatus("已删除会话");
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(`删除失败: ${message}`);
-    }
-  };
+  const { create, update, remove, testConnect, getSecret } = useSessionActions({
+    sessions,
+    setSessions,
+    selectedId,
+    setSelectedId,
+    connectedIds,
+    setConnectedIds,
+    tabs,
+    clearTab,
+    writerMapRef,
+    setStatus,
+    setError,
+    tr,
+  });
 
 
   return (
-    <main className="app-shell">
+    <I18nProvider value={{ lang, tr }}>
+      <main className="app-shell">
       {currentPage === "home" ? (
         <HomePage
           sessions={sessions}
@@ -218,6 +157,9 @@ export default function App() {
           onConnect={connect}
           onOnlineUpgrade={checkOnlineUpgrade}
           upgradeChecking={upgradeChecking}
+          lang={lang}
+          onSwitchLang={switchLang}
+          tr={tr}
         />
       ) : (
         <TerminalPage
@@ -228,6 +170,7 @@ export default function App() {
           connectedIds={connectedIds}
           error={error}
           status={status}
+          tr={tr}
           sftpEntries={sftpProps.entries}
           sftpPath={sftpProps.path}
           sftpLoading={sftpProps.loading}
@@ -248,13 +191,13 @@ export default function App() {
             const taskId = createDownloadTask(remotePath);
             void downloadSftpFile(tab.sessionId, remotePath)
               .then((savedPath) => {
-                setStatus(`已下载到: ${savedPath}`);
+                setStatus(tr("status.downloadedTo", { path: savedPath }));
                 setError(null);
                 finishDownloadTask(taskId, true, savedPath, savedPath);
               })
               .catch((err) => {
                 const message = err instanceof Error ? err.message : String(err);
-                setError(`下载失败: ${message}`);
+                setError(tr("error.downloadFailed", { message }));
                 finishDownloadTask(taskId, false, message);
               });
           }}
@@ -275,7 +218,7 @@ export default function App() {
                   if (connectedIds.includes(tab.sessionId) && activeTabId === tab.id) {
                     void sendInput(tab.sessionId, text).catch((err) => {
                       const message = err instanceof Error ? err.message : String(err);
-                      setError(`发送失败: ${message}`);
+                      setError(tr("error.sendFailed", { message }));
                     });
                   }
                 }}
@@ -283,7 +226,7 @@ export default function App() {
                   if (connectedIds.includes(tab.sessionId) && activeTabId === tab.id) {
                     void resizeTerminal(tab.sessionId, cols, rows).catch((err) => {
                       const message = err instanceof Error ? err.message : String(err);
-                      setError(`调整终端尺寸失败: ${message}`);
+                      setError(tr("error.resizeTerminalFailed", { message }));
                     });
                   }
                 }}
@@ -293,6 +236,7 @@ export default function App() {
         />
       )}
       <DownloadToastStack tasks={downloadTasks} onError={(message) => setError(message)} />
-    </main>
+      </main>
+    </I18nProvider>
   );
 }

@@ -1,4 +1,5 @@
 import type { Session } from "../../services/types";
+import { useI18n } from "../../i18n-context";
 
 interface Props {
   sessions: Session[];
@@ -23,6 +24,7 @@ export function HostsPanel({
   onEditHost,
   onRefreshMetrics,
 }: Props) {
+  const { tr } = useI18n();
   return (
     <>
       {menu ? (
@@ -33,7 +35,7 @@ export function HostsPanel({
               onSetMenu(null);
             }}
           >
-            修改主机信息
+            {tr("terminal.modifyHostInfo")}
           </button>
           <button
             onClick={() => {
@@ -41,13 +43,13 @@ export function HostsPanel({
               onSetMenu(null);
             }}
           >
-            刷新主机监控
+            {tr("terminal.refreshHostMonitor")}
           </button>
         </div>
       ) : null}
 
       <aside className="terminal-hosts">
-        <div className="panel-title">主机列表</div>
+        <div className="panel-title">{tr("terminal.hostList")}</div>
         <ul>
           {sessions.map((session) => {
             const hasActiveTab = activeTabSessionId === session.id;
@@ -63,7 +65,7 @@ export function HostsPanel({
                     e.stopPropagation();
                     onSetMenu({ x: e.clientX, y: e.clientY, session });
                   }}
-                  title="单击选中，双击打开新的会话标签"
+                  title={tr("terminal.hostSingleDoubleClickHint")}
                 >
                   {session.name}
                 </button>

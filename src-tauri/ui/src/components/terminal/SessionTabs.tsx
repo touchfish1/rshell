@@ -1,4 +1,5 @@
 import type { Session } from "../../services/types";
+import { useI18n } from "../../i18n-context";
 
 interface TerminalTab {
   id: string;
@@ -33,6 +34,7 @@ export function SessionTabs({
   onCloseTabsToRight,
   onCloseOtherTabs,
 }: Props) {
+  const { tr } = useI18n();
   const menuTabIndex = menu ? tabs.findIndex((tab) => tab.id === menu.tabId) : -1;
   const hasLeftTabs = menuTabIndex > 0;
   const hasRightTabs = menuTabIndex >= 0 && menuTabIndex < tabs.length - 1;
@@ -42,7 +44,7 @@ export function SessionTabs({
     <>
       <div className="session-tabs">
         {tabs.length === 0 ? (
-          <div className="session-tab-empty">暂无打开的会话，点击左侧主机连接</div>
+          <div className="session-tab-empty">{tr("terminal.noOpenedSession")}</div>
         ) : (
           tabs.map((tab) => {
             const active = tab.id === activeTabId;
@@ -61,7 +63,7 @@ export function SessionTabs({
                   {tab.title}
                   <span className={`session-dot ${connected ? "on" : "off"}`} />
                 </button>
-                <button className="session-tab-close" onClick={() => onCloseTab(tab.id)} title="关闭标签">
+                <button className="session-tab-close" onClick={() => onCloseTab(tab.id)} title={tr("terminal.closeTab")}>
                   ×
                 </button>
               </div>
@@ -78,7 +80,7 @@ export function SessionTabs({
               onSetMenu(null);
             }}
           >
-            复制 session
+            {tr("terminal.duplicateSession")}
           </button>
           <button
             disabled={!hasRightTabs}
@@ -88,7 +90,7 @@ export function SessionTabs({
               onSetMenu(null);
             }}
           >
-            关闭右边
+            {tr("terminal.closeRight")}
           </button>
           <button
             disabled={!hasLeftTabs}
@@ -98,7 +100,7 @@ export function SessionTabs({
               onSetMenu(null);
             }}
           >
-            关闭左边
+            {tr("terminal.closeLeft")}
           </button>
           <button
             disabled={!hasOtherTabs}
@@ -108,7 +110,7 @@ export function SessionTabs({
               onSetMenu(null);
             }}
           >
-            关闭其他
+            {tr("terminal.closeOthers")}
           </button>
         </div>
       ) : null}
