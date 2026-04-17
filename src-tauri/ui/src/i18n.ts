@@ -26,6 +26,7 @@ export type I18nKey =
   | "home.auditFilterConnect"
   | "home.auditFilterCommand"
   | "home.auditFilterDisconnect"
+  | "home.auditFilterControl"
   | "home.auditSearchPlaceholder"
   | "home.auditExportCsv"
   | "home.auditExportJson"
@@ -192,6 +193,7 @@ const zhCN: Dict = {
   "home.auditFilterConnect": "连接",
   "home.auditFilterCommand": "命令",
   "home.auditFilterDisconnect": "断开",
+  "home.auditFilterControl": "控制键",
   "home.auditSearchPlaceholder": "搜索主机、会话或命令",
   "home.auditExportCsv": "导出 CSV",
   "home.auditExportJson": "导出 JSON",
@@ -357,6 +359,7 @@ const enUS: Dict = {
   "home.auditFilterConnect": "Connect",
   "home.auditFilterCommand": "Command",
   "home.auditFilterDisconnect": "Disconnect",
+  "home.auditFilterControl": "Control Key",
   "home.auditSearchPlaceholder": "Search by host, session, or command",
   "home.auditExportCsv": "Export CSV",
   "home.auditExportJson": "Export JSON",

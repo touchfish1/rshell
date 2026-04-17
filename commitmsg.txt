@@ -1,0 +1,3 @@
+fix: enforce v1 updater release validation
+
+Switch updater artifacts to v1Compatible and restore strict latest.json plus signature checks in release workflow, while keeping Windows artifact diagnostics for traceability.

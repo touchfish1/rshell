@@ -17,6 +17,13 @@ use crate::domain::session::Session;
 use crate::domain::terminal::TerminalClient;
 use crate::infra::store::SessionStore;
 
+#[derive(Default)]
+pub(crate) struct AuditInputState {
+    pub buffer: String,
+    pub esc_pending: bool,
+    pub csi_pending: bool,
+}
+
 pub struct ActiveTerminal {
     pub client: Mutex<Box<dyn TerminalClient>>,
 }
@@ -45,6 +52,7 @@ pub struct AppState {
     store: SessionStore,
     sessions: Arc<Mutex<Vec<Session>>>,
     active: Arc<Mutex<HashMap<Uuid, Arc<ActiveTerminal>>>>,
+    audit_input_buffers: Arc<Mutex<HashMap<Uuid, AuditInputState>>>,
 }
 
 impl Default for AppState {
@@ -55,6 +63,7 @@ impl Default for AppState {
             store,
             sessions: Arc::new(Mutex::new(sessions)),
             active: Arc::new(Mutex::new(HashMap::new())),
+            audit_input_buffers: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 }

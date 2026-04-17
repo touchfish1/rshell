@@ -11,11 +11,12 @@ interface Props {
   onRefresh: () => void;
 }
 
-type FilterType = "all" | "connect" | "command" | "disconnect";
+type FilterType = "all" | "connect" | "command" | "disconnect" | "control";
 
 function mapEventType(eventType: string) {
   if (eventType.includes("disconnect")) return "disconnect";
   if (eventType.includes("connect")) return "connect";
+  if (eventType === "control") return "control";
   if (eventType === "command") return "command";
   return "all";
 }
@@ -125,6 +126,7 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
             <option value="connect">{tr("home.auditFilterConnect")}</option>
             <option value="command">{tr("home.auditFilterCommand")}</option>
             <option value="disconnect">{tr("home.auditFilterDisconnect")}</option>
+            <option value="control">{tr("home.auditFilterControl" as I18nKey)}</option>
           </select>
           <input
             value={keyword}

@@ -112,7 +112,42 @@ jobs:
             $sigs = Get-ChildItem -Recurse "src-tauri/target/release/bundle" -File -Filter "*.sig" -ErrorAction SilentlyContinue
             Write-Host ""
             Write-Host ("Found .sig files: " + $sigs.Count)
+            Write-Host ""
+            Write-Host "=== Diagnose: nsis/msi/sig details ==="
+            $nsisExe = Get-ChildItem -Recurse "src-tauri/target/release/bundle/nsis" -File -Filter "*-setup.exe" -ErrorAction SilentlyContinue
+            $nsisSig = Get-ChildItem -Recurse "src-tauri/target/release/bundle/nsis" -File -Filter "*-setup.exe.sig" -ErrorAction SilentlyContinue
+            $msi = Get-ChildItem -Recurse "src-tauri/target/release/bundle/msi" -File -Filter "*.msi" -ErrorAction SilentlyContinue
+            $msiSig = Get-ChildItem -Recurse "src-tauri/target/release/bundle/msi" -File -Filter "*.msi.sig" -ErrorAction SilentlyContinue
+            Write-Host ("NSIS installers: " + $nsisExe.Count)
+            $nsisExe | ForEach-Object { Write-Host ("  NSIS EXE: " + $_.FullName) }
+            Write-Host ("NSIS signatures: " + $nsisSig.Count)
+            $nsisSig | ForEach-Object { Write-Host ("  NSIS SIG: " + $_.FullName) }
+            Write-Host ("MSI installers: " + $msi.Count)
+            $msi | ForEach-Object { Write-Host ("  MSI: " + $_.FullName) }
+            Write-Host ("MSI signatures: " + $msiSig.Count)
+            $msiSig | ForEach-Object { Write-Host ("  MSI SIG: " + $_.FullName) }
           }
+
+      - name: Validate Windows updater artifacts (strict latest.json + sig)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $latest = Get-ChildItem -Recurse "src-tauri/target/release/bundle" -File -Filter "latest*.json" -ErrorAction SilentlyContinue
+          if ($latest.Count -eq 0) {
+            Write-Error "Strict mode failed: no updater manifest (latest*.json) generated on Windows."
+            exit 1
+          }
+          $missingSig = @()
+          foreach ($file in $latest) {
+            if (-not (Test-Path ($file.FullName + ".sig"))) {
+              $missingSig += $file.FullName
+            }
+          }
+          if ($missingSig.Count -gt 0) {
+            Write-Error ("Strict mode failed: missing .sig for updater manifest(s): " + ($missingSig -join ", "))
+            exit 1
+          }
+          Write-Host "Strict mode passed: latest*.json + .sig found."
 
       - name: Create Windows zip
         if: runner.os == 'Windows'
@@ -156,10 +191,6 @@ jobs:
           done
           if [ "$found" -eq 0 ]; then
             echo "::error::No updater manifest (latest*.json) was generated on Windows."
-            echo "Debug: listing bundle directory (src-tauri/target/release/bundle) if present"
-            ls -la src-tauri/target/release/bundle || true
-            echo "Debug: find candidate files under src-tauri/target/release/bundle"
-            find src-tauri/target/release/bundle -maxdepth 6 -type f -name "latest*.json" -o -name "latest*.json.sig" || true
             exit 1
           fi
           echo "Found updater manifest files:"

@@ -7,21 +7,13 @@ use crate::app::AppState;
 
 use super::common::emit_debug;
 
-fn extract_commands(input: &str) -> Vec<String> {
-    input
-        .replace('\r', "\n")
-        .split('\n')
-        .map(str::trim)
-        .filter(|line| !line.is_empty())
-        .map(|line| {
-            let mut cmd = sanitize_command(line);
-            if cmd.len() > 240 {
-                cmd.truncate(240);
-                cmd.push_str("...");
-            }
-            cmd
-        })
-        .collect()
+fn normalize_command_for_audit(input: &str) -> String {
+    let mut cmd = sanitize_command(input.trim());
+    if cmd.len() > 240 {
+        cmd.truncate(240);
+        cmd.push_str("...");
+    }
+    cmd
 }
 
 fn is_sensitive_key(key: &str) -> bool {
@@ -110,6 +102,7 @@ pub async fn connect_session(
             .await;
         return Err(err);
     }
+    state.clear_audit_input_buffer(id).await;
     let _ = state
         .record_session_audit(id, "connect", None, "session connected".to_string())
         .await;
@@ -156,6 +149,7 @@ pub async fn disconnect_session(app: AppHandle, state: State<'_, AppState>, id: 
     };
     let event = if result.is_ok() { "disconnect" } else { "disconnect_failed" };
     let _ = state.record_session_audit(id, event, None, detail).await;
+    state.clear_audit_input_buffer(id).await;
     result
 }
 
@@ -167,12 +161,19 @@ pub async fn send_input(app: AppHandle, state: State<'_, AppState>, id: String, 
         "send_input",
         &format!("sending {} bytes", input.as_bytes().len()),
     );
-    let commands = extract_commands(&input);
+    let audit_input = input.clone();
     let result = state.send_input(id, input).await;
     if result.is_ok() {
-        for command in commands {
+        let events = state.collect_input_events_for_audit(id, &audit_input).await;
+        for raw in events.commands {
+            let command = normalize_command_for_audit(&raw);
             let _ = state
                 .record_session_audit(id, "command", Some(command), "command input".to_string())
+                .await;
+        }
+        for control in events.control_events {
+            let _ = state
+                .record_session_audit(id, "control", None, format!("control key: {control}"))
                 .await;
         }
     }

@@ -20,7 +20,7 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": true,
+    "createUpdaterArtifacts": "v1Compatible",
     "icon": [
       "icons/icon.png",
       "icons/icon.ico"
