@@ -1,0 +1,24 @@
+[package]
+name = "rshell"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+async-trait = "0.1"
+base64 = "0.22"
+dirs = "6"
+keyring = "3"
+russh = "0.49"
+russh-keys = "0.49"
+ssh2 = "0.9"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[package.metadata.tauri]

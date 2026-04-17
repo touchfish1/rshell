@@ -1,0 +1,148 @@
+use base64::Engine;
+use tauri::{AppHandle, Emitter, State};
+use uuid::Uuid;
+
+use crate::app::AppState;
+use crate::domain::session::{Session, SessionInput};
+
+fn emit_debug(app: &AppHandle, session_id: Option<Uuid>, stage: &str, message: &str) {
+    let sid = session_id
+        .map(|id| id.to_string())
+        .unwrap_or_else(|| "-".to_string());
+    let text = format!("[backend][{stage}][{sid}] {message}");
+    eprintln!("{text}");
+    let _ = app.emit(
+        "debug-log",
+        serde_json::json!({
+            "sessionId": sid,
+            "stage": stage,
+            "message": message
+        }),
+    );
+}
+
+#[tauri::command]
+pub async fn list_sessions(state: State<'_, AppState>) -> Result<Vec<Session>, String> {
+    Ok(state.list_sessions().await)
+}
+
+#[tauri::command]
+pub async fn create_session(
+    state: State<'_, AppState>,
+    input: SessionInput,
+    secret: Option<String>,
+) -> Result<Session, String> {
+    state.create_session(input, secret).await
+}
+
+#[tauri::command]
+pub async fn update_session(
+    state: State<'_, AppState>,
+    id: String,
+    input: SessionInput,
+    secret: Option<String>,
+) -> Result<Session, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    state.update_session(id, input, secret).await
+}
+
+#[tauri::command]
+pub async fn delete_session(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    state.delete_session(id).await
+}
+
+#[tauri::command]
+pub async fn has_session_secret(state: State<'_, AppState>, id: String) -> Result<bool, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    state.has_secret(id).await
+}
+
+#[tauri::command]
+pub async fn connect_session(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    secret: Option<String>,
+) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(&app, Some(id), "connect", "starting connect_session");
+    state.connect_session(id, secret).await?;
+    emit_debug(&app, Some(id), "connect", "connect_session succeeded, start poll loop");
+    // 先推一条本地消息，验证 UI 事件通道正常
+    let hello = base64::engine::general_purpose::STANDARD.encode(b"[rshell] connected\r\n");
+    let _ = app.emit(
+        "terminal-output",
+        serde_json::json!({ "sessionId": id.to_string(), "data": hello }),
+    );
+    Ok(())
+}
+
+#[tauri::command]
+pub async fn pull_output(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    match state.poll_output(id).await {
+        Ok(bytes) => {
+            if bytes.is_empty() {
+                Ok(None)
+            } else {
+                emit_debug(&app, Some(id), "pull_output", &format!("received {} bytes", bytes.len()));
+                Ok(Some(base64::engine::general_purpose::STANDARD.encode(bytes)))
+            }
+        }
+        Err(err) => {
+            emit_debug(&app, Some(id), "pull_output", &format!("error: {err}"));
+            Err(err)
+        }
+    }
+}
+
+#[tauri::command]
+pub async fn disconnect_session(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(&app, Some(id), "disconnect", "disconnect requested");
+    state.disconnect_session(id).await
+}
+
+#[tauri::command]
+pub async fn send_input(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    input: String,
+) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "send_input",
+        &format!("sending {} bytes", input.as_bytes().len()),
+    );
+    state.send_input(id, input).await
+}
+
+#[tauri::command]
+pub async fn resize_terminal(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    cols: u16,
+    rows: u16,
+) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "resize",
+        &format!("resize to {}x{}", cols, rows),
+    );
+    state.resize_terminal(id, cols, rows).await
+}

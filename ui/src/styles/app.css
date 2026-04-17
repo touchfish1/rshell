@@ -1,0 +1,151 @@
+:root {
+  color: #e7e8ea;
+  background: #11131a;
+  font-family: Inter, Segoe UI, sans-serif;
+}
+
+body {
+  margin: 0;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  min-height: 100vh;
+}
+
+.session-list {
+  padding: 12px;
+  border-right: 1px solid #2b3140;
+  background: #161b25;
+}
+
+.session-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 12px;
+}
+
+.session-list button {
+  width: 100%;
+  text-align: left;
+  margin: 4px 0;
+  padding: 8px;
+  border: 1px solid #30384a;
+  background: #1f2633;
+  color: #e7e8ea;
+}
+
+.session-row {
+  display: grid;
+  grid-template-columns: 1fr 34px;
+  gap: 8px;
+  align-items: center;
+}
+
+.session-row button {
+  margin: 4px 0;
+}
+
+.session-row button.danger {
+  text-align: center;
+  width: 34px;
+  padding: 8px 0;
+  border: 1px solid #6b2a3a;
+  background: #2a141c;
+  color: #ffccd6;
+}
+
+.session-list button.active {
+  border-color: #4f83ff;
+}
+
+.session-form {
+  display: grid;
+  gap: 8px;
+}
+
+.session-form input,
+.session-form select,
+.actions button {
+  background: #0f141d;
+  border: 1px solid #30384a;
+  color: #e7e8ea;
+  padding: 8px;
+}
+
+.workspace {
+  display: grid;
+  grid-template-rows: 56px auto 110px 1fr 40px;
+}
+
+.workspace header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #2b3140;
+  padding: 0 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.terminal-pane {
+  width: 100%;
+  height: 100%;
+}
+
+.error-banner {
+  margin: 8px 12px 0;
+  padding: 8px 10px;
+  border: 1px solid #8c2f43;
+  background: #3a1823;
+  color: #ffccd6;
+  font-size: 13px;
+}
+
+.debug-panel {
+  margin: 8px 12px 0;
+  border: 1px solid #30384a;
+  background: #0e131d;
+}
+
+.debug-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #30384a;
+  color: #b2bbcc;
+  font-size: 12px;
+}
+
+.debug-panel-header button {
+  background: #172131;
+  border: 1px solid #30384a;
+  color: #e7e8ea;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.debug-panel-body {
+  min-height: 76px;
+  max-height: 76px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 6px 8px;
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: #9ba3b3;
+}
+
+.workspace footer {
+  border-top: 1px solid #2b3140;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: #9ba3b3;
+}
