@@ -29,10 +29,13 @@ jobs:
               src-tauri/target/release/bundle/**/*.deb
               src-tauri/target/release/bundle/**/*.rpm
               src-tauri/target/release/bundle/**/*.AppImage
+              src-tauri/target/release/bundle/**/*.AppImage.tar.gz
           - os: windows-latest
             bundle_pattern: |
               src-tauri/target/release/bundle/**/*.msi
               src-tauri/target/release/bundle/**/*.exe
+              src-tauri/target/release/bundle/**/*.msi.zip
+              src-tauri/target/release/bundle/**/*.nsis.zip
           - os: macos-latest
             bundle_pattern: |
               src-tauri/target/release/bundle/**/*.dmg
@@ -128,26 +131,70 @@ jobs:
             $msiSig | ForEach-Object { Write-Host ("  MSI SIG: " + $_.FullName) }
           }
 
-      - name: Validate Windows updater artifacts (strict latest.json + sig)
+      - name: Validate Windows updater artifacts (strict bundle + sig)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          $latest = Get-ChildItem -Recurse "src-tauri/target/release/bundle" -File -Filter "latest*.json" -ErrorAction SilentlyContinue
-          if ($latest.Count -eq 0) {
-            Write-Error "Strict mode failed: no updater manifest (latest*.json) generated on Windows."
+          $bundle = Get-ChildItem -Recurse "src-tauri/target/release/bundle/nsis" -File -Filter "*-setup.nsis.zip" -ErrorAction SilentlyContinue
+          if ($bundle.Count -eq 0) {
+            Write-Error "Strict mode failed: no Windows updater bundle (*-setup.nsis.zip) generated."
             exit 1
           }
           $missingSig = @()
-          foreach ($file in $latest) {
+          foreach ($file in $bundle) {
             if (-not (Test-Path ($file.FullName + ".sig"))) {
               $missingSig += $file.FullName
             }
           }
           if ($missingSig.Count -gt 0) {
-            Write-Error ("Strict mode failed: missing .sig for updater manifest(s): " + ($missingSig -join ", "))
+            Write-Error ("Strict mode failed: missing .sig for Windows updater bundle(s): " + ($missingSig -join ", "))
             exit 1
           }
-          Write-Host "Strict mode passed: latest*.json + .sig found."
+          Write-Host "Strict mode passed: Windows updater bundle + .sig found."
+
+      - name: Validate macOS updater artifacts (strict bundle + sig)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          bundles=(src-tauri/target/release/bundle/**/*.app.tar.gz)
+          if [ ${#bundles[@]} -eq 0 ]; then
+            echo "::error::Strict mode failed: no macOS updater bundle (*.app.tar.gz) generated."
+            exit 1
+          fi
+          missing=0
+          for file in "${bundles[@]}"; do
+            if [ ! -f "${file}.sig" ]; then
+              echo "::error::Missing signature for macOS updater bundle: ${file}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Strict mode passed: macOS updater bundle + .sig found."
+
+      - name: Validate Linux updater artifacts (strict bundle + sig)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
+          bundles=(src-tauri/target/release/bundle/**/*.AppImage.tar.gz)
+          if [ ${#bundles[@]} -eq 0 ]; then
+            echo "::error::Strict mode failed: no Linux updater bundle (*.AppImage.tar.gz) generated."
+            exit 1
+          fi
+          missing=0
+          for file in "${bundles[@]}"; do
+            if [ ! -f "${file}.sig" ]; then
+              echo "::error::Missing signature for Linux updater bundle: ${file}"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "Strict mode passed: Linux updater bundle + .sig found."
 
       - name: Create Windows zip
         if: runner.os == 'Windows'
@@ -174,83 +221,104 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Collect updater manifest files
-        if: runner.os == 'Windows'
-        shell: bash
-        run: |
-          shopt -s globstar nullglob
-          mkdir -p updater-manifest
-          found=0
-          for file in src-tauri/target/release/bundle/**/latest*.json; do
-            found=1
-            base="$(basename "$file")"
-            cp "$file" "updater-manifest/${base}"
-            if [ -f "${file}.sig" ]; then
-              cp "${file}.sig" "updater-manifest/${base}.sig"
-            fi
-          done
-          if [ "$found" -eq 0 ]; then
-            echo "::error::No updater manifest (latest*.json) was generated on Windows."
-            exit 1
-          fi
-          echo "Found updater manifest files:"
-          ls -la updater-manifest
-
-      - name: Upload updater manifest artifact
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: updater-manifest
-          path: updater-manifest/*
-          if-no-files-found: error
-
-  upload-updater-manifest:
-    name: Upload latest.json to Release
+  generate-and-upload-latest-json:
+    name: Generate and upload latest.json
     runs-on: ubuntu-latest
     needs: build-and-upload
     env:
       TAG_NAME: ${{ github.event.inputs.tag || github.ref_name }}
     steps:
-      - name: Download updater manifest artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: updater-manifest
-          path: updater-manifest
-
-      - name: Ensure updater manifest exists
+      - name: Generate latest.json from release assets
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          shopt -s nullglob
-          files=(updater-manifest/*latest*.json)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No latest.json artifact found from build jobs."
-            exit 1
-          fi
-          printf 'Found updater manifests:\n%s\n' "${files[@]}"
+          api_url="https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG_NAME}"
+          release_json="$(curl -fsSL \
+            -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "${api_url}")"
 
-      - name: Log latest.json path and summary
-        shell: bash
-        run: |
-          shopt -s nullglob
-          files=(updater-manifest/*latest*.json)
-          echo "==== latest.json diagnostics ===="
-          for file in "${files[@]}"; do
-            echo "Path: $file"
-            echo "Size(bytes): $(wc -c < "$file")"
-            echo "SHA256: $(sha256sum "$file" | awk '{print $1}')"
-            echo "Preview(first 400 chars):"
-            head -c 400 "$file" || true
-            echo
-            echo "----"
+          get_asset_url() {
+            local pattern="$1"
+            echo "${release_json}" | jq -r --arg pattern "$pattern" '
+              .assets
+              | map(select(.name | test($pattern)))
+              | first
+              | .url // empty
+            '
+          }
+
+          get_sig_content() {
+            local asset_api_url="$1"
+            curl -fsSL \
+              -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+              -H "Accept: application/octet-stream" \
+              "${asset_api_url}" | tr -d '\r\n'
+          }
+
+          windows_bundle_url="$(get_asset_url ".*-setup\\.nsis\\.zip$")"
+          windows_sig_url="$(get_asset_url ".*-setup\\.nsis\\.zip\\.sig$")"
+          mac_bundle_url="$(get_asset_url ".*\\.app\\.tar\\.gz$")"
+          mac_sig_url="$(get_asset_url ".*\\.app\\.tar\\.gz\\.sig$")"
+          linux_bundle_url="$(get_asset_url ".*\\.AppImage\\.tar\\.gz$")"
+          linux_sig_url="$(get_asset_url ".*\\.AppImage\\.tar\\.gz\\.sig$")"
+
+          for required in windows_bundle_url windows_sig_url mac_bundle_url mac_sig_url linux_bundle_url linux_sig_url; do
+            if [ -z "${!required}" ]; then
+              echo "::error::Missing required release asset for ${required}"
+              exit 1
+            fi
           done
 
-      - name: Upload updater manifest to GitHub Release
+          windows_sig="$(get_sig_content "${windows_sig_url}")"
+          mac_sig="$(get_sig_content "${mac_sig_url}")"
+          linux_sig="$(get_sig_content "${linux_sig_url}")"
+
+          if [ -z "${windows_sig}" ] || [ -z "${mac_sig}" ] || [ -z "${linux_sig}" ]; then
+            echo "::error::One or more signature files are empty."
+            exit 1
+          fi
+
+          version="$(echo "${release_json}" | jq -r '.tag_name | sub("^v"; "")')"
+          pub_date="$(echo "${release_json}" | jq -r '.published_at // .created_at')"
+          notes="$(echo "${release_json}" | jq -r '.body // ""')"
+
+          jq -n \
+            --arg version "${version}" \
+            --arg notes "${notes}" \
+            --arg pub_date "${pub_date}" \
+            --arg windows_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_NAME}/$(echo "${release_json}" | jq -r '.assets[] | select(.url == "'"${windows_bundle_url}"'") | .name')" \
+            --arg windows_sig "${windows_sig}" \
+            --arg mac_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_NAME}/$(echo "${release_json}" | jq -r '.assets[] | select(.url == "'"${mac_bundle_url}"'") | .name')" \
+            --arg mac_sig "${mac_sig}" \
+            --arg linux_url "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG_NAME}/$(echo "${release_json}" | jq -r '.assets[] | select(.url == "'"${linux_bundle_url}"'") | .name')" \
+            --arg linux_sig "${linux_sig}" \
+            '{
+              version: $version,
+              notes: $notes,
+              pub_date: $pub_date,
+              platforms: {
+                "windows-x86_64": { url: $windows_url, signature: $windows_sig },
+                "darwin-x86_64": { url: $mac_url, signature: $mac_sig },
+                "darwin-aarch64": { url: $mac_url, signature: $mac_sig },
+                "linux-x86_64": { url: $linux_url, signature: $linux_sig }
+              }
+            }' > latest.json
+
+          echo "==== latest.json diagnostics ===="
+          echo "Path: latest.json"
+          echo "Size(bytes): $(wc -c < latest.json)"
+          echo "SHA256: $(sha256sum latest.json | awk '{print $1}')"
+          echo "Preview(first 400 chars):"
+          head -c 400 latest.json || true
+          echo
+
+      - name: Upload latest.json to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.TAG_NAME }}
-          files: |
-            updater-manifest/*latest*.json
-            updater-manifest/*latest*.json.sig
-          fail_on_unmatched_files: false
+          files: latest.json
+          fail_on_unmatched_files: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
