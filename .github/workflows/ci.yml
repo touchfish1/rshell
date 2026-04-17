@@ -51,3 +51,4 @@ jobs:
         working-directory: src-tauri/ui
       - name: Rust check
         run: cargo check
+        working-directory: src-tauri

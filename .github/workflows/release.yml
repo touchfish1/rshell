@@ -26,18 +26,18 @@ jobs:
         include:
           - os: ubuntu-latest
             bundle_pattern: |
-              target/release/bundle/**/*.deb
-              target/release/bundle/**/*.rpm
-              target/release/bundle/**/*.AppImage
+              src-tauri/target/release/bundle/**/*.deb
+              src-tauri/target/release/bundle/**/*.rpm
+              src-tauri/target/release/bundle/**/*.AppImage
           - os: windows-latest
             bundle_pattern: |
-              target/release/bundle/**/*.msi
-              target/release/bundle/**/*.exe
+              src-tauri/target/release/bundle/**/*.msi
+              src-tauri/target/release/bundle/**/*.exe
           - os: macos-latest
             bundle_pattern: |
-              target/release/bundle/**/*.dmg
-              target/release/bundle/**/*.pkg
-              target/release/bundle/**/*.app.tar.gz
+              src-tauri/target/release/bundle/**/*.dmg
+              src-tauri/target/release/bundle/**/*.pkg
+              src-tauri/target/release/bundle/**/*.app.tar.gz
 
     steps:
       - name: Checkout
@@ -81,18 +81,51 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
+      - name: Diagnose updater artifacts (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Write-Host "=== Diagnose: list src-tauri/target/release/bundle recursively ==="
+          if (Test-Path "src-tauri/target/release/bundle") {
+            Get-ChildItem -Recurse "src-tauri/target/release/bundle" -File | Sort-Object FullName | ForEach-Object {
+              "{0}  {1} bytes" -f $_.FullName, $_.Length
+            }
+          } else {
+            Write-Host "src-tauri/target/release/bundle does not exist"
+          }
+          Write-Host ""
+          Write-Host "=== Diagnose: search latest*.json and signatures ==="
+          if (Test-Path "src-tauri/target/release/bundle") {
+            $latest = Get-ChildItem -Recurse "src-tauri/target/release/bundle" -File -Filter "latest*.json" -ErrorAction SilentlyContinue
+            if ($latest.Count -eq 0) {
+              Write-Host "No latest*.json found under src-tauri/target/release/bundle"
+            } else {
+              Write-Host "Found latest*.json:"
+              $latest | ForEach-Object { $_.FullName }
+              Write-Host ""
+              Write-Host "Preview(first 30 lines) of each latest*.json:"
+              foreach ($f in $latest) {
+                Write-Host ("--- " + $f.FullName + " ---")
+                Get-Content -Path $f.FullName -TotalCount 30
+              }
+            }
+            $sigs = Get-ChildItem -Recurse "src-tauri/target/release/bundle" -File -Filter "*.sig" -ErrorAction SilentlyContinue
+            Write-Host ""
+            Write-Host ("Found .sig files: " + $sigs.Count)
+          }
+
       - name: Create Windows zip
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path release-assets -Force | Out-Null
-          Compress-Archive -Path "target/release/rshell.exe" -DestinationPath "release-assets/rshell-windows-x64.zip" -Force
+          Compress-Archive -Path "src-tauri/target/release/rshell.exe" -DestinationPath "release-assets/rshell-windows-x64.zip" -Force
 
       - name: Create macOS zip
         if: runner.os == 'macOS'
         run: |
           mkdir -p release-assets
-          ditto -c -k --keepParent "target/release/rshell" "release-assets/rshell-macos-universal.zip"
+          ditto -c -k --keepParent "src-tauri/target/release/rshell" "release-assets/rshell-macos-universal.zip"
 
       - name: Upload assets to GitHub Release
         uses: softprops/action-gh-release@v2
@@ -100,7 +133,7 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           files: |
             ${{ matrix.bundle_pattern }}
-            target/release/bundle/**/*.sig
+            src-tauri/target/release/bundle/**/*.sig
             release-assets/*.zip
           fail_on_unmatched_files: false
         env:
@@ -113,7 +146,7 @@ jobs:
           shopt -s globstar nullglob
           mkdir -p updater-manifest
           found=0
-          for file in target/release/bundle/**/latest*.json; do
+          for file in src-tauri/target/release/bundle/**/latest*.json; do
             found=1
             base="$(basename "$file")"
             cp "$file" "updater-manifest/${base}"
@@ -122,8 +155,15 @@ jobs:
             fi
           done
           if [ "$found" -eq 0 ]; then
-            echo "No updater manifest generated on ${{ runner.os }}"
+            echo "::error::No updater manifest (latest*.json) was generated on Windows."
+            echo "Debug: listing bundle directory (src-tauri/target/release/bundle) if present"
+            ls -la src-tauri/target/release/bundle || true
+            echo "Debug: find candidate files under src-tauri/target/release/bundle"
+            find src-tauri/target/release/bundle -maxdepth 6 -type f -name "latest*.json" -o -name "latest*.json.sig" || true
+            exit 1
           fi
+          echo "Found updater manifest files:"
+          ls -la updater-manifest
 
       - name: Upload updater manifest artifact
         if: runner.os == 'Windows'
@@ -131,7 +171,7 @@ jobs:
         with:
           name: updater-manifest
           path: updater-manifest/*
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   upload-updater-manifest:
     name: Upload latest.json to Release

@@ -20,6 +20,37 @@ function mapEventType(eventType: string) {
   return "all";
 }
 
+function maskSensitiveCommand(input: string) {
+  if (!input) return input;
+  let text = input;
+  text = text.replace(
+    /\b(password|passwd|pwd|token|secret|api[_-]?key|access[_-]?key)\b\s*=\s*([^\s&"',}]+|"[^"]*"|'[^']*')/gi,
+    "$1=***"
+  );
+  text = text.replace(
+    /(["']?(password|passwd|pwd|token|secret|api[_-]?key|access[_-]?key)["']?\s*:\s*)("[^"]*"|'[^']*'|[^\s,}\]]+)/gi,
+    '$1"***"'
+  );
+  const parts = text.split(/\s+/);
+  const out: string[] = [];
+  let nextMask = false;
+  for (const part of parts) {
+    if (!part) continue;
+    if (nextMask) {
+      out.push("***");
+      nextMask = false;
+      continue;
+    }
+    if (/^(-p|--p|--pw|--pwd|--password|--passwd|--token|--secret|--apikey|--api-key)$/i.test(part)) {
+      out.push(part);
+      nextMask = true;
+      continue;
+    }
+    out.push(part);
+  }
+  return out.join(" ");
+}
+
 function downloadTextFile(filename: string, content: string, contentType: string) {
   const blob = new Blob([content], { type: contentType });
   const href = URL.createObjectURL(blob);
@@ -123,7 +154,7 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
                   <span>{record.session_name ?? "-"}</span>
                   <span>{record.host ?? "-"}</span>
                 </div>
-                {record.command ? <div className="audit-command">{record.command}</div> : null}
+                {record.command ? <div className="audit-command">{maskSensitiveCommand(record.command)}</div> : null}
                 <div className="audit-detail">{record.detail}</div>
               </div>
             ))

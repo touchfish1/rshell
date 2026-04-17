@@ -6,8 +6,8 @@
 
 `rshell` 采用 Tauri 双层架构：
 
-- 前端（`ui/`）：React + TypeScript，负责界面、交互、状态驱动
-- 后端（`src/`）：Rust + Tauri Commands，负责网络连接、SFTP、存储与系统能力
+- 前端（`src-tauri/ui/`）：React + TypeScript，负责界面、交互、状态驱动
+- 后端（`src-tauri/src/`）：Rust + Tauri Commands，负责网络连接、SFTP、存储与系统能力
 
 通信方式：
 
@@ -18,13 +18,13 @@
 
 ## 2.1 Rust 后端
 
-### `src/main.rs`
+### `src-tauri/src/main.rs`
 
 - Tauri 启动入口
 - 注册 `AppState`
 - 注册全部命令处理函数（session、terminal、sftp、metrics、utility）
 
-### `src/api/commands.rs`
+### `src-tauri/src/api/commands.rs`
 
 - 作为前端与业务层之间的命令适配层
 - 负责参数转换、日志事件发送、调用 `AppState`
@@ -37,7 +37,7 @@
 - SFTP：`list_sftp_dir`、`download_sftp_file`
 - 监控与工具：`get_host_metrics`、`test_host_reachability`、`open_in_file_manager`、`get_session_secret`
 
-### `src/app/mod.rs`
+### `src-tauri/src/app/mod.rs`
 
 业务核心，包含：
 
@@ -51,7 +51,7 @@
 - SFTP 目录读取与下载
 - 主机指标采集（CPU、内存、磁盘）
 
-### `src/infra/store.rs`
+### `src-tauri/src/infra/store.rs`
 
 - 负责会话和密码持久化
 - 文件：
@@ -60,20 +60,20 @@
 
 ## 2.2 前端
 
-### `ui/src/App.tsx`
+### `src-tauri/ui/src/App.tsx`
 
 - 前端主状态容器
 - 路由/页面切换（首页与 Terminal）
 - 与后端 API 的桥接调用与事件监听
 - 管理标签页、下载任务、在线状态等全局状态
 
-### `ui/src/pages/HomePage.tsx`
+### `src-tauri/ui/src/pages/HomePage.tsx`
 
 - 主机列表主页面
 - 展示在线状态与会话入口
 - 承载新增/编辑/测试连接相关交互入口
 
-### `ui/src/pages/TerminalPage.tsx`
+### `src-tauri/ui/src/pages/TerminalPage.tsx`
 
 - Terminal 工作台布局
 - 左侧主机列表交互（单击选中/双击打开）
@@ -81,13 +81,13 @@
 - 右侧固定监控区 + 文件列表区
 - SFTP 右键下载菜单
 
-### `ui/src/components/TerminalPane.tsx`
+### `src-tauri/ui/src/components/TerminalPane.tsx`
 
 - xterm.js 实例封装
 - 处理激活/隐藏切换的尺寸同步、聚焦、刷新
 - 将输入事件传回后端
 
-### `ui/src/services/bridge.ts`
+### `src-tauri/ui/src/services/bridge.ts`
 
 - 前端唯一后端调用入口
 - 所有 invoke 命令与事件监听都在此定义，便于追踪与重构

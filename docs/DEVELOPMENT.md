@@ -19,13 +19,16 @@ Linux 构建 Tauri 需要 GTK/WebKit 相关依赖（参考 `.github/workflows/re
 
 ```text
 rshell/
-  src/                     # Rust backend
+  src-tauri/               # Tauri backend root
+    src/                   # Rust backend
     api/commands.rs        # Tauri command 层
     app/mod.rs             # 业务核心状态机
     infra/store.rs         # 配置与密码存储
     infra/ssh_client.rs    # SSH terminal client
     infra/telnet_client.rs # Telnet client
-  ui/                      # React frontend
+    tauri.conf.json        # Tauri config
+    capabilities/          # Tauri capabilities
+    ui/                    # React frontend
     src/App.tsx            # 前端状态与页面总入口
     src/pages/HomePage.tsx
     src/pages/TerminalPage.tsx
@@ -39,6 +42,7 @@ rshell/
 ## 3.1 安装依赖
 
 ```bash
+cd src-tauri
 cargo check
 cd ui
 npm install
@@ -51,34 +55,33 @@ npm install
 终端 1（前端）：
 
 ```bash
-cd ui
+cd src-tauri/ui
 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
 ```
 
 终端 2（桌面）：
 
 ```bash
-cargo run
+npx @tauri-apps/cli@2 dev
 ```
 
 ## 3.3 常用检查命令
 
 ```bash
-cargo check
-cargo test
-cd ui && npm run build
+cd src-tauri && cargo check && cargo test
+cd src-tauri/ui && npm run build
 ```
 
 建议在提交前至少执行：
 
-- `cargo check`
-- `cd ui && npm run build`
+- `cd src-tauri && cargo check`
+- `cd src-tauri/ui && npm run build`
 
 ## 4. 调试指南
 
 ## 4.1 后端日志
 
-`src/api/commands.rs` 使用 `emit_debug` 发送结构化日志：
+`src-tauri/src/api/commands.rs` 使用 `emit_debug` 发送结构化日志：
 
 - 终端输出拉取
 - 输入发送
@@ -107,7 +110,7 @@ cd ui && npm run build
 确认：
 
 - 会话 `encoding` 是否与服务器输出一致
-- 前端是否按该编码解码（`App.tsx`）
+- 前端是否按该编码解码（`src-tauri/ui/src/App.tsx`）
 
 ### inactive session
 
@@ -145,8 +148,8 @@ cd ui && npm run build
 ## 7. 前端开发约定
 
 - 页面层仅做 UI 与编排，不直接调用 `invoke`
-- 所有后端调用统一经 `ui/src/services/bridge.ts`
-- 类型统一定义在 `ui/src/services/types.ts`
+- 所有后端调用统一经 `src-tauri/ui/src/services/bridge.ts`
+- 类型统一定义在 `src-tauri/ui/src/services/types.ts`
 - 涉及 xterm.js 的尺寸问题优先在 `TerminalPane` 处理
 
 ## 8. 发布流程
