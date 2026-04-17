@@ -18,27 +18,21 @@ jobs:
   build-and-upload:
     name: Build ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    env:
+      TAG_NAME: ${{ github.event.inputs.tag || github.ref_name }}
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
-            bundle_pattern: |
-              target/release/bundle/**/*.deb
-              target/release/bundle/**/*.rpm
-              target/release/bundle/**/*.AppImage
           - os: windows-latest
-            bundle_pattern: |
-              target/release/bundle/**/*.msi
-              target/release/bundle/**/*.exe
           - os: macos-latest
-            bundle_pattern: |
-              target/release/bundle/**/*.dmg
-              target/release/bundle/**/*.pkg
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG_NAME }}
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -70,8 +64,16 @@ jobs:
         run: npm ci
         working-directory: ui
 
-      - name: Build Tauri bundles
-        run: npx @tauri-apps/cli@2 build
+      - name: Build and upload bundles
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ env.TAG_NAME }}
+          releaseName: rshell ${{ env.TAG_NAME }}
+          releaseBody: Automated release for ${{ env.TAG_NAME }}.
+          releaseDraft: false
+          prerelease: false
 
       - name: Create Windows zip
         if: runner.os == 'Windows'
@@ -89,9 +91,8 @@ jobs:
       - name: Upload assets to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || github.event.inputs.tag || github.ref_name }}
+          tag_name: ${{ env.TAG_NAME }}
           files: |
-            ${{ matrix.bundle_pattern }}
             release-assets/*.zip
           fail_on_unmatched_files: false
         env:
