@@ -156,7 +156,10 @@ jobs:
         if: runner.os == 'macOS'
         shell: bash
         run: |
-          mapfile -t bundles < <(find src-tauri/target/release/bundle -type f -name "*.app.tar.gz")
+          bundles=()
+          while IFS= read -r file; do
+            bundles+=("$file")
+          done < <(find src-tauri/target/release/bundle -type f -name "*.app.tar.gz")
           if [ ${#bundles[@]} -eq 0 ]; then
             echo "::error::Strict mode failed: no macOS updater bundle (*.app.tar.gz) generated."
             exit 1
@@ -177,7 +180,10 @@ jobs:
         if: runner.os == 'Linux'
         shell: bash
         run: |
-          mapfile -t bundles < <(find src-tauri/target/release/bundle -type f -name "*.AppImage.tar.gz")
+          bundles=()
+          while IFS= read -r file; do
+            bundles+=("$file")
+          done < <(find src-tauri/target/release/bundle -type f -name "*.AppImage.tar.gz")
           if [ ${#bundles[@]} -eq 0 ]; then
             echo "::error::Strict mode failed: no Linux updater bundle (*.AppImage.tar.gz) generated."
             exit 1
