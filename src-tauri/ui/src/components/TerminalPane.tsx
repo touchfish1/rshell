@@ -20,6 +20,7 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
   const registerWriterRef = useRef(registerWriter);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
+  const lastResizeRef = useRef<{ cols: number; rows: number; at: number }>({ cols: 0, rows: 0, at: 0 });
 
   useEffect(() => {
     connectedRef.current = connected;
@@ -38,6 +39,10 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
       }
       terminal.scrollToBottom();
       terminal.focus();
+      const now = Date.now();
+      const last = lastResizeRef.current;
+      if (terminal.cols === last.cols && terminal.rows === last.rows && now - last.at < 400) return;
+      lastResizeRef.current = { cols: terminal.cols, rows: terminal.rows, at: now };
       onResizeRef.current(terminal.cols, terminal.rows);
     };
     let raf2 = 0;
@@ -112,6 +117,10 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
       syncPaneHeight();
       fitAddon.fit();
       if (activeRef.current) {
+        const now = Date.now();
+        const last = lastResizeRef.current;
+        if (terminal.cols === last.cols && terminal.rows === last.rows && now - last.at < 400) return;
+        lastResizeRef.current = { cols: terminal.cols, rows: terminal.rows, at: now };
         onResizeRef.current(terminal.cols, terminal.rows);
       }
     };

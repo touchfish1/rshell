@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { onDebugLog, onTerminalOutput, pullOutput } from "../services/bridge";
 import type { Session } from "../services/types";
 
+const PULL_OUTPUT_INTERVAL_MS = 80;
+
 function normalizeEncoding(encoding?: string) {
   const value = (encoding || "utf-8").trim().toLowerCase();
   if (value === "utf8") return "utf-8";
@@ -49,7 +51,10 @@ export function useTerminalOutput(opts: {
 
   useEffect(() => {
     if (connectedIds.length === 0) return;
+    let inflight = false;
     const timer = window.setInterval(() => {
+      if (inflight) return;
+      inflight = true;
       connectedIds.forEach((id) => {
         void pullOutput(id)
           .then((base64) => {
@@ -64,7 +69,8 @@ export function useTerminalOutput(opts: {
             onError(`拉取输出失败: ${message}`);
           });
       });
-    }, 10);
+      inflight = false;
+    }, PULL_OUTPUT_INTERVAL_MS);
     return () => window.clearInterval(timer);
   }, [connectedIds, getTabsBySessionId, onError, sessions, writeToTab]);
 }
