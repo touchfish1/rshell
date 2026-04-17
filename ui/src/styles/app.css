@@ -435,19 +435,17 @@ body {
 .session-tab {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(52, 62, 84, 0.7);
+  border: none;
   border-radius: 8px;
   background: transparent;
-  transition: border-color 120ms ease, background 120ms ease;
+  transition: background 120ms ease;
 }
 
 .session-tab:hover {
-  border-color: rgba(79, 131, 255, 0.42);
   background: rgba(28, 36, 50, 0.45);
 }
 
 .session-tab.active {
-  border-color: rgba(89, 145, 255, 0.72);
   background: rgba(35, 47, 66, 0.62);
 }
 
@@ -465,7 +463,7 @@ body {
 
 .session-tab-close {
   border: none;
-  border-left: 1px solid rgba(56, 66, 89, 0.68);
+  border-left: none;
   background: transparent;
   color: #9aa5bb;
   width: 24px;
@@ -493,6 +491,34 @@ body {
 
 .session-dot.off {
   background: #728099;
+}
+
+.session-tab-context-menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 128px;
+  background: #0d131d;
+  border: 1px solid rgba(55, 66, 90, 0.95);
+  border-radius: 8px;
+  padding: 4px;
+  display: grid;
+  gap: 4px;
+}
+
+.session-tab-context-menu button {
+  width: 100%;
+  text-align: left;
+  font-size: 12px;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: #cfd8ea;
+}
+
+.session-tab-context-menu button:hover {
+  border-color: rgba(56, 65, 86, 0.9);
+  background: rgba(28, 37, 52, 0.7);
 }
 
 .terminal-workspace {

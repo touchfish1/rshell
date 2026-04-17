@@ -367,6 +367,40 @@ export default function App() {
     await disconnect(id);
   };
 
+  const duplicateTab = async (id: string) => {
+    const tab = tabsRef.current.find((item) => item.id === id);
+    if (!tab) return;
+    await connect(tab.sessionId);
+  };
+
+  const closeTabsBatch = async (tabIds: string[]) => {
+    for (const tabId of tabIds) {
+      await disconnect(tabId);
+    }
+  };
+
+  const closeTabsToLeft = async (id: string) => {
+    const current = tabsRef.current;
+    const index = current.findIndex((tab) => tab.id === id);
+    if (index <= 0) return;
+    const targets = current.slice(0, index).map((tab) => tab.id);
+    await closeTabsBatch(targets);
+  };
+
+  const closeTabsToRight = async (id: string) => {
+    const current = tabsRef.current;
+    const index = current.findIndex((tab) => tab.id === id);
+    if (index < 0 || index === current.length - 1) return;
+    const targets = current.slice(index + 1).map((tab) => tab.id);
+    await closeTabsBatch(targets);
+  };
+
+  const closeOtherTabs = async (id: string) => {
+    const current = tabsRef.current;
+    const targets = current.filter((tab) => tab.id !== id).map((tab) => tab.id);
+    await closeTabsBatch(targets);
+  };
+
   const normalizeSftpPath = (path?: string) => {
     if (!path || path === ".") return "/";
     return path;
@@ -466,9 +500,13 @@ export default function App() {
           sftpPath={activeTabId ? sftpPathMap[activeTabId] ?? "/" : "/"}
           sftpLoading={Boolean(activeTabId && sftpLoadingId === activeTabId)}
           onOpenSession={(id) => void connect(id)}
+          onDuplicateTab={(id) => void duplicateTab(id)}
           onSelectSession={setSelectedId}
           onSwitchTab={setActiveTabId}
           onCloseTab={(id) => void closeTab(id)}
+          onCloseTabsToLeft={(id) => void closeTabsToLeft(id)}
+          onCloseTabsToRight={(id) => void closeTabsToRight(id)}
+          onCloseOtherTabs={(id) => void closeOtherTabs(id)}
           onSftpOpenDir={(path) => {
             if (activeTabId) {
               const tab = tabs.find((t) => t.id === activeTabId);

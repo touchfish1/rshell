@@ -20,9 +20,13 @@ interface Props {
   sftpPath: string;
   sftpLoading: boolean;
   onOpenSession: (id: string) => void;
+  onDuplicateTab: (id: string) => void;
   onSelectSession: (id: string) => void;
   onSwitchTab: (id: string) => void;
   onCloseTab: (id: string) => void;
+  onCloseTabsToLeft: (id: string) => void;
+  onCloseTabsToRight: (id: string) => void;
+  onCloseOtherTabs: (id: string) => void;
   onSftpOpenDir: (path: string) => void;
   onSftpUp: () => void;
   onSftpDownload: (path: string) => void;
@@ -43,9 +47,13 @@ export default function TerminalPage({
   sftpPath,
   sftpLoading,
   onOpenSession,
+  onDuplicateTab,
   onSelectSession,
   onSwitchTab,
   onCloseTab,
+  onCloseTabsToLeft,
+  onCloseTabsToRight,
+  onCloseOtherTabs,
   onSftpOpenDir,
   onSftpUp,
   onSftpDownload,
@@ -62,6 +70,7 @@ export default function TerminalPage({
   const [hostsWidth, setHostsWidth] = useState(240);
   const [sftpWidth, setSftpWidth] = useState(320);
   const [menu, setMenu] = useState<{ x: number; y: number; path: string } | null>(null);
+  const [tabMenu, setTabMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
   const normalizedPath = sftpPath === "." ? "/" : sftpPath;
@@ -119,9 +128,12 @@ export default function TerminalPage({
 
   useEffect(() => {
     const closeMenu = () => setMenu(null);
+    const closeTabMenu = () => setTabMenu(null);
     window.addEventListener("click", closeMenu);
+    window.addEventListener("click", closeTabMenu);
     return () => {
       window.removeEventListener("click", closeMenu);
+      window.removeEventListener("click", closeTabMenu);
     };
   }, []);
 
@@ -161,7 +173,15 @@ export default function TerminalPage({
             const connected = connectedIds.includes(tab.sessionId);
             return (
               <div key={tab.id} className={`session-tab ${active ? "active" : ""}`}>
-                <button className="session-tab-main" onClick={() => onSwitchTab(tab.id)}>
+                <button
+                  className="session-tab-main"
+                  onClick={() => onSwitchTab(tab.id)}
+                  onContextMenu={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setTabMenu({ x: e.clientX, y: e.clientY, tabId: tab.id });
+                  }}
+                >
                   {tab.title}
                   <span className={`session-dot ${connected ? "on" : "off"}`} />
                 </button>
@@ -173,6 +193,42 @@ export default function TerminalPage({
           })
         )}
       </div>
+      {tabMenu ? (
+        <div className="session-tab-context-menu" style={{ left: tabMenu.x, top: tabMenu.y }}>
+          <button
+            onClick={() => {
+              onDuplicateTab(tabMenu.tabId);
+              setTabMenu(null);
+            }}
+          >
+            复制 session
+          </button>
+          <button
+            onClick={() => {
+              onCloseTabsToRight(tabMenu.tabId);
+              setTabMenu(null);
+            }}
+          >
+            关闭右边
+          </button>
+          <button
+            onClick={() => {
+              onCloseTabsToLeft(tabMenu.tabId);
+              setTabMenu(null);
+            }}
+          >
+            关闭左边
+          </button>
+          <button
+            onClick={() => {
+              onCloseOtherTabs(tabMenu.tabId);
+              setTabMenu(null);
+            }}
+          >
+            关闭其他
+          </button>
+        </div>
+      ) : null}
       <div className="terminal-error-slot">{error ? <div className="error-banner">{error}</div> : null}</div>
       <div className="terminal-workspace" ref={workspaceRef} style={workspaceStyle}>
         <aside className="terminal-hosts">
