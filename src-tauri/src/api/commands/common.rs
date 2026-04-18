@@ -1,3 +1,5 @@
+//! 命令层共用工具：向前端推送 `debug-log` 事件，并打印 stderr 便于本地调试。
+
 use tauri::{AppHandle, Emitter};
 use uuid::Uuid;
 

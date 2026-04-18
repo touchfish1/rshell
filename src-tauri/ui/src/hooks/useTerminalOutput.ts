@@ -30,9 +30,11 @@ export function useTerminalOutput(opts: {
   getTabsBySessionId: (sessionId: string) => Array<{ id: string }>;
   writeToTab: (tabId: string, text: string) => void;
   onError: (message: string) => void;
+  /** 拉取输出失败且会话已不可用（如链路断开）时回调，用于更新 UI 而非仅弹通用错误 */
+  onSessionTransportError?: (sessionId: string, message: string) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }) {
-  const { sessions, connectedIds, getTabsBySessionId, writeToTab, onError, tr } = opts;
+  const { sessions, connectedIds, getTabsBySessionId, writeToTab, onError, onSessionTransportError, tr } = opts;
 
   useEffect(() => {
     const unlistenPromise = onTerminalOutput((payload) => {
@@ -68,12 +70,16 @@ export function useTerminalOutput(opts: {
           .catch((err) => {
             const message = err instanceof Error ? err.message : String(err);
             if (message.includes("inactive session")) return;
-            onError(tr("error.pullOutputFailed", { message }));
+            if (onSessionTransportError) {
+              onSessionTransportError(id, message);
+            } else {
+              onError(tr("error.pullOutputFailed", { message }));
+            }
           });
       });
       inflight = false;
     }, PULL_OUTPUT_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [connectedIds, getTabsBySessionId, onError, sessions, tr, writeToTab]);
+  }, [connectedIds, getTabsBySessionId, onError, onSessionTransportError, sessions, tr, writeToTab]);
 }
 

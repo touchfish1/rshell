@@ -1,3 +1,5 @@
+//! 审计记录结构：连接、断开、命令等事件序列化后写入 `audit.json`。
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

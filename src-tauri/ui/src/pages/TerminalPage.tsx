@@ -1,25 +1,22 @@
 import { useEffect, useState, type ReactNode } from "react";
-import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextReadResult } from "../services/types";
+import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextReadResult, WorkspaceTab } from "../services/types";
 import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
 import { HostsPanel } from "../components/terminal/HostsPanel";
 import { SessionTabs } from "../components/terminal/SessionTabs";
 import { SftpPanel } from "../components/terminal/SftpPanel";
 import { useSplitPanels } from "../hooks/useSplitPanels";
-
-interface TerminalTab {
-  id: string;
-  sessionId: string;
-  title: string;
-}
+import { ErrorBanner } from "../components/ErrorBanner";
 
 interface Props {
   sessions: Session[];
+  connectingSessionId?: string | null;
   selectedId?: string;
   activeTabId?: string;
-  tabs: TerminalTab[];
+  tabs: WorkspaceTab[];
   connectedIds: string[];
   error: string | null;
+  onDismissError: () => void;
   status: string;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
   terminals: Array<{ id: string; node: ReactNode }>;
@@ -47,11 +44,13 @@ interface Props {
 
 export default function TerminalPage({
   sessions,
+  connectingSessionId,
   selectedId,
   activeTabId,
   tabs,
   connectedIds,
   error,
+  onDismissError,
   status,
   tr,
   terminals,
@@ -180,10 +179,13 @@ export default function TerminalPage({
         onCloseTabsToRight={onCloseTabsToRight}
         onCloseOtherTabs={onCloseOtherTabs}
       />
-      <div className="terminal-error-slot">{error ? <div className="error-banner">{error}</div> : null}</div>
+      <div className="terminal-error-slot">
+        {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
+      </div>
       <div className="terminal-workspace" ref={workspaceRef} style={workspaceStyle}>
         <HostsPanel
           sessions={sessions}
+          connectingSessionId={connectingSessionId}
           selectedId={selectedId}
           activeTabSessionId={activeTab?.sessionId}
           menu={hostMenu}

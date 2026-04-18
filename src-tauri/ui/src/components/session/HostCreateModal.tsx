@@ -7,7 +7,7 @@ interface Props {
   secret: string;
   testing: boolean;
   testResult: string | null;
-  hostInputRef: React.RefObject<HTMLInputElement | null>;
+  hostInputRef: React.RefObject<HTMLInputElement>;
   protocolPort: number;
   onClose: () => void;
   onChangeForm: (next: SessionInput) => void;

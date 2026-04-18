@@ -75,6 +75,9 @@ export default function App() {
     closeOtherTabs,
     getTabsBySessionId,
     onBackToHome,
+    retryConnect,
+    handlePullOutputFailure,
+    connectingHostId,
     terminals,
   } = useWorkspaceTabs({
     sessions,
@@ -123,6 +126,7 @@ export default function App() {
     getTabsBySessionId,
     writeToTab,
     onError: (message) => setError(message),
+    onSessionTransportError: handlePullOutputFailure,
     tr,
   });
 
@@ -161,11 +165,13 @@ export default function App() {
       {currentPage === "home" ? (
         <HomePage
           sessions={sessions}
+          connectingSessionId={connectingHostId}
           selectedId={selectedId}
           onlineMap={onlineMap}
           pingingIds={pingingIds}
           connected={connectedIds.length > 0}
           error={error}
+          onDismissError={() => setError(null)}
           status={status}
           onSelect={setSelectedId}
           onCreate={create}
@@ -194,11 +200,13 @@ export default function App() {
       ) : (
         <TerminalPage
           sessions={sessions}
+          connectingSessionId={connectingHostId}
           selectedId={selectedId}
           activeTabId={activeTabId}
           tabs={tabs}
           connectedIds={connectedIds}
           error={error}
+          onDismissError={() => setError(null)}
           status={status}
           tr={tr}
           sftpEntries={sftpProps.entries}
@@ -253,6 +261,10 @@ export default function App() {
               <TerminalPane
                 isActive={activeTabId === tab.id}
                 connected={connectedIds.includes(tab.sessionId) && activeTabId === tab.id}
+                linkState={tab.linkState}
+                linkError={tab.linkError}
+                onRetryConnect={() => void retryConnect(tab.id)}
+                onCloseFailedTab={() => void closeTab(tab.id)}
                 registerWriter={(nextWriter) => {
                   writerMapRef.current.set(tab.id, nextWriter);
                 }}

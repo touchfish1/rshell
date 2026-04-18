@@ -1,3 +1,5 @@
+//! `AppState` 上与会话列表、密钥持久化相关的实现。
+
 use uuid::Uuid;
 
 use crate::app::state::AppState;

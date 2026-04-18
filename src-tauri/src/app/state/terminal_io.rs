@@ -1,3 +1,7 @@
+//! 终端连接生命周期与 I/O：`connect` / `disconnect` / `send_input` / `resize` / `poll_output` 的 `AppState` 实现。
+//!
+//! 与具体协议（SSH/Telnet）的交互通过 `domain::terminal::TerminalClient` 完成。
+
 use std::sync::Arc;
 
 use uuid::Uuid;

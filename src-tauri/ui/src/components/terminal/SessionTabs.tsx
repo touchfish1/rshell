@@ -1,14 +1,8 @@
-import type { Session } from "../../services/types";
+import type { WorkspaceTab } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 
-interface TerminalTab {
-  id: string;
-  sessionId: string;
-  title: string;
-}
-
 interface Props {
-  tabs: TerminalTab[];
+  tabs: WorkspaceTab[];
   activeTabId?: string;
   connectedIds: string[];
   menu: { x: number; y: number; tabId: string } | null;
@@ -48,9 +42,31 @@ export function SessionTabs({
         ) : (
           tabs.map((tab) => {
             const active = tab.id === activeTabId;
-            const connected = connectedIds.includes(tab.sessionId);
+            const backendConnected = connectedIds.includes(tab.sessionId);
+            const linkState = tab.linkState ?? "ready";
+            const dotClass =
+              linkState === "failed"
+                ? "err"
+                : linkState === "connecting"
+                  ? "pending"
+                  : backendConnected
+                    ? "on"
+                    : "off";
             return (
-              <div key={tab.id} className={`session-tab ${active ? "active" : ""}`}>
+              <div
+                key={tab.id}
+                className={`session-tab ${active ? "active" : ""}`}
+                title={tr("terminal.closeTabMiddleHint")}
+                onMouseDown={(e) => {
+                  if (e.button === 1) e.preventDefault();
+                }}
+                onAuxClick={(e) => {
+                  if (e.button === 1) {
+                    e.preventDefault();
+                    onCloseTab(tab.id);
+                  }
+                }}
+              >
                 <button
                   className="session-tab-main"
                   onClick={() => onSwitchTab(tab.id)}
@@ -61,7 +77,7 @@ export function SessionTabs({
                   }}
                 >
                   {tab.title}
-                  <span className={`session-dot ${connected ? "on" : "off"}`} />
+                  <span className={`session-dot ${dotClass}`} />
                 </button>
                 <button className="session-tab-close" onClick={() => onCloseTab(tab.id)} title={tr("terminal.closeTab")}>
                   ×

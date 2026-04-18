@@ -1,16 +1,19 @@
 import SessionList from "../components/SessionList";
 import AuditLogModal from "../components/AuditLogModal";
+import { ErrorBanner } from "../components/ErrorBanner";
 import type { Session, SessionInput } from "../services/types";
 import type { AuditRecord } from "../services/types";
 import type { I18nKey, Lang } from "../i18n";
 
 interface Props {
   sessions: Session[];
+  connectingSessionId?: string | null;
   selectedId?: string;
   onlineMap: Record<string, boolean>;
   pingingIds: string[];
   connected: boolean;
   error: string | null;
+  onDismissError: () => void;
   status: string;
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<void>;
@@ -34,11 +37,13 @@ interface Props {
 
 export default function HomePage({
   sessions,
+  connectingSessionId,
   selectedId,
   onlineMap,
   pingingIds,
   connected,
   error,
+  onDismissError,
   status,
   onSelect,
   onCreate,
@@ -103,7 +108,7 @@ export default function HomePage({
         </div>
       </header>
 
-      {error ? <div className="error-banner">{error}</div> : null}
+      {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
 
       <div className="home-simple">
         <div className="home-panel">
@@ -118,6 +123,7 @@ export default function HomePage({
             <div className="home-list-wrapper">
               <SessionList
                 sessions={sessions}
+                connectingSessionId={connectingSessionId}
                 selectedId={selectedId}
                 onlineMap={onlineMap}
                 pingingIds={pingingIds}

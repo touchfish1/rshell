@@ -1,3 +1,8 @@
+//! rshell 桌面端（Tauri）Rust 入口。
+//!
+//! 负责注册插件、全局 `AppState`，以及暴露给前端的全部 `tauri::command`。
+//! Release 构建在 Windows 上使用 GUI 子系统，避免额外弹出控制台窗口。
+
 #![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
 
 mod api;
@@ -9,8 +14,11 @@ use app::AppState;
 
 fn main() {
     tauri::Builder::default()
+        // 子进程控制（如退出应用）
         .plugin(tauri_plugin_process::init())
+        // 内置在线更新
         .plugin(tauri_plugin_updater::Builder::new().build())
+        // 记住窗口位置与尺寸
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(AppState::default())
         .invoke_handler(tauri::generate_handler![

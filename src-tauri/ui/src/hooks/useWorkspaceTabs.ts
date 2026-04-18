@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { connectSession, disconnectSession, updateSession } from "../services/bridge";
-import type { Session, SessionInput } from "../services/types";
+import { connectSession, disconnectSession } from "../services/bridge";
+import type { Session, WorkspaceTab } from "../services/types";
 import type { I18nKey } from "../i18n";
-
-interface TerminalTab {
-  id: string;
-  sessionId: string;
-  title: string;
-}
+import { touchRecentSession } from "../lib/recentSessions";
+import { tryConnectSessionWithPasswordPrompt } from "../lib/tryConnectSessionWithPasswordPrompt";
+import { buildWorkspaceTabId, formatTabTitle, nextTabIndexForSession } from "../lib/workspaceTabIds";
 
 export function useWorkspaceTabs(opts: {
   sessions: Session[];
@@ -23,10 +20,12 @@ export function useWorkspaceTabs(opts: {
 
   const [connectedIds, setConnectedIds] = useState<string[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | undefined>();
-  const [tabs, setTabs] = useState<TerminalTab[]>([]);
+  const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
   const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
+  /** 首页/侧栏用于显示「该主机正在握手连接」 */
+  const [connectingHostId, setConnectingHostId] = useState<string | null>(null);
 
-  const tabsRef = useRef<TerminalTab[]>([]);
+  const tabsRef = useRef<WorkspaceTab[]>([]);
   useEffect(() => {
     tabsRef.current = tabs;
   }, [tabs]);
@@ -35,19 +34,58 @@ export function useWorkspaceTabs(opts: {
     return tabsRef.current.filter((tab) => tab.sessionId === sessionId);
   }, []);
 
+  const markTabFailed = useCallback((tabId: string, message: string) => {
+    setTabs((prev) =>
+      prev.map((t) => (t.id === tabId ? { ...t, linkState: "failed" as const, linkError: message } : t))
+    );
+    setError(message);
+  }, [setError]);
+
+  const markSessionTabsFailed = useCallback((sessionId: string, message: string) => {
+    setTabs((prev) =>
+      prev.map((t) =>
+        t.sessionId === sessionId ? { ...t, linkState: "failed" as const, linkError: message } : t
+      )
+    );
+    setError(message);
+  }, [setError]);
+
+  const handlePullOutputFailure = useCallback(
+    (sessionId: string, message: string) => {
+      setConnectedIds((prev) => prev.filter((id) => id !== sessionId));
+      void disconnectSession(sessionId).catch(() => {});
+      markSessionTabsFailed(sessionId, tr("terminal.sessionInterrupted", { message }));
+      setStatus(tr("status.sessionInterrupted"));
+    },
+    [markSessionTabsFailed, setStatus, tr]
+  );
+
   const connect = useCallback(
     async (id?: string) => {
       const sessionId = id ?? selectedId;
       if (!sessionId) return;
       const targetSession = sessions.find((session) => session.id === sessionId);
-      const index = tabsRef.current.filter((tab) => tab.sessionId === sessionId).length + 1;
-      const tabId = `${sessionId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-      const tabTitle = `${targetSession?.name ?? sessionId}${index > 1 ? ` (${index})` : ""}`;
+      const index = nextTabIndexForSession(tabsRef.current.filter((tab) => tab.sessionId === sessionId).length);
+      const tabId = buildWorkspaceTabId(sessionId);
+      const tabTitle = formatTabTitle(targetSession?.name, sessionId, index);
+      const alreadyConnected = connectedIds.includes(sessionId);
 
-      setTabs((prev) => [...prev, { id: tabId, sessionId, title: tabTitle }]);
+      setTabs((prev) => [
+        ...prev,
+        {
+          id: tabId,
+          sessionId,
+          title: tabTitle,
+          linkState: alreadyConnected ? "ready" : "connecting",
+        },
+      ]);
       setActiveTabId(tabId);
       setCurrentPage("terminal");
-      setStatus(tr("status.connecting", { name: targetSession?.name ?? sessionId }));
+      setStatus(
+        alreadyConnected
+          ? tr("status.connected", { name: targetSession?.name ?? sessionId })
+          : tr("status.connecting", { name: targetSession?.name ?? sessionId })
+      );
       setError(null);
 
       const rollbackTab = () => {
@@ -57,57 +95,106 @@ export function useWorkspaceTabs(opts: {
         clearSftpTab(tabId);
       };
 
-      if (connectedIds.includes(sessionId)) {
-        setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
+      if (alreadyConnected) {
         void loadSftp(tabId, sessionId, "/");
         return;
       }
 
-      try {
-        await connectSession(sessionId);
+      const finishOk = () => {
+        touchRecentSession(sessionId);
         setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
+        setTabs((prev) =>
+          prev.map((t) =>
+            t.sessionId === sessionId ? { ...t, linkState: "ready" as const, linkError: undefined } : t
+          )
+        );
         setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
+        setError(null);
         void loadSftp(tabId, sessionId, "/");
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        if (message.includes("missing SSH password")) {
-          const input = window.prompt(tr("prompt.inputSshPassword"));
-          if (!input) {
+      };
+
+      setConnectingHostId(sessionId);
+      try {
+        const ok = await tryConnectSessionWithPasswordPrompt({
+          sessionId,
+          targetSession,
+          tr,
+          fail: (msg) => markTabFailed(tabId, msg),
+          onPasswordPromptCancelled: () => {
             setError(tr("error.connectMissingPassword"));
             rollbackTab();
-            return;
-          }
-          try {
-            if (targetSession) {
-              const sessionInput: SessionInput = {
-                name: targetSession.name,
-                protocol: targetSession.protocol,
-                host: targetSession.host,
-                port: targetSession.port,
-                username: targetSession.username,
-                encoding: targetSession.encoding,
-                keepalive_secs: targetSession.keepalive_secs,
-              };
-              await updateSession(sessionId, sessionInput, input);
-            }
-            await connectSession(sessionId, input);
-            setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
-            setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
-            setError(null);
-            void loadSftp(tabId, sessionId, "/");
-            return;
-          } catch (retryErr) {
-            const retryMsg = retryErr instanceof Error ? retryErr.message : String(retryErr);
-            setError(tr("error.connectFailed", { message: retryMsg }));
-            rollbackTab();
-            return;
-          }
-        }
-        setError(tr("error.connectFailed", { message }));
-        rollbackTab();
+          },
+        });
+        if (ok) finishOk();
+      } finally {
+        setConnectingHostId(null);
       }
     },
-    [clearSftpTab, connectedIds, loadSftp, selectedId, sessions, setError, setStatus, tr, writerMapRef]
+    [
+      clearSftpTab,
+      connectedIds,
+      loadSftp,
+      markTabFailed,
+      selectedId,
+      sessions,
+      setError,
+      setStatus,
+      tr,
+      writerMapRef,
+    ]
+  );
+
+  const retryConnect = useCallback(
+    async (tabId: string) => {
+      const tab = tabsRef.current.find((t) => t.id === tabId);
+      if (!tab || tab.linkState !== "failed") return;
+      const sessionId = tab.sessionId;
+      const targetSession = sessions.find((s) => s.id === sessionId);
+      setTabs((prev) =>
+        prev.map((t) =>
+          t.sessionId === sessionId ? { ...t, linkState: "connecting" as const, linkError: undefined } : t
+        )
+      );
+      setStatus(tr("status.connecting", { name: targetSession?.name ?? sessionId }));
+      setError(null);
+
+      setConnectingHostId(sessionId);
+      try {
+        if (connectedIds.includes(sessionId)) {
+          try {
+            await disconnectSession(sessionId);
+          } catch {
+            /* ignore */
+          }
+          setConnectedIds((prev) => prev.filter((id) => id !== sessionId));
+        }
+
+        const finishOk = () => {
+          touchRecentSession(sessionId);
+          setConnectedIds((prev) => (prev.includes(sessionId) ? prev : [...prev, sessionId]));
+          setTabs((prev) =>
+            prev.map((t) =>
+              t.sessionId === sessionId ? { ...t, linkState: "ready" as const, linkError: undefined } : t
+            )
+          );
+          setStatus(tr("status.connected", { name: targetSession?.name ?? sessionId }));
+          setError(null);
+          void loadSftp(tabId, sessionId, "/");
+        };
+
+        const ok = await tryConnectSessionWithPasswordPrompt({
+          sessionId,
+          targetSession,
+          tr,
+          fail: (msg) => markTabFailed(tabId, msg),
+          onPasswordPromptCancelled: () => markTabFailed(tabId, tr("error.connectMissingPassword")),
+        });
+        if (ok) finishOk();
+      } finally {
+        setConnectingHostId(null);
+      }
+    },
+    [connectedIds, loadSftp, markTabFailed, sessions, setError, setStatus, tr]
   );
 
   const disconnect = useCallback(
@@ -217,6 +304,7 @@ export function useWorkspaceTabs(opts: {
     currentPage,
     setCurrentPage,
     connect,
+    retryConnect,
     disconnect,
     closeTab,
     duplicateTab,
@@ -225,6 +313,7 @@ export function useWorkspaceTabs(opts: {
     closeOtherTabs,
     getTabsBySessionId,
     onBackToHome,
+    handlePullOutputFailure,
+    connectingHostId,
   };
 }
-

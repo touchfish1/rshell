@@ -1,3 +1,5 @@
+mod shell;
+
 use ssh2::Session as Ssh2Session;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
@@ -7,6 +9,8 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::domain::terminal::TerminalError;
+
+use shell::open_shell_channel;
 
 pub(super) enum WorkerCommand {
     Write(Vec<u8>),
@@ -25,26 +29,6 @@ pub(super) fn start_worker(
     let (init_tx, init_rx) = std_mpsc::channel::<Result<(), String>>();
 
     thread::spawn(move || {
-        let open_shell_channel =
-            |ssh: &Ssh2Session, output_tx: &mpsc::UnboundedSender<Vec<u8>>| -> Option<ssh2::Channel> {
-                let mut channel = match ssh.channel_session() {
-                    Ok(c) => c,
-                    Err(e) => {
-                        let _ = output_tx.send(format!("\r\n[ssh] open channel failed: {e}\r\n").into_bytes());
-                        return None;
-                    }
-                };
-                if let Err(e) = channel.request_pty("xterm", None, Some((120, 40, 0, 0))) {
-                    let _ = output_tx.send(format!("\r\n[ssh] request pty failed: {e}\r\n").into_bytes());
-                    return None;
-                }
-                if let Err(e) = channel.shell() {
-                    let _ = output_tx.send(format!("\r\n[ssh] request shell failed: {e}\r\n").into_bytes());
-                    return None;
-                }
-                Some(channel)
-            };
-
         let addr = format!("{host}:{port}");
         let socket_addr: SocketAddr = match addr.parse() {
             Ok(a) => a,
@@ -63,8 +47,6 @@ pub(super) fn start_worker(
                 return;
             }
         };
-        // Do not set aggressive socket timeouts here.
-        // Very short TCP timeouts cause intermittent libssh2 transport read failures.
 
         let mut ssh = match Ssh2Session::new() {
             Ok(s) => s,
@@ -94,7 +76,6 @@ pub(super) fn start_worker(
             }
         };
 
-        // Non-blocking mode avoids long read stalls that delay interactive input echo.
         ssh.set_blocking(false);
         let _ = init_tx.send(Ok(()));
         let _ = output_tx.send(b"\r\n[ssh] connected\r\n".to_vec());
@@ -185,4 +166,3 @@ pub(super) fn start_worker(
         Err(_) => Err(TerminalError::Connection("ssh worker init timeout".to_string())),
     }
 }
-

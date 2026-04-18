@@ -1,3 +1,5 @@
+//! 会话 CRUD 与密钥是否存在、读取密码（供前端编辑会话时回填）。
+
 use tauri::State;
 use uuid::Uuid;
 

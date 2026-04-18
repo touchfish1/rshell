@@ -86,6 +86,26 @@
 - xterm.js 实例封装
 - 处理激活/隐藏切换的尺寸同步、聚焦、刷新
 - 将输入事件传回后端
+- 连接中/失败遮罩（重试、关闭标签）、右键复制/粘贴/全选，以及常见粘贴快捷键（含 Ctrl+Shift+V、Shift+Insert）
+- 终端字号：`localStorage`（`rshell.terminal.fontSize`）持久化；**Ctrl/Cmd + ± / 数字键 0** 与 **Ctrl/Cmd + 滚轮** 缩放
+
+### `src-tauri/ui/src/hooks/useWorkspaceTabs.ts`
+
+- 维护 `WorkspaceTab`（含 `linkState`：`connecting` / `ready` / `failed` 与 `linkError`）
+- `connectingHostId`：SSH 握手进行中时用于首页/终端侧栏主机行的加载态，避免重复发起连接
+- 连接失败保留标签并支持 `retryConnect`；`pull_output` 异常时通过 `handlePullOutputFailure` 标记会话下所有标签为断开
+
+### `src-tauri/ui/src/lib/recentSessions.ts`
+
+- 本地记录最近连接过的 `sessionId`（`localStorage` + 事件 `rshell-recent-bumped`），供主机列表排序
+
+### `src-tauri/ui/src/components/SessionList.tsx`
+
+- 主机名/地址/用户等关键字搜索；列表按「最近连接」优先展示；无匹配时展示空结果提示
+
+### `src-tauri/ui/src/components/ErrorBanner.tsx`
+
+- 顶部错误条统一展示与关闭（与终端内失败遮罩可同时出现，关闭仅清除全局 `error` 文案）
 
 ### `src-tauri/ui/src/services/bridge.ts`
 
@@ -98,6 +118,7 @@
 
 - `Session`：`id`、`name`、`protocol`、`host`、`port`、`username`、`encoding`、`keepalive_secs`
 - `SessionInput`：新增/编辑时使用
+- `WorkspaceTab`（仅前端）：终端标签 `id` / `sessionId` / `title` / `linkState` / `linkError`
 
 ## 3.2 SFTP 模型
 

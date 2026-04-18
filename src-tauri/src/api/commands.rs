@@ -1,3 +1,12 @@
+//! Tauri 命令入口聚合：每个 `#[tauri::command]` 在此声明，实现分散在子模块。
+//!
+//! - `sessions`：会话 CRUD、密钥读写
+//! - `terminal`：连接、终端 I/O、断开
+//! - `sftp`：目录列表、下载、文本读写
+//! - `metrics` / `system`：主机指标与系统打开目录、外链
+//! - `test_host_reachability`：首页 TCP 探测（内联实现）
+
+mod command_sanitize;
 mod common;
 mod metrics;
 mod sessions;

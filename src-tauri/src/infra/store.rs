@@ -1,3 +1,5 @@
+//! 会话、密钥与审计记录的本地 JSON 持久化（目录默认为用户配置下的 `rshell/`）。
+
 use std::fs;
 use std::path::PathBuf;
 

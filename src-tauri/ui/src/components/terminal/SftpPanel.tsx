@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { HostMetrics, SftpEntry, SftpTextReadResult } from "../../services/types";
 import { formatBytes, formatMtime, formatSize } from "./formatters";
+import { SftpTextEditorModal } from "./SftpTextEditorModal";
 import { useI18n } from "../../i18n-context";
 
 interface Props {
@@ -319,47 +320,23 @@ export function SftpPanel({
           </button>
         </div>
       ) : null}
-      {editorOpen ? (
-        <div className="sftp-editor-mask" onClick={() => setEditorOpen(false)}>
-          <div className="sftp-editor-dialog" onClick={(event) => event.stopPropagation()}>
-            <div className="sftp-editor-head">
-              <strong>{tr("sftp.textEditor")}</strong>
-              <span className="sftp-editor-path" title={editorPath}>
-                {editorPath}
-              </span>
-            </div>
-            {editorMeta ? (
-              <div className="sftp-editor-meta">
-                {tr("sftp.editorMeta", {
-                  loaded: formatBytes(editorMeta.loadedBytes),
-                  total: formatBytes(editorMeta.totalBytes),
-                })}
-              </div>
-            ) : null}
-            {editorWarning ? <div className="sftp-editor-warning">{editorWarning}</div> : null}
-            {editorError ? <div className="sftp-editor-error">{editorError}</div> : null}
-            <textarea
-              ref={editorTextRef}
-              className="sftp-editor-textarea"
-              value={editorText}
-              onChange={(event) => setEditorText(event.target.value)}
-              readOnly={editorReadOnly || editorLoading}
-              spellCheck={false}
-              placeholder={editorLoading ? tr("sftp.loading") : tr("sftp.editorPlaceholder")}
-            />
-            <div className="sftp-editor-actions">
-              <button onClick={() => setEditorOpen(false)}>{tr("modal.close")}</button>
-              <button
-                className="primary"
-                disabled={editorReadOnly || editorLoading || editorSaving || !editorDirty}
-                onClick={() => void saveEditor()}
-              >
-                {editorSaving ? tr("sftp.editorSaving") : tr("sftp.editorSave")}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <SftpTextEditorModal
+        open={editorOpen}
+        editorPath={editorPath}
+        editorText={editorText}
+        onEditorTextChange={setEditorText}
+        editorLoading={editorLoading}
+        editorSaving={editorSaving}
+        editorError={editorError}
+        editorWarning={editorWarning}
+        editorReadOnly={editorReadOnly}
+        editorMeta={editorMeta}
+        editorDirty={editorDirty}
+        editorTextRef={editorTextRef}
+        tr={tr}
+        onClose={() => setEditorOpen(false)}
+        onSave={saveEditor}
+      />
     </aside>
   );
 }

@@ -9,6 +9,8 @@ interface Props {
   selected: boolean;
   pinging: boolean;
   online: boolean;
+  /** 该主机正在执行连接握手 */
+  isConnecting?: boolean;
   onSelectAndConnect: (id: string) => void;
   onConnect?: (id: string) => void;
   onEdit: (session: Session) => void;
@@ -21,6 +23,7 @@ export function SessionRow({
   selected,
   pinging,
   online,
+  isConnecting = false,
   onSelectAndConnect,
   onConnect,
   onEdit,
@@ -59,11 +62,16 @@ export function SessionRow({
   };
 
   return (
-    <li key={session.id} className={`session-line ${selected ? "active" : ""}`}>
+    <li
+      key={session.id}
+      className={`session-line ${selected ? "active" : ""} ${isConnecting ? "session-line-connecting" : ""}`}
+    >
       <button
         className="session-main"
         onClick={() => onSelectAndConnect(session.id)}
-        title={tr("session.connectTitle", { name: session.name })}
+        title={
+          isConnecting ? tr("session.connectingHint") : tr("session.connectTitle", { name: session.name })
+        }
       >
         <span className="session-col name">
           <span className={`os-icon ${os.cls}`} title={os.label} aria-label={os.label}>
@@ -109,8 +117,16 @@ export function SessionRow({
 
       <div className="session-actions">
         {onConnect ? (
-          <button className="connect" onClick={() => onConnect(session.id)} title={tr("session.connect")}>
-            {tr("session.connect")}
+          <button
+            className="connect"
+            disabled={isConnecting}
+            onClick={() => {
+              if (isConnecting) return;
+              onConnect(session.id);
+            }}
+            title={isConnecting ? tr("session.connectingHint") : tr("session.connect")}
+          >
+            {isConnecting ? tr("session.connectingAction") : tr("session.connect")}
           </button>
         ) : null}
         <button className="edit" onClick={() => onEdit(session)} title={tr("session.editHost")}>

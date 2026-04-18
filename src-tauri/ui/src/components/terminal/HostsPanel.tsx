@@ -3,6 +3,7 @@ import { useI18n } from "../../i18n-context";
 
 interface Props {
   sessions: Session[];
+  connectingSessionId?: string | null;
   selectedId?: string;
   activeTabSessionId?: string;
   menu: { x: number; y: number; session: Session } | null;
@@ -15,6 +16,7 @@ interface Props {
 
 export function HostsPanel({
   sessions,
+  connectingSessionId,
   selectedId,
   activeTabSessionId,
   menu,
@@ -54,18 +56,24 @@ export function HostsPanel({
           {sessions.map((session) => {
             const hasActiveTab = activeTabSessionId === session.id;
             const selected = selectedId === session.id;
+            const isBusy = connectingSessionId === session.id;
             return (
               <li key={session.id}>
                 <button
-                  className={`${selected ? "active" : ""} ${hasActiveTab ? "has-tab" : ""}`.trim()}
+                  className={`${selected ? "active" : ""} ${hasActiveTab ? "has-tab" : ""} ${isBusy ? "host-connecting" : ""}`.trim()}
                   onClick={() => onSelectSession(session.id)}
-                  onDoubleClick={() => onOpenSession(session.id)}
+                  onDoubleClick={() => {
+                    if (isBusy) return;
+                    onOpenSession(session.id);
+                  }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
                     onSetMenu({ x: e.clientX, y: e.clientY, session });
                   }}
-                  title={tr("terminal.hostSingleDoubleClickHint")}
+                  title={
+                    isBusy ? tr("session.connectingHint") : tr("terminal.hostSingleDoubleClickHint")
+                  }
                 >
                   {session.name}
                 </button>

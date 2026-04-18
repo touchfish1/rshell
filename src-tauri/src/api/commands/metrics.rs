@@ -1,3 +1,5 @@
+//! 通过 SSH 在远端执行轻量命令采集 CPU/内存/磁盘（仅 SSH 会话）。
+
 use tauri::{AppHandle, State};
 use uuid::Uuid;
 

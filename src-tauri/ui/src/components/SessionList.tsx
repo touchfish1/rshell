@@ -1,33 +1,20 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Session, SessionInput } from "../services/types";
 import { HostCreateModal } from "./session/HostCreateModal";
 import { HostEditModal } from "./session/HostEditModal";
 import { SessionRow } from "./session/SessionRow";
 import { SessionTableHead } from "./session/SessionTableHead";
+import { SessionListToolbar } from "./session/SessionListToolbar";
 import { useSessionListForms } from "./session/useSessionListForms";
 import { useI18n } from "../i18n-context";
-
-const NAME_COL_MIN = 100;
-const NAME_COL_MAX = 420;
-const HOST_COL_MIN = 140;
-const HOST_COL_MAX = 560;
-const NAME_COL_STORAGE_KEY = "rshell.sessionList.nameColWidth";
-const HOST_COL_STORAGE_KEY = "rshell.sessionList.hostColWidth";
-
-function clamp(value: number, min: number, max: number) {
-  return Math.max(min, Math.min(max, value));
-}
-
-function loadStoredWidth(key: string, fallback: number, min: number, max: number) {
-  const raw = localStorage.getItem(key);
-  if (!raw) return fallback;
-  const parsed = Number(raw);
-  if (!Number.isFinite(parsed)) return fallback;
-  return clamp(parsed, min, max);
-}
+import { getRecentSessionIds } from "../lib/recentSessions";
+import { orderSessionsByRecent } from "../lib/orderSessionsByRecent";
+import { sessionInputFromSession } from "../lib/sessionInput";
+import { useSessionListColumns } from "../hooks/useSessionListColumns";
 
 interface Props {
   sessions: Session[];
+  connectingSessionId?: string | null;
   selectedId?: string;
   onlineMap: Record<string, boolean>;
   pingingIds: string[];
@@ -42,6 +29,7 @@ interface Props {
 
 export default function SessionList({
   sessions,
+  connectingSessionId,
   selectedId,
   onlineMap,
   pingingIds,
@@ -53,69 +41,43 @@ export default function SessionList({
   onGetSecret,
   onConnect,
 }: Props) {
-  const { tr, lang } = useI18n();
-  const [nameColWidth, setNameColWidth] = useState(() =>
-    loadStoredWidth(NAME_COL_STORAGE_KEY, 140, NAME_COL_MIN, NAME_COL_MAX)
-  );
-  const [hostColWidth, setHostColWidth] = useState(() =>
-    loadStoredWidth(HOST_COL_STORAGE_KEY, 220, HOST_COL_MIN, HOST_COL_MAX)
-  );
-  const dragRef = useRef<{
-    col: "name" | "host";
-    startX: number;
-    startWidth: number;
-  } | null>(null);
+  const { tr } = useI18n();
+  const [hostQuery, setHostQuery] = useState("");
+  const [recentIds, setRecentIds] = useState(() => getRecentSessionIds());
+
+  const { gridStyle, onResizeNameStart, onResizeHostStart } = useSessionListColumns();
 
   useEffect(() => {
-    const onMouseMove = (event: MouseEvent) => {
-      if (!dragRef.current) return;
-      const delta = event.clientX - dragRef.current.startX;
-      const next = dragRef.current.startWidth + delta;
-      if (dragRef.current.col === "name") {
-        setNameColWidth(clamp(next, NAME_COL_MIN, NAME_COL_MAX));
-      } else {
-        setHostColWidth(clamp(next, HOST_COL_MIN, HOST_COL_MAX));
-      }
-    };
-    const onMouseUp = () => {
-      dragRef.current = null;
-    };
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
+    const onBump = () => setRecentIds(getRecentSessionIds());
+    window.addEventListener("rshell-recent-bumped", onBump);
+    return () => window.removeEventListener("rshell-recent-bumped", onBump);
   }, []);
 
-  useEffect(() => {
-    localStorage.setItem(NAME_COL_STORAGE_KEY, String(nameColWidth));
-  }, [nameColWidth]);
-
-  useEffect(() => {
-    localStorage.setItem(HOST_COL_STORAGE_KEY, String(hostColWidth));
-  }, [hostColWidth]);
-  const duplicateHost = async (session: Session) => {
-    const copyName = `${session.name}-${lang === "zh-CN" ? "副本" : "copy"}`;
-    const input: SessionInput = {
-      name: copyName,
-      protocol: session.protocol,
-      host: session.host,
-      port: session.port,
-      username: session.username,
-      encoding: session.encoding,
-      keepalive_secs: session.keepalive_secs,
+  const displayedSessions = useMemo(() => {
+    const q = hostQuery.trim().toLowerCase();
+    const matches = (s: Session) => {
+      if (!q) return true;
+      return (
+        s.name.toLowerCase().includes(q) ||
+        s.host.toLowerCase().includes(q) ||
+        s.username.toLowerCase().includes(q) ||
+        s.protocol.toLowerCase().includes(q) ||
+        String(s.port).includes(q)
+      );
     };
+    const filtered = sessions.filter(matches);
+    return orderSessionsByRecent(filtered, recentIds);
+  }, [sessions, recentIds, hostQuery]);
+
+  const duplicateHost = async (session: Session) => {
+    const copyName = `${session.name}-${tr("session.copySuffix")}`;
+    const input = sessionInputFromSession(session, copyName);
     const secret = await onGetSecret(session.id);
     await onCreate(input, secret ?? undefined);
   };
 
   const confirmDelete = async (session: Session) => {
-    const ok = window.confirm(
-      lang === "zh-CN"
-        ? `确定删除主机“${session.name}”吗？`
-        : `Are you sure you want to delete host "${session.name}"?`
-    );
+    const ok = window.confirm(tr("session.deleteConfirm", { name: session.name }));
     if (!ok) return;
     await onDelete(session.id);
   };
@@ -158,38 +120,20 @@ export default function SessionList({
   });
 
   return (
-    <aside
-      className="session-list"
-      style={
-        {
-          "--session-col-name": `${nameColWidth}px`,
-          "--session-col-host": `${hostColWidth}px`,
-        } as CSSProperties
-      }
-    >
-      <div className="session-list-header">
-        <h3>{tr("session.management")}</h3>
-        <button
-          className="btn btn-ghost"
-          onClick={() => setShowCreateModal(true)}
-          title={tr("session.addHost")}
-        >
-          {tr("session.addHost")}
-        </button>
-      </div>
-      <SessionTableHead
-        onResizeNameStart={(clientX) => {
-          dragRef.current = { col: "name", startX: clientX, startWidth: nameColWidth };
-        }}
-        onResizeHostStart={(clientX) => {
-          dragRef.current = { col: "host", startX: clientX, startWidth: hostColWidth };
-        }}
+    <aside className="session-list" style={gridStyle}>
+      <SessionListToolbar
+        hostQuery={hostQuery}
+        onHostQueryChange={setHostQuery}
+        tr={tr}
+        onOpenCreate={() => setShowCreateModal(true)}
       />
+      <SessionTableHead onResizeNameStart={onResizeNameStart} onResizeHostStart={onResizeHostStart} />
       <ul className="session-table-body">
-        {sessions.map((session) => {
+        {displayedSessions.map((session) => {
           const active = selectedId === session.id;
           const pinging = pingingIds.includes(session.id);
           const online = onlineMap[session.id] ?? false;
+          const isConnectingHost = connectingSessionId === session.id;
           return (
             <SessionRow
               key={session.id}
@@ -197,9 +141,12 @@ export default function SessionList({
               selected={active}
               pinging={pinging}
               online={online}
+              isConnecting={isConnectingHost}
               onSelectAndConnect={(id) => {
                 onSelect(id);
-                onConnect?.(id);
+                if (connectingSessionId !== id) {
+                  onConnect?.(id);
+                }
               }}
               onConnect={onConnect}
               onEdit={openEdit}
@@ -212,6 +159,11 @@ export default function SessionList({
             />
           );
         })}
+        {displayedSessions.length === 0 && sessions.length > 0 && hostQuery.trim() ? (
+          <li className="session-search-empty" role="status">
+            {tr("home.searchNoResults")}
+          </li>
+        ) : null}
       </ul>
       <HostCreateModal
         open={showCreateModal}

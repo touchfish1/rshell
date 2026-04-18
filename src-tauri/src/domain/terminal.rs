@@ -1,3 +1,5 @@
+//! 终端会话抽象：协议无关的读写、改尺寸、断开；由 `infra::ssh_client` / `telnet_client` 实现。
+
 use async_trait::async_trait;
 use thiserror::Error;
 

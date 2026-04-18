@@ -1,6 +1,11 @@
+//! 全局 `AppState`：会话内存镜像、活跃终端表、审计输入缓冲等。
+//!
+//! 子模块按职责拆分：`sessions` / `terminal_io` / `sftp` / `metrics` / `audit` 等。
+
 mod metrics;
 mod sessions;
 mod sftp;
+mod audit_parse;
 mod audit;
 mod ssh_helpers;
 mod terminal_io;
@@ -17,6 +22,7 @@ use crate::domain::session::Session;
 use crate::domain::terminal::TerminalClient;
 use crate::infra::store::SessionStore;
 
+/// 审计用：按会话缓冲终端输入，用于解析控制序列、归并命令行。
 #[derive(Default)]
 pub(crate) struct AuditInputState {
     pub buffer: String,
@@ -24,6 +30,7 @@ pub(crate) struct AuditInputState {
     pub csi_pending: bool,
 }
 
+/// 已连接会话在内存中的句柄，内层为异步 `TerminalClient`。
 pub struct ActiveTerminal {
     pub client: Mutex<Box<dyn TerminalClient>>,
 }
@@ -48,10 +55,15 @@ pub struct HostMetrics {
     pub disk_percent: f64,
 }
 
+/// 应用全局状态（由 Tauri `manage` 注入，所有 command 共享）。
 pub struct AppState {
+    /// 本地 `sessions.json` / `secrets.json` / `audit.json` 访问
     store: SessionStore,
+    /// 当前内存中的会话列表（与磁盘同步）
     sessions: Arc<Mutex<Vec<Session>>>,
+    /// 已建立终端连接：`session_id ->` 活跃客户端
     active: Arc<Mutex<HashMap<Uuid, Arc<ActiveTerminal>>>>,
+    /// 审计：每个会话的输入解析状态
     audit_input_buffers: Arc<Mutex<HashMap<Uuid, AuditInputState>>>,
 }
 

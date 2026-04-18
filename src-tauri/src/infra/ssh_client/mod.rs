@@ -1,3 +1,7 @@
+//! SSH 终端实现：在独立线程中跑 `russh`/`ssh2` worker，与异步主循环通过 channel 交换数据。
+//!
+//! 连接、shell、SFTP 等细节见 `worker` 子模块。
+
 use async_trait::async_trait;
 use std::sync::mpsc as std_mpsc;
 use std::time::Duration;

@@ -1,3 +1,5 @@
+//! SFTP：列目录、下载到本机、读写远程文本文件（供 UI 编辑器）。
+
 use tauri::{AppHandle, State};
 use uuid::Uuid;
 

@@ -1,3 +1,5 @@
+//! Telnet 终端：基于 `TcpStream` 的简单读写，实现 `TerminalClient`。
+
 use async_trait::async_trait;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;

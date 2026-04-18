@@ -1,5 +1,16 @@
 export type Protocol = "ssh" | "telnet";
 
+/** 终端标签与后端的链路状态（用于加载态、失败重试、断开提示） */
+export type TabLinkState = "connecting" | "ready" | "failed";
+
+export interface WorkspaceTab {
+  id: string;
+  sessionId: string;
+  title: string;
+  linkState: TabLinkState;
+  linkError?: string;
+}
+
 export interface Session {
   id: string;
   name: string;

@@ -1,3 +1,5 @@
+//! 会话配置模型：保存到磁盘的 `Session` 与前端编辑用的 `SessionInput`。
+
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

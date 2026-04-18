@@ -1,3 +1,5 @@
+//! 跨平台打开本机目录/选中文件、在默认浏览器打开 URL。
+
 use std::path::Path;
 use std::process::Command;
 

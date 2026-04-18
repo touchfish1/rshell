@@ -1,17 +1,44 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
+import type { TabLinkState } from "../services/types";
+import { useI18n } from "../i18n-context";
+import { TerminalPaneContextMenu } from "./terminal/TerminalPaneContextMenu";
+import { TerminalPaneLinkOverlay } from "./terminal/TerminalPaneLinkOverlay";
+import {
+  adjustTerminalFontSize,
+  getTerminalFontSize,
+  persistTerminalFontSize,
+  TERMINAL_FONT_DEFAULT,
+  TERMINAL_FONT_MAX,
+  TERMINAL_FONT_MIN,
+} from "../lib/terminalFontSize";
 
 interface Props {
   isActive: boolean;
   connected: boolean;
+  linkState?: TabLinkState;
+  linkError?: string;
+  onRetryConnect?: () => void;
+  onCloseFailedTab?: () => void;
   onInput: (text: string) => void;
   onResize: (cols: number, rows: number) => void;
   registerWriter: (writer: (content: string) => void) => void;
 }
 
-export default function TerminalPane({ isActive, connected, onInput, onResize, registerWriter }: Props) {
+export default function TerminalPane({
+  isActive,
+  connected,
+  linkState = "ready",
+  linkError,
+  onRetryConnect,
+  onCloseFailedTab,
+  onInput,
+  onResize,
+  registerWriter,
+}: Props) {
+  const { tr } = useI18n();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const connectedRef = useRef(connected);
   const activeRef = useRef(isActive);
@@ -21,6 +48,18 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const lastResizeRef = useRef<{ cols: number; rows: number; at: number }>({ cols: 0, rows: 0, at: 0 });
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number } | null>(null);
+
+  const pasteFromClipboard = useCallback((terminal: Terminal) => {
+    void navigator.clipboard
+      .readText()
+      .then((text) => {
+        if (text.length > 0) {
+          terminal.paste(text);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     connectedRef.current = connected;
@@ -84,7 +123,7 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
 
     const terminal = new Terminal({
       cursorBlink: true,
-      fontSize: 13,
+      fontSize: getTerminalFontSize(),
       theme: { background: "#101219" },
     });
     const fitAddon = new FitAddon();
@@ -92,45 +131,29 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
     fitAddonRef.current = fitAddon;
     terminal.loadAddon(fitAddon);
     terminal.open(containerRef.current);
-    terminal.attachCustomKeyEventHandler((event) => {
-      if (event.type === "keydown" && event.key === "Tab") {
-        // Keep Tab inside terminal for remote shell completion.
-        event.preventDefault();
-        return true;
-      }
-      if (
-        event.type === "keydown" &&
+
+    const tryPaste = (event: KeyboardEvent) => {
+      const isModV =
         (event.ctrlKey || event.metaKey) &&
         !event.altKey &&
-        (event.key === "c" || event.key === "C" || event.code === "KeyC") &&
-        terminal.hasSelection()
-      ) {
-        void navigator.clipboard.writeText(terminal.getSelection()).catch(() => {});
-        event.preventDefault();
-        return false;
-      }
-      if (
+        (event.key === "v" || event.key === "V" || event.code === "KeyV");
+      const isCtrlShiftV =
         event.type === "keydown" &&
-        (event.ctrlKey || event.metaKey) &&
+        event.ctrlKey &&
+        event.shiftKey &&
+        !event.metaKey &&
         !event.altKey &&
-        !event.shiftKey &&
-        (event.key === "v" || event.key === "V" || event.code === "KeyV")
-      ) {
+        (event.key === "V" || event.key === "v" || event.code === "KeyV");
+      const isShiftInsert =
+        event.key === "Insert" && event.shiftKey && !event.ctrlKey && !event.metaKey && !event.altKey;
+
+      if (isCtrlShiftV || (isModV && !event.shiftKey) || isShiftInsert) {
         event.preventDefault();
-        void navigator.clipboard
-          .readText()
-          .then((text) => {
-            if (text.length > 0) {
-              terminal.paste(text);
-            }
-          })
-          .catch(() => {});
+        pasteFromClipboard(terminal);
         return false;
       }
       return true;
-    });
-    fitAddon.fit();
-    terminal.focus();
+    };
 
     const syncPaneHeight = () => {
       const pane = containerRef.current;
@@ -153,6 +176,103 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
         onResizeRef.current(terminal.cols, terminal.rows);
       }
     };
+
+    const applyFontSize = (raw: number) => {
+      const next = Math.max(TERMINAL_FONT_MIN, Math.min(TERMINAL_FONT_MAX, Math.round(raw)));
+      persistTerminalFontSize(next);
+      terminal.options.fontSize = next;
+      onWindowResize();
+    };
+
+    terminal.attachCustomKeyEventHandler((event) => {
+      if (event.type === "keydown" && event.key === "Tab") {
+        event.preventDefault();
+        return true;
+      }
+      if (event.type === "keydown" && (event.ctrlKey || event.metaKey) && !event.altKey) {
+        const code = event.code;
+        if (code === "Equal" || code === "NumpadAdd") {
+          event.preventDefault();
+          applyFontSize(
+            adjustTerminalFontSize(terminal.options.fontSize ?? TERMINAL_FONT_DEFAULT, 1)
+          );
+          return false;
+        }
+        if (code === "Minus" || code === "NumpadSubtract") {
+          event.preventDefault();
+          applyFontSize(
+            adjustTerminalFontSize(terminal.options.fontSize ?? TERMINAL_FONT_DEFAULT, -1)
+          );
+          return false;
+        }
+        if (code === "Digit0" || code === "Numpad0") {
+          event.preventDefault();
+          applyFontSize(TERMINAL_FONT_DEFAULT);
+          return false;
+        }
+      }
+      if (event.type === "keydown") {
+        const pasted = tryPaste(event);
+        if (!pasted) return false;
+      }
+      if (
+        event.type === "keydown" &&
+        event.ctrlKey &&
+        event.shiftKey &&
+        !event.metaKey &&
+        !event.altKey &&
+        (event.key === "c" || event.key === "C" || event.code === "KeyC") &&
+        terminal.hasSelection()
+      ) {
+        void navigator.clipboard.writeText(terminal.getSelection()).catch(() => {});
+        event.preventDefault();
+        return false;
+      }
+      if (
+        event.type === "keydown" &&
+        event.metaKey &&
+        event.shiftKey &&
+        !event.ctrlKey &&
+        !event.altKey &&
+        (event.key === "c" || event.key === "C" || event.code === "KeyC") &&
+        terminal.hasSelection()
+      ) {
+        void navigator.clipboard.writeText(terminal.getSelection()).catch(() => {});
+        event.preventDefault();
+        return false;
+      }
+      if (
+        event.type === "keydown" &&
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        (event.key === "c" || event.key === "C" || event.code === "KeyC") &&
+        terminal.hasSelection()
+      ) {
+        void navigator.clipboard.writeText(terminal.getSelection()).catch(() => {});
+        event.preventDefault();
+        return false;
+      }
+      return true;
+    });
+    fitAddon.fit();
+    terminal.focus();
+
+    const onContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      setCtxMenu({ x: event.clientX, y: event.clientY });
+    };
+    terminal.element?.addEventListener("contextmenu", onContextMenu);
+
+    const onWheelZoom = (e: WheelEvent) => {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 1 : -1;
+      applyFontSize(
+        adjustTerminalFontSize(terminal.options.fontSize ?? TERMINAL_FONT_DEFAULT, delta)
+      );
+    };
+    terminal.element?.addEventListener("wheel", onWheelZoom, { passive: false });
     let fitScheduled = false;
     const scheduleFit = () => {
       if (fitScheduled) return;
@@ -171,7 +291,6 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
     });
 
     const disposeInput = terminal.onData((value) => {
-      // 连接后只显示远端回显，避免本地/远端双写叠加。
       if (!connectedRef.current) {
         terminal.write(value);
       }
@@ -183,8 +302,6 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
     window.addEventListener("resize", onWindowResize);
     onWindowResize();
     const resizeObserver = new ResizeObserver(() => {
-      // Terminal container height can change without window resize.
-      // Keep xterm rows in sync so the prompt stays at the visual bottom.
       onWindowResize();
     });
     resizeObserver.observe(containerRef.current);
@@ -196,6 +313,8 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
     );
 
     return () => {
+      terminal.element?.removeEventListener("contextmenu", onContextMenu);
+      terminal.element?.removeEventListener("wheel", onWheelZoom);
       window.removeEventListener("resize", onWindowResize);
       resizeObserver.disconnect();
       delayedFits.forEach((id) => window.clearTimeout(id));
@@ -204,7 +323,65 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
       fitAddonRef.current = null;
       terminal.dispose();
     };
-  }, []);
+  }, [pasteFromClipboard]);
 
-  return <div className="terminal-pane" ref={containerRef} />;
+  useEffect(() => {
+    if (!ctxMenu) return;
+    const close = () => setCtxMenu(null);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") close();
+    };
+    const timer = window.setTimeout(() => {
+      window.addEventListener("click", close);
+    }, 0);
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener("click", close);
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [ctxMenu]);
+
+  const runCtxCopy = () => {
+    const terminal = terminalRef.current;
+    if (!terminal?.hasSelection()) return;
+    void navigator.clipboard.writeText(terminal.getSelection()).catch(() => {});
+    setCtxMenu(null);
+  };
+
+  const runCtxPaste = () => {
+    const terminal = terminalRef.current;
+    if (!terminal) return;
+    pasteFromClipboard(terminal);
+    setCtxMenu(null);
+  };
+
+  const runCtxSelectAll = () => {
+    terminalRef.current?.selectAll();
+    setCtxMenu(null);
+  };
+
+  const terminal = terminalRef.current;
+  const canCtxCopy = Boolean(terminal?.hasSelection());
+
+  return (
+    <div className="terminal-pane-shell" title={tr("terminal.zoomKeyboardHint")}>
+      <div className="terminal-pane" ref={containerRef} />
+      <TerminalPaneContextMenu
+        ctxMenu={ctxMenu}
+        canCtxCopy={canCtxCopy}
+        tr={tr}
+        onCopy={runCtxCopy}
+        onPaste={runCtxPaste}
+        onSelectAll={runCtxSelectAll}
+      />
+      <TerminalPaneLinkOverlay
+        linkState={linkState}
+        linkError={linkError}
+        tr={tr}
+        onRetryConnect={onRetryConnect}
+        onCloseFailedTab={onCloseFailedTab}
+      />
+    </div>
+  );
 }

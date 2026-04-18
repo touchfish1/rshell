@@ -36,7 +36,7 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
   const [editTesting, setEditTesting] = useState(false);
   const [editTestResult, setEditTestResult] = useState<string | null>(null);
 
-  const hostInputRef = useRef<HTMLInputElement | null>(null);
+  const hostInputRef = useRef<HTMLInputElement>(null);
 
   const createProtocolPort = useMemo(() => (createForm.protocol === "ssh" ? 22 : 23), [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
