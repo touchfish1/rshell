@@ -1,7 +1,7 @@
 {
   "name": "rshell-workspace",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.14",
   "devDependencies": {
     "@tauri-apps/cli": "^2.10.1"
   },

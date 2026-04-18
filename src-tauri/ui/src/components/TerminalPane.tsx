@@ -98,6 +98,35 @@ export default function TerminalPane({ isActive, connected, onInput, onResize, r
         event.preventDefault();
         return true;
       }
+      if (
+        event.type === "keydown" &&
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        (event.key === "c" || event.key === "C" || event.code === "KeyC") &&
+        terminal.hasSelection()
+      ) {
+        void navigator.clipboard.writeText(terminal.getSelection()).catch(() => {});
+        event.preventDefault();
+        return false;
+      }
+      if (
+        event.type === "keydown" &&
+        (event.ctrlKey || event.metaKey) &&
+        !event.altKey &&
+        !event.shiftKey &&
+        (event.key === "v" || event.key === "V" || event.code === "KeyV")
+      ) {
+        event.preventDefault();
+        void navigator.clipboard
+          .readText()
+          .then((text) => {
+            if (text.length > 0) {
+              terminal.paste(text);
+            }
+          })
+          .catch(() => {});
+        return false;
+      }
       return true;
     });
     fitAddon.fit();
