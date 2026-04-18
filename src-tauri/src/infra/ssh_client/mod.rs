@@ -72,8 +72,12 @@ impl TerminalClient for SshClient {
         self.port = Some(session.port);
         self.username = Some(session.username.clone());
 
-        let (cmd_tx, output_rx) =
-            start_worker(session.host.clone(), session.port, session.username.clone(), password)?;
+        let (cmd_tx, output_rx) = start_worker(
+            session.host.clone(),
+            session.port,
+            session.username.clone(),
+            password,
+        )?;
         self.cmd_tx = Some(cmd_tx);
         self.output_rx = Some(output_rx);
         Ok(())
@@ -137,4 +141,3 @@ impl TerminalClient for SshClient {
 
 #[cfg(test)]
 mod tests;
-

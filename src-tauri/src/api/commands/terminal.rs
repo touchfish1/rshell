@@ -29,7 +29,12 @@ pub async fn connect_session(
     let _ = state
         .record_session_audit(id, "connect", None, "session connected".to_string())
         .await;
-    emit_debug(&app, Some(id), "connect", "connect_session succeeded, start poll loop");
+    emit_debug(
+        &app,
+        Some(id),
+        "connect",
+        "connect_session succeeded, start poll loop",
+    );
     let hello = base64::engine::general_purpose::STANDARD.encode(b"[rshell] connected\r\n");
     let _ = app.emit(
         "terminal-output",
@@ -38,7 +43,11 @@ pub async fn connect_session(
     Ok(())
 }
 
-pub async fn pull_output(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+pub async fn pull_output(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     match state.poll_output(id).await {
         Ok(bytes) => {
@@ -51,7 +60,9 @@ pub async fn pull_output(app: AppHandle, state: State<'_, AppState>, id: String)
                     "pull_output",
                     &format!("received {} bytes", bytes.len()),
                 );
-                Ok(Some(base64::engine::general_purpose::STANDARD.encode(bytes)))
+                Ok(Some(
+                    base64::engine::general_purpose::STANDARD.encode(bytes),
+                ))
             }
         }
         Err(err) => {
@@ -61,7 +72,11 @@ pub async fn pull_output(app: AppHandle, state: State<'_, AppState>, id: String)
     }
 }
 
-pub async fn disconnect_session(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<(), String> {
+pub async fn disconnect_session(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     emit_debug(&app, Some(id), "disconnect", "disconnect requested");
     let result = state.disconnect_session(id).await;
@@ -70,13 +85,22 @@ pub async fn disconnect_session(app: AppHandle, state: State<'_, AppState>, id: 
     } else {
         "disconnect failed".to_string()
     };
-    let event = if result.is_ok() { "disconnect" } else { "disconnect_failed" };
+    let event = if result.is_ok() {
+        "disconnect"
+    } else {
+        "disconnect_failed"
+    };
     let _ = state.record_session_audit(id, event, None, detail).await;
     state.clear_audit_input_buffer(id).await;
     result
 }
 
-pub async fn send_input(app: AppHandle, state: State<'_, AppState>, id: String, input: String) -> Result<(), String> {
+pub async fn send_input(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    input: String,
+) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     emit_debug(
         &app,
@@ -111,7 +135,11 @@ pub async fn resize_terminal(
     rows: u16,
 ) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    emit_debug(&app, Some(id), "resize", &format!("resize to {}x{}", cols, rows));
+    emit_debug(
+        &app,
+        Some(id),
+        "resize",
+        &format!("resize to {}x{}", cols, rows),
+    );
     state.resize_terminal(id, cols, rows).await
 }
-

@@ -1,3 +1,7 @@
+//! SSH 阻塞线程 worker：在独立 `std::thread` 里跑 `ssh2`，通过 channel 与 async 侧桥接。
+//!
+//! `WorkerCommand` 写终端、改 PTY 尺寸、断开；输出经 `tokio::mpsc` 送回主循环。
+
 mod shell;
 
 use ssh2::Session as Ssh2Session;
@@ -23,7 +27,13 @@ pub(super) fn start_worker(
     port: u16,
     username: String,
     password: String,
-) -> Result<(std_mpsc::Sender<WorkerCommand>, mpsc::UnboundedReceiver<Vec<u8>>), TerminalError> {
+) -> Result<
+    (
+        std_mpsc::Sender<WorkerCommand>,
+        mpsc::UnboundedReceiver<Vec<u8>>,
+    ),
+    TerminalError,
+> {
     let (cmd_tx, cmd_rx) = std_mpsc::channel::<WorkerCommand>();
     let (output_tx, output_rx) = mpsc::unbounded_channel::<Vec<u8>>();
     let (init_tx, init_rx) = std_mpsc::channel::<Result<(), String>>();
@@ -52,7 +62,8 @@ pub(super) fn start_worker(
             Ok(s) => s,
             Err(e) => {
                 let _ = init_tx.send(Err(format!("session init failed: {e}")));
-                let _ = output_tx.send(format!("\r\n[ssh] session init failed: {e}\r\n").into_bytes());
+                let _ =
+                    output_tx.send(format!("\r\n[ssh] session init failed: {e}\r\n").into_bytes());
                 return;
             }
         };
@@ -91,17 +102,20 @@ pub(super) fn start_worker(
                             .collect::<Vec<u8>>();
                         if let Err(e) = channel.write_all(&normalized) {
                             let text = e.to_string();
-                            if text.contains("closed channel") || text.contains("channel is closed") {
+                            if text.contains("closed channel") || text.contains("channel is closed")
+                            {
                                 if let Some(new_channel) = open_shell_channel(&ssh, &output_tx) {
                                     channel = new_channel;
-                                    let _ = output_tx.send(b"\r\n[ssh] channel reopened\r\n".to_vec());
+                                    let _ =
+                                        output_tx.send(b"\r\n[ssh] channel reopened\r\n".to_vec());
                                     let _ = channel.write_all(&normalized);
                                 } else {
                                     let _ = output_tx.send(b"\r\n[ssh] reopen failed\r\n".to_vec());
                                     return;
                                 }
                             }
-                            let _ = output_tx.send(format!("\r\n[ssh] write failed: {e}\r\n").into_bytes());
+                            let _ = output_tx
+                                .send(format!("\r\n[ssh] write failed: {e}\r\n").into_bytes());
                         }
                         let _ = channel.flush();
                     }
@@ -138,7 +152,8 @@ pub(super) fn start_worker(
                         && e.kind() != std::io::ErrorKind::TimedOut
                         && e.kind() != std::io::ErrorKind::Interrupted
                     {
-                        let _ = output_tx.send(format!("\r\n[ssh] read failed: {e}\r\n").into_bytes());
+                        let _ =
+                            output_tx.send(format!("\r\n[ssh] read failed: {e}\r\n").into_bytes());
                         let text = e.to_string();
                         if text.contains("transport read") {
                             thread::sleep(Duration::from_millis(50));
@@ -163,6 +178,8 @@ pub(super) fn start_worker(
     match init_rx.recv_timeout(Duration::from_secs(10)) {
         Ok(Ok(())) => Ok((cmd_tx, output_rx)),
         Ok(Err(e)) => Err(TerminalError::Connection(e)),
-        Err(_) => Err(TerminalError::Connection("ssh worker init timeout".to_string())),
+        Err(_) => Err(TerminalError::Connection(
+            "ssh worker init timeout".to_string(),
+        )),
     }
 }

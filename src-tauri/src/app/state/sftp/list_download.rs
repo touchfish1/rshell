@@ -1,7 +1,10 @@
+//! SFTP 列目录与下载到本机用户目录（含错误信息友好化）。
+
 use std::fs::File;
-use std::io::copy;
+use std::io::{copy, Write};
 use std::path::{Path, PathBuf};
 
+use base64::Engine;
 use uuid::Uuid;
 
 use crate::app::state::{AppState, SftpEntry};
@@ -19,7 +22,11 @@ fn describe_io_error(error: &std::io::Error, stage: &str, target_path: &Path) ->
 }
 
 impl AppState {
-    pub async fn list_sftp_dir(&self, id: Uuid, path: Option<String>) -> Result<Vec<SftpEntry>, String> {
+    pub async fn list_sftp_dir(
+        &self,
+        id: Uuid,
+        path: Option<String>,
+    ) -> Result<Vec<SftpEntry>, String> {
         let session = self.find_session(id).await?;
         if !matches!(session.protocol, Protocol::Ssh) {
             return Err("sftp only supports ssh sessions".to_string());
@@ -62,7 +69,11 @@ impl AppState {
         Ok(out)
     }
 
-    pub async fn download_sftp_file(&self, id: Uuid, remote_path: String) -> Result<String, String> {
+    pub async fn download_sftp_file(
+        &self,
+        id: Uuid,
+        remote_path: String,
+    ) -> Result<String, String> {
         let session = self.find_session(id).await?;
         if !matches!(session.protocol, Protocol::Ssh) {
             return Err("download only supports ssh sessions".to_string());
@@ -96,7 +107,8 @@ impl AppState {
         let mut target_dir =
             dirs::download_dir().unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
         target_dir.push("rshell");
-        std::fs::create_dir_all(&target_dir).map_err(|e| format!("create download dir failed: {e}"))?;
+        std::fs::create_dir_all(&target_dir)
+            .map_err(|e| format!("create download dir failed: {e}"))?;
         let mut target_path: PathBuf = target_dir.join(file_name);
         let mut idx = 1;
         while target_path.exists() {
@@ -117,5 +129,59 @@ impl AppState {
         copy(&mut source, &mut output)
             .map_err(|e| describe_io_error(&e, "write local file", &target_path))?;
         Ok(target_path.to_string_lossy().to_string())
+    }
+
+    pub async fn upload_sftp_file(
+        &self,
+        id: Uuid,
+        remote_dir: String,
+        file_name: String,
+        content_base64: String,
+    ) -> Result<(), String> {
+        let session = self.find_session(id).await?;
+        if !matches!(session.protocol, Protocol::Ssh) {
+            return Err("upload only supports ssh sessions".to_string());
+        }
+        if file_name.trim().is_empty() {
+            return Err("upload failed: file name is empty".to_string());
+        }
+
+        let secret = self
+            .store
+            .get_secret(id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "missing SSH password".to_string())?;
+        let ssh = self.open_ssh_session(&session, &secret)?;
+        let sftp = ssh.sftp().map_err(|e| format!("sftp init failed: {e}"))?;
+
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(content_base64.trim())
+            .map_err(|e| format!("decode upload payload failed: {e}"))?;
+        if bytes.is_empty() {
+            return Err("upload failed: empty file".to_string());
+        }
+
+        let normalized_dir = if remote_dir.trim().is_empty() {
+            ".".to_string()
+        } else {
+            remote_dir.replace('\\', "/")
+        };
+        let joined = if normalized_dir.ends_with('/') || normalized_dir == "/" {
+            format!("{normalized_dir}{file_name}")
+        } else {
+            format!("{normalized_dir}/{file_name}")
+        };
+
+        let remote = Path::new(&joined);
+        let mut target = sftp
+            .create(remote)
+            .map_err(|e| format!("open remote file for upload failed: {e}"))?;
+        target
+            .write_all(&bytes)
+            .map_err(|e| format!("upload write failed: {e}"))?;
+        target
+            .flush()
+            .map_err(|e| format!("upload flush failed: {e}"))?;
+        Ok(())
     }
 }

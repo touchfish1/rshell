@@ -27,7 +27,14 @@ fn is_sensitive_flag(token: &str) -> bool {
     let lower = token.to_ascii_lowercase();
     matches!(
         lower.as_str(),
-        "-p" | "--p" | "--pw" | "--pwd" | "--password" | "--passwd" | "--token" | "--secret" | "--apikey"
+        "-p" | "--p"
+            | "--pw"
+            | "--pwd"
+            | "--password"
+            | "--passwd"
+            | "--token"
+            | "--secret"
+            | "--apikey"
             | "--api-key"
     )
 }

@@ -23,4 +23,3 @@ pub trait TerminalClient: Send + Sync {
     async fn resize(&mut self, cols: u16, rows: u16) -> Result<(), TerminalError>;
     async fn disconnect(&mut self) -> Result<(), TerminalError>;
 }
-

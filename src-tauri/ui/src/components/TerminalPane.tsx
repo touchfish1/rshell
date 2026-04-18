@@ -14,6 +14,8 @@ import {
   TERMINAL_FONT_MAX,
   TERMINAL_FONT_MIN,
 } from "../lib/terminalFontSize";
+import { getTerminalFontFamily } from "../lib/terminalFontFamily";
+import { getXtermITheme } from "../lib/xtermThemes";
 
 interface Props {
   isActive: boolean;
@@ -124,13 +126,27 @@ export default function TerminalPane({
     const terminal = new Terminal({
       cursorBlink: true,
       fontSize: getTerminalFontSize(),
-      theme: { background: "#101219" },
+      fontFamily: getTerminalFontFamily(),
+      theme: getXtermITheme(),
     });
     const fitAddon = new FitAddon();
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
     terminal.loadAddon(fitAddon);
     terminal.open(containerRef.current);
+
+    const applyAppearance = () => {
+      terminal.options.theme = getXtermITheme();
+      terminal.options.fontFamily = getTerminalFontFamily();
+      if (terminal.rows > 0) {
+        terminal.refresh(0, terminal.rows - 1);
+      }
+    };
+    window.addEventListener("rshell-theme-changed", applyAppearance);
+    window.addEventListener("rshell-terminal-font-changed", applyAppearance);
+    const themeMql = window.matchMedia("(prefers-color-scheme: light)");
+    const onThemeMql = () => applyAppearance();
+    themeMql.addEventListener("change", onThemeMql);
 
     const tryPaste = (event: KeyboardEvent) => {
       const isModV =
@@ -313,6 +329,9 @@ export default function TerminalPane({
     );
 
     return () => {
+      window.removeEventListener("rshell-theme-changed", applyAppearance);
+      window.removeEventListener("rshell-terminal-font-changed", applyAppearance);
+      themeMql.removeEventListener("change", onThemeMql);
       terminal.element?.removeEventListener("contextmenu", onContextMenu);
       terminal.element?.removeEventListener("wheel", onWheelZoom);
       window.removeEventListener("resize", onWindowResize);

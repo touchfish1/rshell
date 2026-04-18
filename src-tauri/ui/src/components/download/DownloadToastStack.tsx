@@ -5,9 +5,11 @@ import { useI18n } from "../../i18n-context";
 interface Props {
   tasks: DownloadTask[];
   onError: (message: string) => void;
+  onRetry?: (task: DownloadTask) => void;
+  onDismiss?: (id: string) => void;
 }
 
-export function DownloadToastStack({ tasks, onError }: Props) {
+export function DownloadToastStack({ tasks, onError, onRetry, onDismiss }: Props) {
   const { tr } = useI18n();
   if (tasks.length === 0) return null;
 
@@ -20,12 +22,17 @@ export function DownloadToastStack({ tasks, onError }: Props) {
               {task.name}
             </span>
             <span className="download-status">
-              {task.status === "downloading" ? tr("toast.downloading") : task.status === "success" ? tr("toast.done") : tr("toast.failed")}
+              {task.status === "downloading"
+                ? tr("toast.downloading")
+                : task.status === "success"
+                  ? tr("toast.done")
+                  : tr("toast.failed")}
             </span>
             {task.status === "success" && task.localPath ? (
               <button
                 className="download-open-btn"
                 title={tr("toast.openFolder")}
+                type="button"
                 onClick={() => {
                   void openInFileManager(task.localPath!).catch((err) => {
                     const message = err instanceof Error ? err.message : String(err);
@@ -34,6 +41,16 @@ export function DownloadToastStack({ tasks, onError }: Props) {
                 }}
               >
                 📂
+              </button>
+            ) : null}
+            {task.status === "error" && task.remotePath && task.sessionId && onRetry ? (
+              <button type="button" className="download-retry-btn" onClick={() => onRetry(task)}>
+                {tr("toast.retry")}
+              </button>
+            ) : null}
+            {task.status === "error" && onDismiss ? (
+              <button type="button" className="download-dismiss-btn" onClick={() => onDismiss(task.id)}>
+                {tr("toast.dismiss")}
               </button>
             ) : null}
           </div>
@@ -48,4 +65,3 @@ export function DownloadToastStack({ tasks, onError }: Props) {
     </div>
   );
 }
-

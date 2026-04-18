@@ -13,7 +13,11 @@ use crate::infra::ssh_client::SshClient;
 use crate::infra::telnet_client::TelnetClient;
 
 impl AppState {
-    pub async fn connect_session(&self, id: Uuid, secret_override: Option<String>) -> Result<(), String> {
+    pub async fn connect_session(
+        &self,
+        id: Uuid,
+        secret_override: Option<String>,
+    ) -> Result<(), String> {
         let session = self
             .sessions
             .lock()
@@ -123,4 +127,3 @@ impl AppState {
             .ok_or_else(|| "session not found".to_string())
     }
 }
-

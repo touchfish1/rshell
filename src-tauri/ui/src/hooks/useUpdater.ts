@@ -1,8 +1,13 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import type { I18nKey } from "../i18n";
+
+export interface UpgradePromptState {
+  current: string;
+  next: string;
+}
 
 export function useUpdater(opts: {
   setStatus: (text: string) => void;
@@ -11,9 +16,20 @@ export function useUpdater(opts: {
 }) {
   const { setStatus, setError, tr } = opts;
   const [upgradeChecking, setUpgradeChecking] = useState(false);
+  const [upgradePrompt, setUpgradePrompt] = useState<UpgradePromptState | null>(null);
+  const upgradeResolverRef = useRef<((accepted: boolean) => void) | null>(null);
+  const upgradeBusyRef = useRef(false);
+
+  const resolveUpgradePrompt = useCallback((accepted: boolean) => {
+    const resolve = upgradeResolverRef.current;
+    upgradeResolverRef.current = null;
+    resolve?.(accepted);
+    setUpgradePrompt(null);
+  }, []);
 
   const checkOnlineUpgrade = useCallback(async () => {
-    if (upgradeChecking) return;
+    if (upgradeBusyRef.current) return;
+    upgradeBusyRef.current = true;
     setUpgradeChecking(true);
     setError(null);
     setStatus(tr("updater.checking"));
@@ -26,8 +42,12 @@ export function useUpdater(opts: {
       }
 
       const nextVersion = update.version;
-      const shouldInstall = window.confirm(tr("updater.confirm", { next: nextVersion, current }));
-      if (!shouldInstall) {
+      const accepted = await new Promise<boolean>((resolve) => {
+        upgradeResolverRef.current = resolve;
+        setUpgradePrompt({ current, next: nextVersion });
+      });
+
+      if (!accepted) {
         setStatus(tr("updater.cancelled", { next: nextVersion }));
         return;
       }
@@ -64,13 +84,15 @@ export function useUpdater(opts: {
       setError(tr("updater.failed", { message }));
       setStatus(tr("updater.failed", { message }));
     } finally {
+      upgradeBusyRef.current = false;
       setUpgradeChecking(false);
     }
-  }, [setError, setStatus, tr, upgradeChecking]);
+  }, [resolveUpgradePrompt, setError, setStatus, tr]);
 
   return {
     upgradeChecking,
     checkOnlineUpgrade,
+    upgradePrompt,
+    resolveUpgradePrompt,
   };
 }
-

@@ -10,7 +10,11 @@ impl AppState {
         self.sessions.lock().await.clone()
     }
 
-    pub async fn create_session(&self, input: SessionInput, secret: Option<String>) -> Result<Session, String> {
+    pub async fn create_session(
+        &self,
+        input: SessionInput,
+        secret: Option<String>,
+    ) -> Result<Session, String> {
         let session = input.into_session();
         {
             let mut sessions = self.sessions.lock().await;
@@ -25,7 +29,12 @@ impl AppState {
         Ok(session)
     }
 
-    pub async fn update_session(&self, id: Uuid, input: SessionInput, secret: Option<String>) -> Result<Session, String> {
+    pub async fn update_session(
+        &self,
+        id: Uuid,
+        input: SessionInput,
+        secret: Option<String>,
+    ) -> Result<Session, String> {
         let mut sessions = self.sessions.lock().await;
         let target_index = sessions
             .iter()
@@ -42,7 +51,9 @@ impl AppState {
         let updated = target.clone();
         self.store.save_all(&sessions).map_err(|e| e.to_string())?;
         if let Some(secret) = secret {
-            self.store.set_secret(id, &secret).map_err(|e| e.to_string())?;
+            self.store
+                .set_secret(id, &secret)
+                .map_err(|e| e.to_string())?;
         }
         Ok(updated)
     }
@@ -65,4 +76,3 @@ impl AppState {
         self.store.get_secret(id).map_err(|e| e.to_string())
     }
 }
-

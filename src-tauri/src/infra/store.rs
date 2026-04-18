@@ -46,7 +46,8 @@ impl SessionStore {
         if !self.db_path.exists() {
             return Ok(vec![]);
         }
-        let content = fs::read_to_string(&self.db_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        let content =
+            fs::read_to_string(&self.db_path).map_err(|e| StoreError::Io(e.to_string()))?;
         serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))
     }
 
@@ -73,7 +74,8 @@ impl SessionStore {
 
     pub fn set_secret(&self, session_id: Uuid, secret: &str) -> Result<(), StoreError> {
         let mut data = self.read_secrets()?;
-        data.secrets.insert(session_id.to_string(), secret.to_string());
+        data.secrets
+            .insert(session_id.to_string(), secret.to_string());
         self.write_secrets(&data)
     }
 
@@ -92,7 +94,8 @@ impl SessionStore {
         if !self.audit_path.exists() {
             return Ok(vec![]);
         }
-        let content = fs::read_to_string(&self.audit_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        let content =
+            fs::read_to_string(&self.audit_path).map_err(|e| StoreError::Io(e.to_string()))?;
         let mut records: Vec<AuditRecord> =
             serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))?;
         records.sort_by(|a, b| b.timestamp_ms.cmp(&a.timestamp_ms));
@@ -112,8 +115,8 @@ impl SessionStore {
             let to_drop = records.len() - max_keep;
             records.drain(0..to_drop);
         }
-        let content =
-            serde_json::to_string_pretty(&records).map_err(|e| StoreError::Serialize(e.to_string()))?;
+        let content = serde_json::to_string_pretty(&records)
+            .map_err(|e| StoreError::Serialize(e.to_string()))?;
         fs::write(&self.audit_path, content).map_err(|e| StoreError::Io(e.to_string()))
     }
 }

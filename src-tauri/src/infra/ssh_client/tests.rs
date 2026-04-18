@@ -1,3 +1,5 @@
+//! 需设置 `RSHELL_TEST_HOST` / `RSHELL_TEST_USER` / `RSHELL_TEST_PASS` 的 SSH2 探测测试。
+
 #[cfg(test)]
 mod tests {
     use ssh2::Session as Ssh2Session;
@@ -21,12 +23,18 @@ mod tests {
         assert!(sess.authenticated(), "session not authenticated");
 
         let mut channel = sess.channel_session().expect("open channel failed");
-        channel.exec("echo __RSHELL_BACKEND_OK__").expect("exec command failed");
+        channel
+            .exec("echo __RSHELL_BACKEND_OK__")
+            .expect("exec command failed");
         let mut output = String::new();
-        channel.read_to_string(&mut output).expect("read command output failed");
+        channel
+            .read_to_string(&mut output)
+            .expect("read command output failed");
         channel.wait_close().expect("wait close failed");
 
-        assert!(output.contains("__RSHELL_BACKEND_OK__"), "unexpected output: {output}");
+        assert!(
+            output.contains("__RSHELL_BACKEND_OK__"),
+            "unexpected output: {output}"
+        );
     }
 }
-

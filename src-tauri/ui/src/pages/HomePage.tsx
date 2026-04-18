@@ -1,6 +1,7 @@
 import SessionList from "../components/SessionList";
 import AuditLogModal from "../components/AuditLogModal";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { ThemeControls } from "../components/ThemeControls";
 import type { Session, SessionInput } from "../services/types";
 import type { AuditRecord } from "../services/types";
 import type { I18nKey, Lang } from "../i18n";
@@ -93,6 +94,7 @@ export default function HomePage({
               {tr("lang.en")}
             </button>
           </div>
+          <ThemeControls tr={tr} />
           <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
             {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
           </button>
@@ -139,6 +141,12 @@ export default function HomePage({
                 <div className="empty-state" role="note" aria-label={tr("home.ariaNoSession")}>
                   <div className="empty-title">{tr("home.emptyTitle")}</div>
                   <div className="empty-subtitle">{tr("home.emptySubtitle")}</div>
+                  <ol className="empty-steps">
+                    <li>{tr("home.emptyStep1")}</li>
+                    <li>{tr("home.emptyStep2")}</li>
+                    <li>{tr("home.emptyStep3")}</li>
+                  </ol>
+                  <p className="empty-doc">{tr("home.emptyDocLink")}</p>
                 </div>
               ) : null}
             </div>

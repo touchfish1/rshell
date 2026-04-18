@@ -1,3 +1,5 @@
+//! `AppState` 与会话相关的异步集成测试（本机起 echo 端口等）。
+
 #[cfg(test)]
 mod tests {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -7,7 +9,9 @@ mod tests {
     use crate::domain::session::{Protocol, SessionInput};
 
     async fn spawn_echo_server() -> u16 {
-        let listener = TcpListener::bind("127.0.0.1:0").await.expect("bind echo server");
+        let listener = TcpListener::bind("127.0.0.1:0")
+            .await
+            .expect("bind echo server");
         let port = listener.local_addr().expect("read local addr").port();
         tokio::spawn(async move {
             let (mut socket, _) = listener.accept().await.expect("accept client");
@@ -92,4 +96,3 @@ mod tests {
             .expect("cleanup session");
     }
 }
-

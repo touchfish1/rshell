@@ -6,6 +6,7 @@
 - `ARCHITECTURE.md`：系统架构、模块职责、关键数据流
 - `API_REFERENCE.md`：后端命令与接口约定
 - `USER_GUIDE.md`：用户功能与操作说明
+- `UX_OPTIMIZATION.md`：用户体验分步优化计划（路线图与勾选清单）
 
 建议：
 

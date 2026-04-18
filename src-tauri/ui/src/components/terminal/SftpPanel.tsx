@@ -20,6 +20,7 @@ interface Props {
   onSftpUp: () => void;
   onSftpOpenDir: (path: string) => void;
   onSftpDownload: (path: string) => void;
+  onSftpUpload: (remoteDir: string, fileName: string, contentBase64: string) => Promise<void>;
   onSftpReadText: (path: string) => Promise<SftpTextReadResult>;
   onSftpSaveText: (path: string, content: string) => Promise<void>;
 }
@@ -39,6 +40,7 @@ export function SftpPanel({
   onSftpUp,
   onSftpOpenDir,
   onSftpDownload,
+  onSftpUpload,
   onSftpReadText,
   onSftpSaveText,
 }: Props) {
@@ -57,6 +59,13 @@ export function SftpPanel({
   const [editorReadOnly, setEditorReadOnly] = useState(false);
   const [editorMeta, setEditorMeta] = useState<{ loadedBytes: number; totalBytes: number } | null>(null);
   const editorTextRef = useRef<HTMLTextAreaElement | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadHint, setUploadHint] = useState<string | null>(null);
+
+  const normalizedPath = sftpPath === "." ? "/" : sftpPath;
+  const canGoUp = normalizedPath !== "/";
 
   const copyHostIp = async () => {
     if (!activeHostIp) return;
@@ -108,8 +117,49 @@ export function SftpPanel({
     node.setSelectionRange(pos, pos);
   }, [editorOpen, editorLoading]);
 
-  const normalizedPath = sftpPath === "." ? "/" : sftpPath;
-  const canGoUp = normalizedPath !== "/";
+  const readAsBase64 = async (file: File): Promise<string> => {
+    const buf = await file.arrayBuffer();
+    let binary = "";
+    const bytes = new Uint8Array(buf);
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode(...bytes.slice(i, i + chunk));
+    }
+    return btoa(binary);
+  };
+
+  const runUpload = async (file: File) => {
+    if (!monitorSupported) return;
+    if (uploading) return;
+    // 8MB soft limit to avoid UI freeze / large base64 payload
+    const max = 8 * 1024 * 1024;
+    if (file.size > max) {
+      setUploadHint(tr("sftp.uploadTooLarge", { size: formatBytes(file.size) }));
+      return;
+    }
+    setUploading(true);
+    try {
+      setUploadHint(tr("sftp.uploading"));
+      const base64 = await readAsBase64(file);
+      await onSftpUpload(normalizedPath, file.name, base64);
+      setUploadHint(tr("sftp.uploadSuccess", { name: file.name }));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const pathCrumbs = (() => {
+    const p = normalizedPath.replace(/\/+$/, "") || "/";
+    if (p === "/") return [{ label: "/", path: "/" }] as { label: string; path: string }[];
+    const segments = p.split("/").filter(Boolean);
+    const out: { label: string; path: string }[] = [{ label: "/", path: "/" }];
+    let acc = "";
+    for (const seg of segments) {
+      acc += `/${seg}`;
+      out.push({ label: seg, path: acc });
+    }
+    return out;
+  })();
 
   const getDisplayName = (entry: SftpEntry) => {
     if (entry.name && entry.name.trim()) return entry.name;
@@ -237,16 +287,64 @@ export function SftpPanel({
           <button onClick={onSftpUp} disabled={!canGoUp}>
             {tr("sftp.up")}
           </button>
-          <span className="sftp-path" title={normalizedPath}>
-            {normalizedPath}
-          </span>
+          <button
+            type="button"
+            disabled={!monitorSupported || uploading}
+            onClick={() => uploadInputRef.current?.click()}
+            title={tr("sftp.upload")}
+          >
+            {tr("sftp.upload")}
+          </button>
+          <input
+            ref={uploadInputRef}
+            type="file"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (f) void runUpload(f);
+            }}
+          />
+          <div className="sftp-breadcrumbs" title={normalizedPath}>
+            {pathCrumbs.map((c, i) => (
+              <span key={c.path} className="sftp-bc-item">
+                {i > 0 ? <span className="sftp-bc-sep">/</span> : null}
+                <button type="button" className="sftp-bc-part" onClick={() => onSftpOpenDir(c.path)}>
+                  {c.label}
+                </button>
+              </span>
+            ))}
+          </div>
         </div>
         <div className="sftp-head">
           <span>{tr("sftp.fileName")}</span>
           <span>{tr("sftp.fileSize")}</span>
           <span>{tr("sftp.modifiedAt")}</span>
         </div>
-        <ul>
+        <ul
+          className={dragOver ? "sftp-drop sftp-drop-active" : "sftp-drop"}
+          onDragEnter={(e) => {
+            if (!monitorSupported) return;
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragOver={(e) => {
+            if (!monitorSupported) return;
+            e.preventDefault();
+          }}
+          onDragLeave={(e) => {
+            if (!monitorSupported) return;
+            e.preventDefault();
+            setDragOver(false);
+          }}
+          onDrop={(e) => {
+            if (!monitorSupported) return;
+            e.preventDefault();
+            setDragOver(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) void runUpload(f);
+          }}
+        >
           {sftpLoading ? (
             <li className="sftp-empty">{tr("sftp.loading")}</li>
           ) : sftpEntries.length === 0 ? (
@@ -298,6 +396,8 @@ export function SftpPanel({
             </>
           )}
         </ul>
+        {dragOver ? <div className="sftp-drop-hint">{tr("sftp.dropToUpload")}</div> : null}
+        {uploadHint ? <div className="sftp-upload-hint">{uploadHint}</div> : null}
       </div>
 
       {menu ? (

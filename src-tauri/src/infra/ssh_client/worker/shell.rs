@@ -1,3 +1,5 @@
+//! 在已认证的 `ssh2::Session` 上申请 PTY + shell 通道，失败时向输出通道写入可读错误信息。
+
 use ssh2::Session as Ssh2Session;
 use tokio::sync::mpsc;
 

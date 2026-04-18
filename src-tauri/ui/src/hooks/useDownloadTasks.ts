@@ -7,6 +7,9 @@ export interface DownloadTask {
   status: "downloading" | "success" | "error";
   detail?: string;
   localPath?: string;
+  /** 用于失败重试 */
+  remotePath?: string;
+  sessionId?: string;
 }
 
 export function useDownloadTasks() {
@@ -20,11 +23,14 @@ export function useDownloadTasks() {
     };
   }, []);
 
-  const createDownloadTask = (remotePath: string) => {
+  const createDownloadTask = (remotePath: string, sessionId: string) => {
     const normalized = remotePath.replace(/\\/g, "/");
     const name = normalized.split("/").pop() || normalized;
     const id = `dl-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
-    setDownloadTasks((prev) => [...prev, { id, name, progress: 6, status: "downloading" }]);
+    setDownloadTasks((prev) => [
+      ...prev,
+      { id, name, progress: 6, status: "downloading", remotePath: normalized, sessionId },
+    ]);
     const timer = window.setInterval(() => {
       setDownloadTasks((prev) =>
         prev.map((task) => {
@@ -49,15 +55,26 @@ export function useDownloadTasks() {
         task.id === id ? { ...task, progress: 100, status: ok ? "success" : "error", detail, localPath } : task
       )
     );
-    window.setTimeout(() => {
-      setDownloadTasks((prev) => prev.filter((task) => task.id !== id));
-    }, ok ? 2200 : 3600);
+    if (ok) {
+      window.setTimeout(() => {
+        setDownloadTasks((prev) => prev.filter((task) => task.id !== id));
+      }, 2200);
+    }
+  };
+
+  const dismissDownloadTask = (id: string) => {
+    const timer = downloadTimerRef.current.get(id);
+    if (timer) {
+      window.clearInterval(timer);
+      downloadTimerRef.current.delete(id);
+    }
+    setDownloadTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
   return {
     downloadTasks,
     createDownloadTask,
     finishDownloadTask,
+    dismissDownloadTask,
   };
 }
-

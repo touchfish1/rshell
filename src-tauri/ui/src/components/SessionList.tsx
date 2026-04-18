@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import type { Session, SessionInput } from "../services/types";
 import { HostCreateModal } from "./session/HostCreateModal";
 import { HostEditModal } from "./session/HostEditModal";
@@ -119,6 +119,65 @@ export default function SessionList({
     tr,
   });
 
+  const moveListSelection = useCallback(
+    (delta: number) => {
+      if (displayedSessions.length === 0) return;
+      const cur = displayedSessions.findIndex((s) => s.id === selectedId);
+      const base = cur < 0 ? 0 : cur;
+      const next = Math.max(0, Math.min(displayedSessions.length - 1, base + delta));
+      onSelect(displayedSessions[next].id);
+    },
+    [displayedSessions, onSelect, selectedId]
+  );
+
+  const onListKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
+    if (showCreateModal || editSession) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      moveListSelection(1);
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      moveListSelection(-1);
+      return;
+    }
+    if (e.key === "Home" && displayedSessions.length > 0) {
+      e.preventDefault();
+      onSelect(displayedSessions[0].id);
+      return;
+    }
+    if (e.key === "End" && displayedSessions.length > 0) {
+      e.preventDefault();
+      onSelect(displayedSessions[displayedSessions.length - 1].id);
+      return;
+    }
+    if ((e.key === "j" || e.key === "J") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      moveListSelection(1);
+      return;
+    }
+    if ((e.key === "k" || e.key === "K") && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault();
+      moveListSelection(-1);
+      return;
+    }
+    if (e.key === "Enter" && selectedId) {
+      e.preventDefault();
+      if (connectingSessionId !== selectedId) {
+        onConnect?.(selectedId);
+      }
+      return;
+    }
+    if (e.key === "F2" && selectedId) {
+      const row = sessions.find((s) => s.id === selectedId);
+      if (row) {
+        e.preventDefault();
+        openEdit(row);
+      }
+    }
+  };
+
   return (
     <aside className="session-list" style={gridStyle}>
       <SessionListToolbar
@@ -128,7 +187,7 @@ export default function SessionList({
         onOpenCreate={() => setShowCreateModal(true)}
       />
       <SessionTableHead onResizeNameStart={onResizeNameStart} onResizeHostStart={onResizeHostStart} />
-      <ul className="session-table-body">
+      <ul className="session-table-body" tabIndex={0} aria-label={tr("session.listKeyboardHint")} onKeyDown={onListKeyDown}>
         {displayedSessions.map((session) => {
           const active = selectedId === session.id;
           const pinging = pingingIds.includes(session.id);

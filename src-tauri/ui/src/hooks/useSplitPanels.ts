@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { persistHostsWidth, persistSftpWidth, readInitialHostsWidth, readInitialSftpWidth } from "../lib/workspacePanelWidths";
 
 type DragState =
   | {
@@ -15,8 +16,12 @@ type DragState =
 export function useSplitPanels() {
   const workspaceRef = useRef<HTMLDivElement | null>(null);
   const dragRef = useRef<DragState | null>(null);
-  const [hostsWidth, setHostsWidth] = useState(240);
-  const [sftpWidth, setSftpWidth] = useState(320);
+  const hostsWidthRef = useRef(240);
+  const sftpWidthRef = useRef(320);
+  const [hostsWidth, setHostsWidth] = useState(() => readInitialHostsWidth(240));
+  const [sftpWidth, setSftpWidth] = useState(() => readInitialSftpWidth(320));
+  hostsWidthRef.current = hostsWidth;
+  sftpWidthRef.current = sftpWidth;
 
   const clamp = useMemo(() => {
     return (nextHosts: number, nextSftp: number) => {
@@ -55,6 +60,10 @@ export function useSplitPanels() {
       }
     };
     const onMouseUp = () => {
+      if (dragRef.current) {
+        persistHostsWidth(hostsWidthRef.current);
+        persistSftpWidth(sftpWidthRef.current);
+      }
       dragRef.current = null;
     };
     window.addEventListener("mousemove", onMouseMove);

@@ -418,12 +418,39 @@
   padding: 5px 8px;
 }
 
-.sftp-path {
-  color: #95a0b8;
+.sftp-breadcrumbs {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0;
   font-size: 12px;
+}
+
+.sftp-bc-part {
+  border: none;
+  background: transparent;
+  color: #9fb4d8;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sftp-bc-part:hover {
+  background: rgba(79, 131, 255, 0.14);
+  color: #dfe8ff;
+}
+
+.sftp-bc-sep {
+  color: #5a6578;
+  user-select: none;
+  padding: 0 1px;
 }
 
 .sftp-dir,
@@ -529,6 +556,17 @@
 .sftp-context-menu button:disabled:hover {
   border-color: transparent;
   background: transparent;
+}
+
+.sftp-drop-hint,
+.sftp-upload-hint {
+  padding: 6px 10px 10px;
+  font-size: 11px;
+  color: #8fa0bd;
+}
+
+.sftp-drop-hint {
+  color: #cfe4ff;
 }
 
 .sftp-editor-mask {

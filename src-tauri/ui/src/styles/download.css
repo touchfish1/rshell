@@ -26,9 +26,14 @@
 .download-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   margin-bottom: 4px;
+}
+
+.download-title .download-name {
+  margin-right: auto;
 }
 
 .download-name {
@@ -65,6 +70,23 @@
 .download-open-btn:hover {
   border-color: rgba(79, 131, 255, 0.65);
   background: rgba(39, 55, 79, 0.95);
+}
+
+.download-retry-btn,
+.download-dismiss-btn {
+  margin-left: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(72, 86, 116, 0.9);
+  background: rgba(25, 34, 48, 0.85);
+  color: #dbe6fb;
+  cursor: pointer;
+}
+
+.download-retry-btn:hover,
+.download-dismiss-btn:hover {
+  border-color: rgba(79, 131, 255, 0.65);
 }
 
 .download-detail {

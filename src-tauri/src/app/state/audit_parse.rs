@@ -1,3 +1,5 @@
+//! 从用户输入流中解析 ESC/CSI 与可打印字符，归并为「命令行」或控制键事件供审计使用。
+
 use crate::app::state::AuditInputState;
 
 pub struct AuditInputEvents {

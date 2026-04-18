@@ -1,3 +1,5 @@
+//! 主机资源指标：在 SSH 会话上执行 `/proc` 等只读命令并解析为 `HostMetrics`。
+
 use uuid::Uuid;
 
 use crate::app::state::{AppState, HostMetrics};
@@ -26,7 +28,9 @@ impl AppState {
             if parts.next()? != "cpu" {
                 return None;
             }
-            let values = parts.filter_map(|v| v.parse::<u64>().ok()).collect::<Vec<_>>();
+            let values = parts
+                .filter_map(|v| v.parse::<u64>().ok())
+                .collect::<Vec<_>>();
             if values.len() < 4 {
                 return None;
             }
@@ -34,8 +38,10 @@ impl AppState {
             let idle = values.get(3).copied().unwrap_or(0) + values.get(4).copied().unwrap_or(0);
             Some((total, idle))
         };
-        let (cpu_total_1, cpu_idle_1) = parse_cpu(cpu_lines.first().copied().unwrap_or("")).unwrap_or((0, 0));
-        let (cpu_total_2, cpu_idle_2) = parse_cpu(cpu_lines.get(1).copied().unwrap_or("")).unwrap_or((0, 0));
+        let (cpu_total_1, cpu_idle_1) =
+            parse_cpu(cpu_lines.first().copied().unwrap_or("")).unwrap_or((0, 0));
+        let (cpu_total_2, cpu_idle_2) =
+            parse_cpu(cpu_lines.get(1).copied().unwrap_or("")).unwrap_or((0, 0));
         let cpu_delta = cpu_total_2.saturating_sub(cpu_total_1) as f64;
         let cpu_idle_delta = cpu_idle_2.saturating_sub(cpu_idle_1) as f64;
         let cpu_percent = if cpu_delta > 0.0 {
@@ -63,7 +69,9 @@ impl AppState {
             }
         }
         let memory_total_bytes = mem_total_kb.saturating_mul(1024);
-        let memory_used_bytes = mem_total_kb.saturating_sub(mem_available_kb).saturating_mul(1024);
+        let memory_used_bytes = mem_total_kb
+            .saturating_sub(mem_available_kb)
+            .saturating_mul(1024);
         let memory_percent = if memory_total_bytes > 0 {
             (memory_used_bytes as f64 * 100.0 / memory_total_bytes as f64).clamp(0.0, 100.0)
         } else {
@@ -79,8 +87,14 @@ impl AppState {
         if fields.len() < 5 {
             return Err("parse disk metrics failed".to_string());
         }
-        let disk_total_bytes = fields.get(1).and_then(|v| v.parse::<u64>().ok()).unwrap_or(0);
-        let disk_used_bytes = fields.get(2).and_then(|v| v.parse::<u64>().ok()).unwrap_or(0);
+        let disk_total_bytes = fields
+            .get(1)
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(0);
+        let disk_used_bytes = fields
+            .get(2)
+            .and_then(|v| v.parse::<u64>().ok())
+            .unwrap_or(0);
         let disk_percent = if disk_total_bytes > 0 {
             (disk_used_bytes as f64 * 100.0 / disk_total_bytes as f64).clamp(0.0, 100.0)
         } else {
@@ -98,4 +112,3 @@ impl AppState {
         })
     }
 }
-

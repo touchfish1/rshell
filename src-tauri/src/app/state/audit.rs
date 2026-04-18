@@ -1,3 +1,5 @@
+//! 审计写入：`record_session_audit`、从终端输入缓冲提取命令并落盘（条数上限见常量）。
+
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use uuid::Uuid;
@@ -52,7 +54,9 @@ impl AppState {
         input: &str,
     ) -> AuditInputEvents {
         let mut buffers = self.audit_input_buffers.lock().await;
-        let state = buffers.entry(session_id).or_insert_with(AuditInputState::default);
+        let state = buffers
+            .entry(session_id)
+            .or_insert_with(AuditInputState::default);
         collect_audit_input_events(state, input)
     }
 

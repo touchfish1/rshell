@@ -1,3 +1,6 @@
+/**
+ * 工作区标签与会话连接：`tabs`/`activeTabId`、连接/断开、`pull_output` 失败处理、SFTP 页与重试。
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { connectSession, disconnectSession } from "../services/bridge";
 import type { Session, WorkspaceTab } from "../services/types";

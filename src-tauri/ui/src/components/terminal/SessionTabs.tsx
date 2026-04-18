@@ -1,3 +1,6 @@
+/**
+ * 工作区顶部的会话标签栏：切换、关闭、右键菜单（复制标题、关闭到左/右等）、中键关闭。
+ */
 import type { WorkspaceTab } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 

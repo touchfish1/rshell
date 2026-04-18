@@ -18,7 +18,10 @@ pub async fn list_sftp_dir(
         &app,
         Some(id),
         "sftp",
-        &format!("list dir {}", path.clone().unwrap_or_else(|| ".".to_string())),
+        &format!(
+            "list dir {}",
+            path.clone().unwrap_or_else(|| ".".to_string())
+        ),
     );
     state.list_sftp_dir(id, path).await
 }
@@ -72,3 +75,22 @@ pub async fn save_sftp_text_file(
     state.save_sftp_text_file(id, remote_path, content).await
 }
 
+pub async fn upload_sftp_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_dir: String,
+    file_name: String,
+    content_base64: String,
+) -> Result<(), String> {
+    let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
+    emit_debug(
+        &app,
+        Some(id),
+        "sftp_upload",
+        &format!("upload file {} -> {}", file_name, remote_dir),
+    );
+    state
+        .upload_sftp_file(id, remote_dir, file_name, content_base64)
+        .await
+}

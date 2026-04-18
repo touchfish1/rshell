@@ -18,4 +18,3 @@ pub fn emit_debug(app: &AppHandle, session_id: Option<Uuid>, stage: &str, messag
         }),
     );
 }
-

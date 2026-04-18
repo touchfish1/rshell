@@ -11,6 +11,7 @@ mod domain;
 mod infra;
 
 use app::AppState;
+use tauri::{Manager, WindowEvent};
 
 fn main() {
     tauri::Builder::default()
@@ -21,6 +22,20 @@ fn main() {
         // 记住窗口位置与尺寸
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .manage(AppState::default())
+        .setup(|app| {
+            if let Some(window) = app.get_webview_window("main") {
+                let handle = app.handle().clone();
+                window.on_window_event(move |event| {
+                    if let WindowEvent::CloseRequested { api, .. } = event {
+                        api.prevent_close();
+                        if let Some(w) = handle.get_webview_window("main") {
+                            let _ = w.hide();
+                        }
+                    }
+                });
+            }
+            Ok(())
+        })
         .invoke_handler(tauri::generate_handler![
             api::commands::list_sessions,
             api::commands::create_session,
@@ -37,6 +52,7 @@ fn main() {
             api::commands::download_sftp_file,
             api::commands::read_sftp_text_file,
             api::commands::save_sftp_text_file,
+            api::commands::upload_sftp_file,
             api::commands::test_host_reachability,
             api::commands::open_in_file_manager,
             api::commands::open_external_url,

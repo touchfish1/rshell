@@ -1,3 +1,5 @@
+//! SFTP 文本读写：大小限制、分块读取，供内置编辑器避免一次性加载过大文件。
+
 use std::io::{Read, Write};
 use std::path::Path;
 
@@ -19,7 +21,11 @@ pub struct SftpTextReadResult {
 }
 
 impl AppState {
-    pub async fn read_sftp_text_file(&self, id: Uuid, remote_path: String) -> Result<SftpTextReadResult, String> {
+    pub async fn read_sftp_text_file(
+        &self,
+        id: Uuid,
+        remote_path: String,
+    ) -> Result<SftpTextReadResult, String> {
         let session = self.find_session(id).await?;
         if !matches!(session.protocol, Protocol::Ssh) {
             return Err("text editor only supports ssh sessions".to_string());
@@ -77,7 +83,12 @@ impl AppState {
         })
     }
 
-    pub async fn save_sftp_text_file(&self, id: Uuid, remote_path: String, content: String) -> Result<(), String> {
+    pub async fn save_sftp_text_file(
+        &self,
+        id: Uuid,
+        remote_path: String,
+        content: String,
+    ) -> Result<(), String> {
         let session = self.find_session(id).await?;
         if !matches!(session.protocol, Protocol::Ssh) {
             return Err("text editor only supports ssh sessions".to_string());

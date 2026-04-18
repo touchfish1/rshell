@@ -14,7 +14,7 @@ interface Props {
   editorReadOnly: boolean;
   editorMeta: { loadedBytes: number; totalBytes: number } | null;
   editorDirty: boolean;
-  editorTextRef: RefObject<HTMLTextAreaElement | null>;
+  editorTextRef: RefObject<HTMLTextAreaElement>;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
   onClose: () => void;
   onSave: () => void;

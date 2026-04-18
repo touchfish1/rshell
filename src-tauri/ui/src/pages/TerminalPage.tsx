@@ -1,7 +1,9 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextReadResult, WorkspaceTab } from "../services/types";
 import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
+import { ShortcutHelpModal } from "../components/terminal/ShortcutHelpModal";
+import { ThemeControls } from "../components/ThemeControls";
 import { HostsPanel } from "../components/terminal/HostsPanel";
 import { SessionTabs } from "../components/terminal/SessionTabs";
 import { SftpPanel } from "../components/terminal/SftpPanel";
@@ -34,6 +36,7 @@ interface Props {
   onSftpOpenDir: (path: string) => void;
   onSftpUp: () => void;
   onSftpDownload: (path: string) => void;
+  onSftpUpload: (remoteDir: string, fileName: string, contentBase64: string) => Promise<void>;
   onSftpReadText: (path: string) => Promise<SftpTextReadResult>;
   onSftpSaveText: (path: string, content: string) => Promise<void>;
   onBackToHome: () => void;
@@ -68,6 +71,7 @@ export default function TerminalPage({
   onSftpOpenDir,
   onSftpUp,
   onSftpDownload,
+  onSftpUpload,
   onSftpReadText,
   onSftpSaveText,
   onBackToHome,
@@ -93,6 +97,9 @@ export default function TerminalPage({
   const [monitorError, setMonitorError] = useState<string | null>(null);
   const [monitorChecking, setMonitorChecking] = useState(false);
   const [monitorCheckedAt, setMonitorCheckedAt] = useState<string>("");
+  const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
+  const shortcutHelpOpenRef = useRef(false);
+  shortcutHelpOpenRef.current = shortcutHelpOpen;
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
   const monitorSupported = activeSession?.protocol === "ssh";
@@ -155,13 +162,72 @@ export default function TerminalPage({
     };
   }, [activeSession, monitorSupported, onGetHostMetrics, tr]);
 
+  const tabsRef = useRef(tabs);
+  const activeTabIdRef = useRef(activeTabId);
+  tabsRef.current = tabs;
+  activeTabIdRef.current = activeTabId;
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      const isCtrlSlash = e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "/" || e.code === "Slash");
+      if (isCtrlSlash && shortcutHelpOpenRef.current) {
+        e.preventDefault();
+        setShortcutHelpOpen(false);
+        return;
+      }
+
+      if (editHost) return;
+      if (isBlockingOverlayFocused()) return;
+
+      if (isCtrlSlash) {
+        if (isTerminalInputFocused()) return;
+        e.preventDefault();
+        setShortcutHelpOpen(true);
+        return;
+      }
+
+      const list = tabsRef.current;
+      if (list.length === 0) return;
+
+      if (e.ctrlKey && !e.metaKey && !e.altKey && e.key === "Tab") {
+        e.preventDefault();
+        const delta = e.shiftKey ? -1 : 1;
+        let idx = activeTabIdRef.current ? list.findIndex((t) => t.id === activeTabIdRef.current) : 0;
+        if (idx < 0) idx = 0;
+        const next = (idx + delta + list.length) % list.length;
+        onSwitchTab(list[next].id);
+        return;
+      }
+
+      if (e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "w" || e.key === "W")) {
+        const id = activeTabIdRef.current;
+        if (!id) return;
+        const closeViaShortcut = e.shiftKey || !isTerminalInputFocused();
+        if (!closeViaShortcut) return;
+        e.preventDefault();
+        onCloseTab(id);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [editHost, onSwitchTab, onCloseTab]);
+
   return (
-    <section className="workspace terminal-page">
+    <section
+      className="workspace terminal-page"
+      title={`${tr("terminal.workspaceShortcutsHint")} · ${tr("terminal.zoomKeyboardHint")}`}
+    >
       <header className="terminal-top">
         <h2>{activeSession?.name ?? tr("terminal.workspace")}</h2>
         <div className="actions">
-          <button onClick={onBackToHome}>{tr("terminal.back")}</button>
-          <button disabled={!activeTabId} onClick={() => onDisconnect(activeTabId)}>
+          <ThemeControls tr={tr} showTerminalFont />
+          <button type="button" title={tr("shortcutHelp.openHint")} onClick={() => setShortcutHelpOpen(true)}>
+            {tr("shortcutHelp.openButton")}
+          </button>
+          <button type="button" onClick={onBackToHome}>
+            {tr("terminal.back")}
+          </button>
+          <button type="button" disabled={!activeTabId} onClick={() => onDisconnect(activeTabId)}>
             {tr("terminal.disconnect")}
           </button>
         </div>
@@ -254,6 +320,7 @@ export default function TerminalPage({
           onSftpUp={onSftpUp}
           onSftpOpenDir={onSftpOpenDir}
           onSftpDownload={onSftpDownload}
+          onSftpUpload={onSftpUpload}
           onSftpReadText={onSftpReadText}
           onSftpSaveText={onSftpSaveText}
         />
@@ -267,7 +334,20 @@ export default function TerminalPage({
         onChangeSecret={setEditSecret}
         onSave={onUpdateHost}
       />
+      <ShortcutHelpModal open={shortcutHelpOpen} onClose={() => setShortcutHelpOpen(false)} tr={tr} />
       <footer>{status}</footer>
     </section>
   );
+}
+
+function isBlockingOverlayFocused(): boolean {
+  const el = document.activeElement;
+  if (!el || !(el instanceof HTMLElement)) return false;
+  return Boolean(el.closest(".modal-backdrop, .sftp-editor-mask"));
+}
+
+function isTerminalInputFocused(): boolean {
+  const el = document.activeElement;
+  if (!el || !(el instanceof HTMLElement)) return false;
+  return Boolean(el.closest(".xterm"));
 }

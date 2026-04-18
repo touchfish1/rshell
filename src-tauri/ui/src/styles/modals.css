@@ -44,6 +44,51 @@
   margin-top: 4px;
 }
 
+.shortcut-help-card {
+  width: min(520px, calc(100vw - 24px));
+  max-height: min(640px, 85vh);
+  display: flex;
+  flex-direction: column;
+}
+
+.shortcut-help-body {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #b8c3d9;
+}
+
+.shortcut-help-section {
+  margin-bottom: 12px;
+}
+
+.shortcut-help-section:last-child {
+  margin-bottom: 0;
+}
+
+.shortcut-help-section h5 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #d7ddea;
+  letter-spacing: 0.02em;
+}
+
+.shortcut-help-section ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.shortcut-help-section li {
+  margin-bottom: 4px;
+}
+
+.shortcut-help-section li:last-child {
+  margin-bottom: 0;
+}
+
 .placeholder-row {
   border: 1px solid rgba(48, 56, 74, 0.75);
   border-radius: 8px;

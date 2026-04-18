@@ -34,7 +34,9 @@ pub async fn open_in_file_manager(path: String) -> Result<(), String> {
 
     #[cfg(target_os = "linux")]
     {
-        let parent = p.parent().ok_or_else(|| "invalid parent path".to_string())?;
+        let parent = p
+            .parent()
+            .ok_or_else(|| "invalid parent path".to_string())?;
         let status = Command::new("xdg-open")
             .arg(parent)
             .status()
@@ -91,4 +93,3 @@ pub async fn open_external_url(url: String) -> Result<(), String> {
     #[allow(unreachable_code)]
     Err("unsupported platform".to_string())
 }
-

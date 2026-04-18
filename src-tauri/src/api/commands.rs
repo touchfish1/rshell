@@ -56,7 +56,10 @@ pub async fn has_session_secret(state: State<'_, AppState>, id: String) -> Resul
 }
 
 #[tauri::command]
-pub async fn get_session_secret(state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+pub async fn get_session_secret(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
     sessions::get_session_secret(state, id).await
 }
 
@@ -71,17 +74,30 @@ pub async fn connect_session(
 }
 
 #[tauri::command]
-pub async fn pull_output(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+pub async fn pull_output(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
     terminal::pull_output(app, state, id).await
 }
 
 #[tauri::command]
-pub async fn disconnect_session(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<(), String> {
+pub async fn disconnect_session(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<(), String> {
     terminal::disconnect_session(app, state, id).await
 }
 
 #[tauri::command]
-pub async fn send_input(app: AppHandle, state: State<'_, AppState>, id: String, input: String) -> Result<(), String> {
+pub async fn send_input(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    input: String,
+) -> Result<(), String> {
     terminal::send_input(app, state, id, input).await
 }
 
@@ -138,6 +154,18 @@ pub async fn save_sftp_text_file(
 }
 
 #[tauri::command]
+pub async fn upload_sftp_file(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+    remote_dir: String,
+    file_name: String,
+    content_base64: String,
+) -> Result<(), String> {
+    sftp::upload_sftp_file(app, state, id, remote_dir, file_name, content_base64).await
+}
+
+#[tauri::command]
 pub async fn open_in_file_manager(path: String) -> Result<(), String> {
     system::open_in_file_manager(path).await
 }
@@ -148,12 +176,20 @@ pub async fn open_external_url(url: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn get_host_metrics(app: AppHandle, state: State<'_, AppState>, id: String) -> Result<HostMetrics, String> {
+pub async fn get_host_metrics(
+    app: AppHandle,
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<HostMetrics, String> {
     metrics::get_host_metrics(app, state, id).await
 }
 
 #[tauri::command]
-pub async fn test_host_reachability(host: String, port: u16, timeout_ms: Option<u64>) -> Result<bool, String> {
+pub async fn test_host_reachability(
+    host: String,
+    port: u16,
+    timeout_ms: Option<u64>,
+) -> Result<bool, String> {
     if host.trim().is_empty() {
         return Err("host is required".to_string());
     }
@@ -164,6 +200,9 @@ pub async fn test_host_reachability(host: String, port: u16, timeout_ms: Option<
 }
 
 #[tauri::command]
-pub async fn list_audits(state: State<'_, AppState>, limit: Option<usize>) -> Result<Vec<AuditRecord>, String> {
+pub async fn list_audits(
+    state: State<'_, AppState>,
+    limit: Option<usize>,
+) -> Result<Vec<AuditRecord>, String> {
     state.list_audits(limit).await
 }

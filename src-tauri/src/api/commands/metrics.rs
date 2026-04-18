@@ -16,4 +16,3 @@ pub async fn get_host_metrics(
     emit_debug(&app, Some(id), "metrics", "collect host metrics");
     state.get_host_metrics(id).await
 }
-

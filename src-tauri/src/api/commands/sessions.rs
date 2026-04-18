@@ -38,8 +38,10 @@ pub async fn has_session_secret(state: State<'_, AppState>, id: String) -> Resul
     state.has_secret(id).await
 }
 
-pub async fn get_session_secret(state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+pub async fn get_session_secret(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
     state.get_secret(id).await
 }
-

@@ -1,3 +1,6 @@
+/**
+ * 前端与 Tauri 后端的薄封装：`invoke` 各命令、`listen` 审计事件，类型与 `types.ts` 对齐。
+ */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import type { AuditRecord, HostMetrics, Session, SessionInput, SftpEntry, SftpTextReadResult } from "./types";
@@ -60,6 +63,15 @@ export async function readSftpTextFile(id: string, remotePath: string): Promise<
 
 export async function saveSftpTextFile(id: string, remotePath: string, content: string): Promise<void> {
   await invoke("save_sftp_text_file", { id, remotePath, content });
+}
+
+export async function uploadSftpFile(
+  id: string,
+  remoteDir: string,
+  fileName: string,
+  contentBase64: string
+): Promise<void> {
+  await invoke("upload_sftp_file", { id, remoteDir, fileName, contentBase64 });
 }
 
 export async function openInFileManager(path: string): Promise<void> {

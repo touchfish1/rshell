@@ -2,14 +2,14 @@
 //!
 //! 子模块按职责拆分：`sessions` / `terminal_io` / `sftp` / `metrics` / `audit` 等。
 
+mod audit;
+mod audit_parse;
+mod convert;
 mod metrics;
 mod sessions;
 mod sftp;
-mod audit_parse;
-mod audit;
 mod ssh_helpers;
 mod terminal_io;
-mod convert;
 pub use self::sftp::SftpTextReadResult;
 
 use std::collections::HashMap;
@@ -79,4 +79,3 @@ impl Default for AppState {
         }
     }
 }
-
