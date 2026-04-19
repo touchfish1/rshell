@@ -112,7 +112,7 @@ export function useSessionActions({
   };
 
   const testConnect = async (input: SessionInput) => {
-    return testHostReachability(input.host, input.port, 2000);
+    return testHostReachability(input.host, input.port, 2000, input.protocol);
   };
 
   const getSecret = async (id: string) => {

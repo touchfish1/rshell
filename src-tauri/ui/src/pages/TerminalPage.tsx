@@ -3,7 +3,7 @@ import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextR
 import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
 import { ShortcutHelpModal } from "../components/terminal/ShortcutHelpModal";
-import { ThemeControls } from "../components/ThemeControls";
+import { TerminalFontControls } from "../components/TerminalFontControls";
 import { HostsPanel } from "../components/terminal/HostsPanel";
 import { SessionTabs } from "../components/terminal/SessionTabs";
 import { SftpPanel } from "../components/terminal/SftpPanel";
@@ -220,7 +220,7 @@ export default function TerminalPage({
       <header className="terminal-top">
         <h2>{activeSession?.name ?? tr("terminal.workspace")}</h2>
         <div className="actions">
-          <ThemeControls tr={tr} showTerminalFont />
+          <TerminalFontControls tr={tr} />
           <button type="button" title={tr("shortcutHelp.openHint")} onClick={() => setShortcutHelpOpen(true)}>
             {tr("shortcutHelp.openButton")}
           </button>

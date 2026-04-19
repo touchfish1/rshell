@@ -189,7 +189,7 @@ export default function App() {
     setActiveTabId(hookActiveTabId);
   }, [hookActiveTabId]);
 
-  const { onlineMap, pingingIds } = useSessionPing({ currentPage, sessions });
+  const { onlineMap, pingingIds, refreshReachability } = useSessionPing({ currentPage, sessions });
 
   const writeToTab = useMemo(() => {
     return (tabId: string, text: string) => writerMapRef.current.get(tabId)?.(text);
@@ -269,6 +269,7 @@ export default function App() {
             upgradeChecking={upgradeChecking}
             lang={lang}
             onSwitchLang={switchLang}
+            onRefreshHostStatus={refreshReachability}
             tr={tr}
           />
         ) : (

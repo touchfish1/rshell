@@ -142,11 +142,7 @@ export default function TerminalPane({
         terminal.refresh(0, terminal.rows - 1);
       }
     };
-    window.addEventListener("rshell-theme-changed", applyAppearance);
     window.addEventListener("rshell-terminal-font-changed", applyAppearance);
-    const themeMql = window.matchMedia("(prefers-color-scheme: light)");
-    const onThemeMql = () => applyAppearance();
-    themeMql.addEventListener("change", onThemeMql);
 
     const tryPaste = (event: KeyboardEvent) => {
       const isModV =
@@ -329,9 +325,7 @@ export default function TerminalPane({
     );
 
     return () => {
-      window.removeEventListener("rshell-theme-changed", applyAppearance);
       window.removeEventListener("rshell-terminal-font-changed", applyAppearance);
-      themeMql.removeEventListener("change", onThemeMql);
       terminal.element?.removeEventListener("contextmenu", onContextMenu);
       terminal.element?.removeEventListener("wheel", onWheelZoom);
       window.removeEventListener("resize", onWindowResize);

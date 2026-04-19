@@ -1,32 +1,7 @@
 import type { ITheme } from "xterm";
 
+/** 与固定深色应用壳一致的 xterm 配色。 */
 export function getXtermITheme(): ITheme {
-  const isLight = typeof document !== "undefined" && document.documentElement.getAttribute("data-theme") === "light";
-  if (isLight) {
-    return {
-      background: "#fafafa",
-      foreground: "#141820",
-      cursor: "#141820",
-      cursorAccent: "#fafafa",
-      selectionBackground: "rgba(64, 120, 255, 0.28)",
-      black: "#141820",
-      brightBlack: "#5a6578",
-      red: "#c42b2b",
-      brightRed: "#e04848",
-      green: "#1a7f37",
-      brightGreen: "#2dac5a",
-      yellow: "#8a6400",
-      brightYellow: "#b58900",
-      blue: "#2563eb",
-      brightBlue: "#5b8cff",
-      magenta: "#9333ea",
-      brightMagenta: "#b565f0",
-      cyan: "#0d9488",
-      brightCyan: "#2dd4bf",
-      white: "#dce3ef",
-      brightWhite: "#f1f5fb",
-    };
-  }
   return {
     background: "#101219",
     foreground: "#e7e8ea",

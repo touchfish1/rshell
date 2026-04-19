@@ -77,7 +77,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   border-bottom: 1px solid rgba(48, 56, 74, 0.55);
+}
+
+.home-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.home-refresh-status {
+  font-size: 12px;
+  padding: 4px 10px;
 }
 
 .home-panel-body {

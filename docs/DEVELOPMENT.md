@@ -128,7 +128,7 @@ cd src-tauri/ui && npm run build
 - `connect_session` / `disconnect_session`: 建连与断开
 - `send_input` / `pull_output` / `resize_terminal`: 终端数据流
 - `list_sftp_dir` / `download_sftp_file`: 文件浏览与下载
-- `test_host_reachability`: TCP 可达性测试
+- `test_host_reachability`: ICMP ping ∥ 端口/协议（SSH 横幅、Telnet TCP），前端首页可手动刷新
 - `get_host_metrics`: 主机指标采集
 - `open_in_file_manager`: 打开本地文件所在目录
 - `get_session_secret`: 获取密码（用于编辑界面按需显示）

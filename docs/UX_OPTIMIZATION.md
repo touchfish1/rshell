@@ -106,7 +106,7 @@
 
 ### 步骤 5.1 — 主题
 
-- [x] 顶栏 `ThemeControls`：深色 / 浅色 / 跟随系统，写入 `rshell.theme`；`document.documentElement` 上 `data-theme`；`base.css` 提供浅色全局覆盖；xterm 通过 `lib/xtermThemes.ts` 与 `rshell-theme-changed` 事件同步配色。
+- [x] 应用壳固定深色（`data-theme="dark"`）；终端页 `TerminalFontControls` 可选等宽字体预设；xterm 配色见 `lib/xtermThemes.ts`，字体变更通过 `rshell-terminal-font-changed` 同步。
 
 ### 步骤 5.2 — 字体（可选）
 

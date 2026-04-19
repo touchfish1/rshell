@@ -126,8 +126,9 @@
   - `host: string`
   - `port: u16`
   - `timeout_ms?: u64`（100~10000，默认 2000）
+  - `protocol?: string`（`ssh` / `telnet`；SSH 时在 TCP 连通后还会校验是否收到 `SSH-` 协议横幅，不执行登录认证）
 - 返回：`boolean`
-- 说明：TCP 层连通性探测（不执行 SSH 认证）
+- 说明：并行执行 ICMP ping 与 TCP/协议探测（SSH 横幅等），**任一为真**则返回 `true`；用于刷新按钮与主机列表状态
 
 ### `get_host_metrics`
 

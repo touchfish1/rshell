@@ -3,7 +3,15 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
-import type { AuditRecord, HostMetrics, Session, SessionInput, SftpEntry, SftpTextReadResult } from "./types";
+import type {
+  AuditRecord,
+  HostMetrics,
+  Protocol,
+  Session,
+  SessionInput,
+  SftpEntry,
+  SftpTextReadResult,
+} from "./types";
 
 export async function listSessions(): Promise<Session[]> {
   return invoke("list_sessions");
@@ -85,9 +93,16 @@ export async function openExternalUrl(url: string): Promise<void> {
 export async function testHostReachability(
   host: string,
   port: number,
-  timeoutMs = 2000
+  timeoutMs = 2000,
+  protocol?: Protocol
 ): Promise<boolean> {
-  return invoke("test_host_reachability", { host, port, timeout_ms: timeoutMs });
+  const ok = await invoke<boolean>("test_host_reachability", {
+    host,
+    port,
+    timeout_ms: timeoutMs,
+    protocol: protocol ?? null,
+  });
+  return ok === true;
 }
 
 export async function getHostMetrics(id: string): Promise<HostMetrics> {

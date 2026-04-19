@@ -1,6 +1,6 @@
 [package]
 name = "rshell"
-version = "0.1.18"
+version = "0.1.19"
 edition = "2021"
 
 [dependencies]
@@ -18,7 +18,7 @@ tauri-plugin-process = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-window-state = "2"
 thiserror = "2"
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "net"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "net", "process"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 
 [build-dependencies]

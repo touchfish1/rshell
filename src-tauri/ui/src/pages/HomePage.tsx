@@ -1,7 +1,6 @@
 import SessionList from "../components/SessionList";
 import AuditLogModal from "../components/AuditLogModal";
 import { ErrorBanner } from "../components/ErrorBanner";
-import { ThemeControls } from "../components/ThemeControls";
 import type { Session, SessionInput } from "../services/types";
 import type { AuditRecord } from "../services/types";
 import type { I18nKey, Lang } from "../i18n";
@@ -33,6 +32,7 @@ interface Props {
   upgradeChecking: boolean;
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
+  onRefreshHostStatus: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -63,6 +63,7 @@ export default function HomePage({
   upgradeChecking,
   lang,
   onSwitchLang,
+  onRefreshHostStatus,
   tr,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
@@ -94,7 +95,6 @@ export default function HomePage({
               {tr("lang.en")}
             </button>
           </div>
-          <ThemeControls tr={tr} />
           <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
             {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
           </button>
@@ -119,7 +119,18 @@ export default function HomePage({
               <div className="card-title">{tr("home.hostList")}</div>
               <div className="card-subtitle">{tr("home.hostListHint")}</div>
             </div>
-            <div className="home-header-status">{status}</div>
+            <div className="home-panel-header-actions">
+              <button
+                type="button"
+                className="btn btn-ghost home-refresh-status"
+                onClick={() => onRefreshHostStatus()}
+                disabled={!hasSessions || pingingIds.length > 0}
+                title={tr("home.refreshStatusHint")}
+              >
+                {pingingIds.length > 0 ? tr("home.refreshStatusRunning") : tr("home.refreshStatus")}
+              </button>
+              <div className="home-header-status">{status}</div>
+            </div>
           </div>
           <div className="home-panel-body">
             <div className="home-list-wrapper">
