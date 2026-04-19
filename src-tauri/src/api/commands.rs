@@ -23,6 +23,10 @@ use tokio::net::TcpStream;
 use tokio::process::Command as TokioCommand;
 use tokio::time::{timeout, Duration, Instant};
 
+/// Windows 上避免 `ping` 等子进程弹出控制台黑窗（`CREATE_NO_WINDOW`）。
+#[cfg(windows)]
+const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+
 #[tauri::command]
 pub async fn list_sessions(state: State<'_, AppState>) -> Result<Vec<Session>, String> {
     sessions::list_sessions(state).await
@@ -235,6 +239,7 @@ async fn icmp_ping_host(host: &str) -> bool {
     #[cfg(windows)]
     {
         return TokioCommand::new("ping")
+            .creation_flags(CREATE_NO_WINDOW)
             .args(["-n", "1", "-w", "3000", host])
             .output()
             .await
