@@ -7,8 +7,9 @@ import type { MouseEvent } from "react";
 interface Props {
   session: Session;
   selected: boolean;
-  pinging: boolean;
   online: boolean;
+  /** 在线时的探测耗时（毫秒）；未探测或离线为 null */
+  latencyMs: number | null;
   /** 该主机正在执行连接握手 */
   isConnecting?: boolean;
   onSelectAndConnect: (id: string) => void;
@@ -21,8 +22,8 @@ interface Props {
 export function SessionRow({
   session,
   selected,
-  pinging,
   online,
+  latencyMs,
   isConnecting = false,
   onSelectAndConnect,
   onConnect,
@@ -110,8 +111,17 @@ export function SessionRow({
         <span className="session-col user">{session.username || "-"}</span>
         <span className="session-col proto">{session.protocol.toUpperCase()}</span>
         <span className="session-col port">{session.port}</span>
-        <span className={`session-col status ${online ? "ok" : ""} ${pinging ? "checking" : ""}`}>
-          {pinging ? tr("session.statusChecking") : online ? tr("session.statusOnline") : tr("session.statusOffline")}
+        <span className={`session-col status ${online ? "ok" : ""}`}>
+          {online ? (
+            <>
+              {tr("session.statusOnline")}
+              {latencyMs != null ? (
+                <span className="session-latency">{tr("session.latencySuffix", { ms: latencyMs })}</span>
+              ) : null}
+            </>
+          ) : (
+            tr("session.statusOffline")
+          )}
         </span>
       </button>
 

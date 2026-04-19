@@ -1,0 +1,512 @@
+/**
+ * 浅色主题：与 `html[data-theme="light"]` 配合，覆盖各业务区硬编码色，
+ * 保证正文/边框/面板对比度（WCAG 友好取向）。
+ */
+html[data-theme="light"] .modal-close:hover {
+  background: rgba(15, 23, 42, 0.08);
+  color: var(--modal-text);
+}
+
+html[data-theme="light"] .password-toggle-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+
+/* —— 首页顶栏与信息区 —— */
+html[data-theme="light"] .topbar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(243, 245, 249, 0.85));
+  border-bottom: 1px solid #d5dce8;
+}
+
+html[data-theme="light"] .topbar-subtitle,
+html[data-theme="light"] .topbar-app-version {
+  color: #5c6678;
+}
+
+html[data-theme="light"] .app-badge {
+  color: #1e3a5f;
+  border-color: #c5cedd;
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.18), rgba(255, 255, 255, 0.9));
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="light"] .home-panel {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .home-panel-header {
+  border-bottom-color: #d5dce8;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .home-header-status {
+  color: #5c6678;
+}
+
+html[data-theme="light"] .card-title {
+  color: #111827;
+}
+
+html[data-theme="light"] .card-subtitle {
+  color: #5c6678;
+}
+
+html[data-theme="light"] .pill {
+  border-color: #c5cedd;
+  background: rgba(255, 255, 255, 0.9);
+  color: #374151;
+}
+
+html[data-theme="light"] .pill-ok {
+  border-color: rgba(22, 163, 74, 0.45);
+  background: rgba(220, 252, 231, 0.95);
+  color: #14532d;
+}
+
+html[data-theme="light"] .pill-muted {
+  color: #5c6678;
+}
+
+html[data-theme="light"] .lang-switch .lang-active {
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(219, 234, 254, 0.95);
+  color: #1e3a8a;
+}
+
+html[data-theme="light"] .empty-state {
+  border-color: #c5cedd;
+  background: rgba(248, 250, 252, 0.95);
+}
+
+html[data-theme="light"] .empty-title {
+  color: #111827;
+}
+
+html[data-theme="light"] .empty-subtitle,
+html[data-theme="light"] .empty-steps {
+  color: #4b5563;
+}
+
+html[data-theme="light"] .empty-icon {
+  border-color: #c5cedd;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2563eb;
+}
+
+html[data-theme="light"] .audit-item-head {
+  color: #5c6678;
+}
+
+html[data-theme="light"] .audit-item-main {
+  color: #1f2937;
+}
+
+html[data-theme="light"] .audit-command {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .audit-detail,
+html[data-theme="light"] .audit-empty {
+  color: #64748b;
+}
+
+/* —— 会话列表 —— */
+html[data-theme="light"] .session-list {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .session-list-header,
+html[data-theme="light"] .session-list-search-row {
+  background: #f8fafc;
+  border-bottom-color: #d5dce8;
+}
+
+html[data-theme="light"] .session-list-header h3 {
+  color: #111827;
+}
+
+html[data-theme="light"] .session-list-search-input {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #111827;
+}
+
+html[data-theme="light"] .session-list-search-input::placeholder {
+  color: #6b7280;
+}
+
+html[data-theme="light"] .session-table-head {
+  background: #f8fafc;
+  border-bottom-color: #d5dce8;
+  color: #5c6678;
+}
+
+html[data-theme="light"] .col-resize-handle::before {
+  background: rgba(100, 116, 139, 0.45);
+}
+
+html[data-theme="light"] li.session-search-empty {
+  color: #64748b;
+  border-bottom-color: #e2e8f0;
+}
+
+html[data-theme="light"] .session-line {
+  border-bottom-color: #e2e8f0;
+}
+
+html[data-theme="light"] .session-main {
+  color: #111827;
+}
+
+html[data-theme="light"] .session-line:hover .session-main {
+  background: rgba(241, 245, 249, 0.95);
+}
+
+html[data-theme="light"] .session-line.active .session-main {
+  background: rgba(219, 234, 254, 0.75);
+}
+
+html[data-theme="light"] .session-col.name {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .session-col.host {
+  color: #334155;
+}
+
+html[data-theme="light"] .copy-icon-btn {
+  color: #64748b;
+}
+
+html[data-theme="light"] .copy-icon-btn:hover {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .session-col.proto,
+html[data-theme="light"] .session-col.port,
+html[data-theme="light"] .session-col.user {
+  color: #475569;
+}
+
+html[data-theme="light"] .session-col.status {
+  color: #64748b;
+}
+
+html[data-theme="light"] .session-col.status.ok {
+  color: #15803d;
+}
+
+html[data-theme="light"] .session-actions button {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #334155;
+}
+
+html[data-theme="light"] .session-actions .danger {
+  border-color: rgba(180, 70, 85, 0.45);
+  background: rgba(254, 242, 242, 0.95);
+  color: #991b1b;
+}
+
+html[data-theme="light"] .session-actions .edit,
+html[data-theme="light"] .session-actions .more {
+  border-color: #c5cedd;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+html[data-theme="light"] .session-more-menu {
+  background: #ffffff;
+  border-color: #c5cedd;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] .session-more-menu button {
+  color: #1e293b;
+}
+
+html[data-theme="light"] .session-more-menu button:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+/* —— 终端页：顶栏、标签、侧栏、SFTP —— */
+html[data-theme="light"] .workspace header {
+  background: #ffffff;
+  border-bottom-color: #d5dce8;
+}
+
+html[data-theme="light"] .workspace header h2 {
+  color: #111827;
+}
+
+html[data-theme="light"] .session-tabs {
+  background: #f1f5f9;
+  border-bottom-color: #d5dce8;
+}
+
+html[data-theme="light"] .session-tab-empty {
+  color: #64748b;
+}
+
+html[data-theme="light"] .session-tab:hover {
+  background: rgba(148, 163, 184, 0.25);
+}
+
+html[data-theme="light"] .session-tab.active {
+  background: rgba(219, 234, 254, 0.85);
+}
+
+html[data-theme="light"] .session-tab-main {
+  color: #111827;
+}
+
+html[data-theme="light"] .session-tab-close {
+  color: #64748b;
+}
+
+html[data-theme="light"] .session-tab-close:hover {
+  color: #0f172a;
+  background: rgba(148, 163, 184, 0.35);
+}
+
+html[data-theme="light"] .session-tab-context-menu,
+html[data-theme="light"] .host-context-menu {
+  background: #ffffff;
+  border-color: #c5cedd;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+html[data-theme="light"] .session-tab-context-menu button,
+html[data-theme="light"] .host-context-menu button {
+  color: #1e293b;
+}
+
+html[data-theme="light"] .session-tab-context-menu button:hover,
+html[data-theme="light"] .host-context-menu button:hover {
+  background: #f1f5f9;
+  border-color: #e2e8f0;
+}
+
+html[data-theme="light"] .session-tab-context-menu button:disabled,
+html[data-theme="light"] .host-context-menu button:disabled {
+  color: #94a3b8;
+}
+
+html[data-theme="light"] .terminal-hosts,
+html[data-theme="light"] .terminal-sftp {
+  border-color: #d5dce8;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .terminal-splitter {
+  background: rgba(226, 232, 240, 0.9);
+  border-color: #e2e8f0;
+}
+
+html[data-theme="light"] .terminal-splitter:hover {
+  background: rgba(59, 130, 246, 0.15);
+}
+
+html[data-theme="light"] .panel-title {
+  color: #475569;
+  border-bottom-color: #d5dce8;
+  background: rgba(248, 250, 252, 0.98);
+}
+
+html[data-theme="light"] .terminal-hosts button {
+  background: #f8fafc;
+  border-color: #c5cedd;
+  color: #111827;
+}
+
+html[data-theme="light"] .terminal-hosts button.active {
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(219, 234, 254, 0.9);
+}
+
+html[data-theme="light"] .sftp-monitor-card {
+  border-color: #c5cedd;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .sftp-monitor-head {
+  color: #334155;
+}
+
+html[data-theme="light"] .sftp-monitor-head button {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #1e293b;
+}
+
+html[data-theme="light"] .sftp-monitor-host {
+  color: #475569;
+}
+
+html[data-theme="light"] .sftp-monitor-row {
+  color: #475569;
+}
+
+html[data-theme="light"] .sftp-monitor-bar {
+  background: #e2e8f0;
+}
+
+html[data-theme="light"] .sftp-monitor-time {
+  color: #64748b;
+}
+
+html[data-theme="light"] .sftp-head {
+  background: #f8fafc;
+  border-bottom-color: #d5dce8;
+  color: #64748b;
+}
+
+html[data-theme="light"] .sftp-toolbar button {
+  background: #ffffff;
+  border-color: #c5cedd;
+  color: #1e293b;
+}
+
+html[data-theme="light"] .sftp-bc-part {
+  color: #2563eb;
+}
+
+html[data-theme="light"] .sftp-bc-part:hover {
+  color: #1e3a8a;
+}
+
+html[data-theme="light"] .sftp-bc-sep {
+  color: #94a3b8;
+}
+
+html[data-theme="light"] .sftp-dir,
+html[data-theme="light"] .sftp-file {
+  color: #1e293b;
+  border-bottom-color: #e2e8f0;
+}
+
+html[data-theme="light"] .sftp-dir:hover:not(:disabled),
+html[data-theme="light"] .sftp-file:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+html[data-theme="light"] .sftp-kind-icon.folder {
+  color: #1d4ed8;
+}
+
+html[data-theme="light"] .sftp-kind-icon.file {
+  color: #64748b;
+}
+
+html[data-theme="light"] .sftp-name-text {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .sftp-col-size,
+html[data-theme="light"] .sftp-col-time {
+  color: #64748b;
+}
+
+html[data-theme="light"] .sftp-drop-hint,
+html[data-theme="light"] .sftp-upload-hint {
+  color: #64748b;
+}
+
+html[data-theme="light"] .sftp-drop-hint {
+  color: #1d4ed8;
+}
+
+html[data-theme="light"] .sftp-empty {
+  color: #64748b;
+}
+
+html[data-theme="light"] .sftp-monitor-error {
+  color: #b91c1c;
+}
+
+html[data-theme="light"] .terminal-pane-overlay {
+  background: rgba(248, 250, 252, 0.88);
+}
+
+html[data-theme="light"] .error-banner {
+  border-color: rgba(180, 70, 85, 0.45);
+  background: rgba(254, 242, 242, 0.98);
+  color: #7f1d1d;
+}
+
+html[data-theme="light"] .error-banner-dismiss {
+  background: rgba(15, 23, 42, 0.06);
+  color: #991b1b;
+}
+
+html[data-theme="light"] .error-banner-dismiss:hover {
+  background: rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="light"] .workspace footer {
+  border-top-color: #d5dce8;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+html[data-theme="light"] .debug-panel {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .debug-panel-header {
+  border-bottom-color: #d5dce8;
+  color: #475569;
+}
+
+html[data-theme="light"] .debug-panel-header button {
+  background: #f8fafc;
+  border-color: #c5cedd;
+  color: #1e293b;
+}
+
+html[data-theme="light"] .debug-panel-body {
+  color: #475569;
+}
+
+/* —— 下载 Toast —— */
+html[data-theme="light"] .download-toast {
+  border-color: #c5cedd;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1);
+}
+
+html[data-theme="light"] .download-name {
+  color: #111827;
+}
+
+html[data-theme="light"] .download-status {
+  color: #64748b;
+}
+
+html[data-theme="light"] .download-open-btn,
+html[data-theme="light"] .download-retry-btn,
+html[data-theme="light"] .download-dismiss-btn {
+  border-color: #c5cedd;
+  background: #f8fafc;
+  color: #1e293b;
+}
+
+html[data-theme="light"] .download-detail {
+  color: #64748b;
+}
+
+html[data-theme="light"] .download-bar {
+  background: #e2e8f0;
+}
+
+html[data-theme="light"] .sftp-editor-error {
+  color: #7f1d1d;
+  background: rgba(254, 242, 242, 0.98);
+  border-color: rgba(180, 70, 85, 0.45);
+}

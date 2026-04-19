@@ -32,6 +32,12 @@ export interface SessionInput {
   keepalive_secs?: number;
 }
 
+/** `test_host_reachability`：ICMP 与端口/协议探测任一成功为在线；`latency_ms` 取成功路径中较短耗时（毫秒），离线为 null。 */
+export interface HostReachability {
+  online: boolean;
+  latency_ms: number | null;
+}
+
 export interface SftpEntry {
   name: string;
   path: string;

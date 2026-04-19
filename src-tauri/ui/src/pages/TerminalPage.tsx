@@ -8,6 +8,7 @@ import { HostsPanel } from "../components/terminal/HostsPanel";
 import { SessionTabs } from "../components/terminal/SessionTabs";
 import { SftpPanel } from "../components/terminal/SftpPanel";
 import { useSplitPanels } from "../hooks/useSplitPanels";
+import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
 
 interface Props {
@@ -220,6 +221,7 @@ export default function TerminalPage({
       <header className="terminal-top">
         <h2>{activeSession?.name ?? tr("terminal.workspace")}</h2>
         <div className="actions">
+          <ColorThemeToggle tr={tr} />
           <TerminalFontControls tr={tr} />
           <button type="button" title={tr("shortcutHelp.openHint")} onClick={() => setShortcutHelpOpen(true)}>
             {tr("shortcutHelp.openButton")}

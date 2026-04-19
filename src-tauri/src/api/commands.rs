@@ -4,7 +4,7 @@
 //! - `terminal`：连接、终端 I/O、断开
 //! - `sftp`：目录列表、下载、文本读写
 //! - `metrics` / `system`：主机指标与系统打开目录、外链
-//! - `test_host_reachability`：ICMP ping 与 TCP/协议横幅任一成功即为在线（禁 ping 时仍可通过端口探测）
+//! - `test_host_reachability`：ICMP ping 与 TCP/协议横幅任一成功即为在线（禁 ping 时仍可通过端口探测），并返回探测耗时（毫秒，取成功路径中较短者）。
 
 mod command_sanitize;
 mod common;
@@ -18,6 +18,7 @@ use tauri::{AppHandle, State};
 
 use crate::app::{AppState, AuditRecord, HostMetrics, SftpEntry, SftpTextReadResult};
 use crate::domain::session::{Session, SessionInput};
+use serde::Serialize;
 use tokio::io::AsyncReadExt;
 use tokio::net::TcpStream;
 use tokio::process::Command as TokioCommand;
@@ -292,24 +293,73 @@ async fn tcp_service_reachable(host: &str, port: u16, duration: Duration, protoc
     verify_stream_after_tcp(stream, protocol).await
 }
 
+async fn icmp_ping_host_timed(host: &str) -> (bool, Option<Duration>) {
+    let t0 = Instant::now();
+    let ok = icmp_ping_host(host).await;
+    if ok {
+        (true, Some(t0.elapsed()))
+    } else {
+        (false, None)
+    }
+}
+
+async fn tcp_service_reachable_timed(
+    host: &str,
+    port: u16,
+    duration: Duration,
+    protocol: Option<&str>,
+) -> (bool, Option<Duration>) {
+    let t0 = Instant::now();
+    let ok = tcp_service_reachable(host, port, duration, protocol).await;
+    if ok {
+        (true, Some(t0.elapsed()))
+    } else {
+        (false, None)
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct HostReachability {
+    pub online: bool,
+    pub latency_ms: Option<u64>,
+}
+
 #[tauri::command]
 pub async fn test_host_reachability(
     host: String,
     port: u16,
     timeout_ms: Option<u64>,
     protocol: Option<String>,
-) -> Result<bool, String> {
+) -> Result<HostReachability, String> {
     let host_trim = host.trim();
     if host_trim.is_empty() {
         return Err("host is required".to_string());
     }
     let duration = Duration::from_millis(timeout_ms.unwrap_or(2000).clamp(100, 10000));
 
-    let (icmp_ok, svc_ok) = tokio::join!(
-        icmp_ping_host(host_trim),
-        tcp_service_reachable(host_trim, port, duration, protocol.as_deref())
+    let ((icmp_ok, icmp_lat), (tcp_ok, tcp_lat)) = tokio::join!(
+        icmp_ping_host_timed(host_trim),
+        tcp_service_reachable_timed(host_trim, port, duration, protocol.as_deref())
     );
-    Ok(icmp_ok || svc_ok)
+    let online = icmp_ok || tcp_ok;
+    let latency_ms = if !online {
+        None
+    } else {
+        let mut ms: Vec<u64> = Vec::new();
+        if icmp_ok {
+            if let Some(d) = icmp_lat {
+                ms.push(d.as_millis() as u64);
+            }
+        }
+        if tcp_ok {
+            if let Some(d) = tcp_lat {
+                ms.push(d.as_millis() as u64);
+            }
+        }
+        ms.into_iter().min()
+    };
+
+    Ok(HostReachability { online, latency_ms })
 }
 
 #[tauri::command]

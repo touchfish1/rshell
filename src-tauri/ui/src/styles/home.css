@@ -49,8 +49,18 @@
 }
 
 .topbar-title-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   font-weight: 800;
   letter-spacing: 0.2px;
+}
+
+.topbar-app-version {
+  font-size: 12px;
+  font-weight: 600;
+  color: #7d8aa3;
+  letter-spacing: 0.02em;
 }
 
 .topbar-subtitle {

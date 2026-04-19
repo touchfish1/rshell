@@ -189,7 +189,7 @@ export default function App() {
     setActiveTabId(hookActiveTabId);
   }, [hookActiveTabId]);
 
-  const { onlineMap, pingingIds, refreshReachability } = useSessionPing({ currentPage, sessions });
+  const { reachabilityMap, refreshBusy, refreshReachability } = useSessionPing({ currentPage, sessions });
 
   const writeToTab = useMemo(() => {
     return (tabId: string, text: string) => writerMapRef.current.get(tabId)?.(text);
@@ -241,8 +241,8 @@ export default function App() {
             sessions={sessions}
             connectingSessionId={connectingHostId}
             selectedId={selectedId}
-            onlineMap={onlineMap}
-            pingingIds={pingingIds}
+            reachabilityMap={reachabilityMap}
+            refreshBusy={refreshBusy}
             connected={connectedIds.length > 0}
             error={error}
             onDismissError={() => setError(null)}

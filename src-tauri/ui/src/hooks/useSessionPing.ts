@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { testHostReachability } from "../services/bridge";
-import type { Session } from "../services/types";
+import type { HostReachability, Session } from "../services/types";
+
+type RunPingOpts = { cancelledRef?: { current: boolean }; manual?: boolean };
 
 export function useSessionPing(opts: { currentPage: "home" | "terminal"; sessions: Session[] }) {
   const { currentPage, sessions } = opts;
-  const [onlineMap, setOnlineMap] = useState<Record<string, boolean>>({});
-  const [pingingIds, setPingingIds] = useState<string[]>([]);
+  const [reachabilityMap, setReachabilityMap] = useState<Record<string, HostReachability>>({});
+  const [refreshBusy, setRefreshBusy] = useState(false);
 
   const currentPageRef = useRef(currentPage);
   const sessionsRef = useRef(sessions);
@@ -16,7 +18,8 @@ export function useSessionPing(opts: { currentPage: "home" | "terminal"; session
     sessionsRef.current = sessions;
   }, [sessions]);
 
-  const runPing = useCallback(async (cancelledRef?: { current: boolean }) => {
+  const runPing = useCallback(async (opts?: RunPingOpts) => {
+    const cancelledRef = opts?.cancelledRef;
     if (cancelledRef?.current) {
       return;
     }
@@ -25,58 +28,62 @@ export function useSessionPing(opts: { currentPage: "home" | "terminal"; session
     }
     const list = sessionsRef.current;
     if (list.length === 0) {
-      setOnlineMap({});
-      setPingingIds([]);
+      setReachabilityMap({});
+      setRefreshBusy(false);
       return;
     }
-    const ids = list.map((s) => s.id);
-    if (!cancelledRef?.current) {
-      setPingingIds(ids);
+    if (opts?.manual) {
+      setRefreshBusy(true);
     }
-    const results = await Promise.all(
-      list.map(async (session) => {
-        try {
-          const ok = await testHostReachability(session.host, session.port, 1500, session.protocol);
-          return [session.id, ok] as const;
-        } catch {
-          return [session.id, false] as const;
-        }
-      })
-    );
-    if (cancelledRef?.current) {
-      return;
-    }
-    if (currentPageRef.current !== "home") {
-      return;
-    }
-    setOnlineMap(() => {
-      const next: Record<string, boolean> = {};
-      for (const [id, ok] of results) {
-        next[id] = ok;
+    try {
+      const results = await Promise.all(
+        list.map(async (session) => {
+          try {
+            const r = await testHostReachability(session.host, session.port, 1500, session.protocol);
+            return [session.id, r] as const;
+          } catch {
+            return [session.id, { online: false, latency_ms: null }] as const;
+          }
+        })
+      );
+      if (cancelledRef?.current) {
+        return;
       }
-      return next;
-    });
-    setPingingIds([]);
+      if (currentPageRef.current !== "home") {
+        return;
+      }
+      setReachabilityMap(() => {
+        const next: Record<string, HostReachability> = {};
+        for (const [id, r] of results) {
+          next[id] = r;
+        }
+        return next;
+      });
+    } finally {
+      if (opts?.manual) {
+        setRefreshBusy(false);
+      }
+    }
   }, []);
 
   useEffect(() => {
     const cancelledRef = { current: false };
 
     if (currentPage !== "home") {
-      setOnlineMap({});
-      setPingingIds([]);
+      setReachabilityMap({});
+      setRefreshBusy(false);
       return;
     }
 
     if (sessions.length === 0) {
-      setOnlineMap({});
-      setPingingIds([]);
+      setReachabilityMap({});
+      setRefreshBusy(false);
       return;
     }
 
-    void runPing(cancelledRef);
+    void runPing({ cancelledRef });
     const timer = window.setInterval(() => {
-      void runPing(cancelledRef);
+      void runPing({ cancelledRef });
     }, 10000);
     return () => {
       cancelledRef.current = true;
@@ -85,8 +92,8 @@ export function useSessionPing(opts: { currentPage: "home" | "terminal"; session
   }, [currentPage, sessions, runPing]);
 
   const refreshReachability = useCallback(() => {
-    void runPing();
+    void runPing({ manual: true });
   }, [runPing]);
 
-  return { onlineMap, pingingIds, refreshReachability };
+  return { reachabilityMap, refreshBusy, refreshReachability };
 }

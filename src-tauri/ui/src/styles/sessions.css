@@ -259,6 +259,12 @@ li.session-search-empty {
   color: #6ce2ab;
 }
 
+.session-latency {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.88;
+}
+
 .session-col.status.checking {
   color: #f3cf72;
 }

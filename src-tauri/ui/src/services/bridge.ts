@@ -6,6 +6,7 @@ import { listen } from "@tauri-apps/api/event";
 import type {
   AuditRecord,
   HostMetrics,
+  HostReachability,
   Protocol,
   Session,
   SessionInput,
@@ -95,14 +96,17 @@ export async function testHostReachability(
   port: number,
   timeoutMs = 2000,
   protocol?: Protocol
-): Promise<boolean> {
-  const ok = await invoke<boolean>("test_host_reachability", {
+): Promise<HostReachability> {
+  const raw = await invoke<{ online: boolean; latency_ms: number | null }>("test_host_reachability", {
     host,
     port,
     timeout_ms: timeoutMs,
     protocol: protocol ?? null,
   });
-  return ok === true;
+  return {
+    online: raw.online === true,
+    latency_ms: raw.latency_ms ?? null,
+  };
 }
 
 export async function getHostMetrics(id: string): Promise<HostMetrics> {

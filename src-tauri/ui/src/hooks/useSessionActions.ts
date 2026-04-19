@@ -8,7 +8,7 @@ import {
   testHostReachability,
   updateSession,
 } from "../services/bridge";
-import type { Session, SessionInput } from "../services/types";
+import type { HostReachability, Session, SessionInput } from "../services/types";
 import type { I18nKey } from "../i18n";
 
 interface UseSessionActionsArgs {
@@ -111,7 +111,7 @@ export function useSessionActions({
     }
   };
 
-  const testConnect = async (input: SessionInput) => {
+  const testConnect = async (input: SessionInput): Promise<HostReachability> => {
     return testHostReachability(input.host, input.port, 2000, input.protocol);
   };
 

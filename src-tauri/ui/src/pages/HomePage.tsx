@@ -1,7 +1,10 @@
+import { useEffect, useState } from "react";
+import { getVersion } from "@tauri-apps/api/app";
 import SessionList from "../components/SessionList";
 import AuditLogModal from "../components/AuditLogModal";
+import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
-import type { Session, SessionInput } from "../services/types";
+import type { HostReachability, Session, SessionInput } from "../services/types";
 import type { AuditRecord } from "../services/types";
 import type { I18nKey, Lang } from "../i18n";
 
@@ -9,8 +12,8 @@ interface Props {
   sessions: Session[];
   connectingSessionId?: string | null;
   selectedId?: string;
-  onlineMap: Record<string, boolean>;
-  pingingIds: string[];
+  reachabilityMap: Record<string, HostReachability>;
+  refreshBusy: boolean;
   connected: boolean;
   error: string | null;
   onDismissError: () => void;
@@ -19,7 +22,7 @@ interface Props {
   onCreate: (input: SessionInput, secret?: string) => Promise<void>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  onTestConnect: (input: SessionInput) => Promise<boolean>;
+  onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onGetSecret: (id: string) => Promise<string | null>;
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
@@ -40,8 +43,8 @@ export default function HomePage({
   sessions,
   connectingSessionId,
   selectedId,
-  onlineMap,
-  pingingIds,
+  reachabilityMap,
+  refreshBusy,
   connected,
   error,
   onDismissError,
@@ -68,17 +71,32 @@ export default function HomePage({
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
+  const [appVersion, setAppVersion] = useState("");
+
+  useEffect(() => {
+    void getVersion()
+      .then((v) => setAppVersion(v))
+      .catch(() => undefined);
+  }, []);
 
   return (
     <section className="workspace home-page">
       <header className="topbar">
         <div className="topbar-title">
           <div className="topbar-title-text">
-            <div className="topbar-title-line">rshell</div>
+            <div className="topbar-title-line">
+              rshell
+              {appVersion ? (
+                <span className="topbar-app-version" title={tr("home.appVersionTitle")}>
+                  v{appVersion}
+                </span>
+              ) : null}
+            </div>
             <div className="topbar-subtitle">{tr("top.subtitle")}</div>
           </div>
         </div>
         <div className="actions">
+          <ColorThemeToggle tr={tr} />
           <div className="lang-switch" role="group" aria-label={tr("top.ariaLanguageSwitch")}>
             <button
               className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
@@ -124,10 +142,10 @@ export default function HomePage({
                 type="button"
                 className="btn btn-ghost home-refresh-status"
                 onClick={() => onRefreshHostStatus()}
-                disabled={!hasSessions || pingingIds.length > 0}
+                disabled={!hasSessions || refreshBusy}
                 title={tr("home.refreshStatusHint")}
               >
-                {pingingIds.length > 0 ? tr("home.refreshStatusRunning") : tr("home.refreshStatus")}
+                {refreshBusy ? tr("home.refreshStatusRunning") : tr("home.refreshStatus")}
               </button>
               <div className="home-header-status">{status}</div>
             </div>
@@ -138,8 +156,7 @@ export default function HomePage({
                 sessions={sessions}
                 connectingSessionId={connectingSessionId}
                 selectedId={selectedId}
-                onlineMap={onlineMap}
-                pingingIds={pingingIds}
+                reachabilityMap={reachabilityMap}
                 onSelect={onSelect}
                 onCreate={onCreate}
                 onUpdate={onUpdate}

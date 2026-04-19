@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import type { Session, SessionInput } from "../services/types";
+import type { HostReachability, Session, SessionInput } from "../services/types";
 import { HostCreateModal } from "./session/HostCreateModal";
 import { HostEditModal } from "./session/HostEditModal";
 import { SessionRow } from "./session/SessionRow";
@@ -17,13 +17,12 @@ interface Props {
   sessions: Session[];
   connectingSessionId?: string | null;
   selectedId?: string;
-  onlineMap: Record<string, boolean>;
-  pingingIds: string[];
+  reachabilityMap: Record<string, HostReachability>;
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<void>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
-  onTestConnect: (input: SessionInput) => Promise<boolean>;
+  onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onGetSecret: (id: string) => Promise<string | null>;
   onConnect?: (id: string) => void;
 }
@@ -32,8 +31,7 @@ export default function SessionList({
   sessions,
   connectingSessionId,
   selectedId,
-  onlineMap,
-  pingingIds,
+  reachabilityMap,
   onSelect,
   onCreate,
   onUpdate,
@@ -191,16 +189,17 @@ export default function SessionList({
       <ul className="session-table-body" tabIndex={0} aria-label={tr("session.listKeyboardHint")} onKeyDown={onListKeyDown}>
         {displayedSessions.map((session) => {
           const active = selectedId === session.id;
-          const pinging = pingingIds.includes(session.id);
-          const online = onlineMap[session.id] ?? false;
+          const reach = reachabilityMap[session.id];
+          const online = reach?.online ?? false;
+          const latencyMs = online && reach?.latency_ms != null ? reach.latency_ms : null;
           const isConnectingHost = connectingSessionId === session.id;
           return (
             <SessionRow
               key={session.id}
               session={session}
               selected={active}
-              pinging={pinging}
               online={online}
+              latencyMs={latencyMs}
               isConnecting={isConnectingHost}
               onSelectAndConnect={(id) => {
                 onSelect(id);

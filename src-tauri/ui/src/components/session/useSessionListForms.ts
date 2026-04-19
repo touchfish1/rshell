@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { Session, SessionInput } from "../../services/types";
+import type { HostReachability, Session, SessionInput } from "../../services/types";
 import type { I18nKey } from "../../i18n";
 
 const defaultForm: SessionInput = {
@@ -15,7 +15,7 @@ const defaultForm: SessionInput = {
 interface Options {
   onCreate: (input: SessionInput, secret?: string) => Promise<void>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
-  onTestConnect: (input: SessionInput) => Promise<boolean>;
+  onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onGetSecret: (id: string) => Promise<string | null>;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
@@ -112,8 +112,8 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
     setCreateTesting(true);
     setCreateTestResult(null);
     try {
-      const ok = await onTestConnect(createForm);
-      setCreateTestResult(ok ? tr("modal.testSuccess") : tr("modal.testFailed"));
+      const r = await onTestConnect(createForm);
+      setCreateTestResult(r.online ? tr("modal.testSuccess") : tr("modal.testFailed"));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setCreateTestResult(tr("error.connectFailed", { message }));
@@ -126,8 +126,8 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
     setEditTesting(true);
     setEditTestResult(null);
     try {
-      const ok = await onTestConnect(editForm);
-      setEditTestResult(ok ? tr("modal.testSuccess") : tr("modal.testFailed"));
+      const r = await onTestConnect(editForm);
+      setEditTestResult(r.online ? tr("modal.testSuccess") : tr("modal.testFailed"));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setEditTestResult(tr("error.connectFailed", { message }));

@@ -16,6 +16,7 @@ import {
 } from "../lib/terminalFontSize";
 import { getTerminalFontFamily } from "../lib/terminalFontFamily";
 import { getXtermITheme } from "../lib/xtermThemes";
+import { useAppTheme } from "../theme-context";
 
 interface Props {
   isActive: boolean;
@@ -41,6 +42,9 @@ export default function TerminalPane({
   registerWriter,
 }: Props) {
   const { tr } = useI18n();
+  const { resolved: colorTheme } = useAppTheme();
+  const colorThemeRef = useRef(colorTheme);
+  colorThemeRef.current = colorTheme;
   const containerRef = useRef<HTMLDivElement | null>(null);
   const connectedRef = useRef(connected);
   const activeRef = useRef(isActive);
@@ -119,6 +123,16 @@ export default function TerminalPane({
   }, [registerWriter]);
 
   useEffect(() => {
+    const terminal = terminalRef.current;
+    if (!terminal) return;
+    terminal.options.theme = getXtermITheme(colorTheme);
+    terminal.options.fontFamily = getTerminalFontFamily();
+    if (terminal.rows > 0) {
+      terminal.refresh(0, terminal.rows - 1);
+    }
+  }, [colorTheme]);
+
+  useEffect(() => {
     if (!containerRef.current) {
       return;
     }
@@ -127,7 +141,7 @@ export default function TerminalPane({
       cursorBlink: true,
       fontSize: getTerminalFontSize(),
       fontFamily: getTerminalFontFamily(),
-      theme: getXtermITheme(),
+      theme: getXtermITheme(colorThemeRef.current),
     });
     const fitAddon = new FitAddon();
     terminalRef.current = terminal;
@@ -136,7 +150,7 @@ export default function TerminalPane({
     terminal.open(containerRef.current);
 
     const applyAppearance = () => {
-      terminal.options.theme = getXtermITheme();
+      terminal.options.theme = getXtermITheme(colorThemeRef.current);
       terminal.options.fontFamily = getTerminalFontFamily();
       if (terminal.rows > 0) {
         terminal.refresh(0, terminal.rows - 1);
