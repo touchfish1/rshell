@@ -167,6 +167,8 @@ cd src-tauri/ui && npm run build
 2. 使用 `tauri-apps/tauri-action` 生成安装包并附加到 Release
 3. 额外打包 ZIP 资产并上传
 
+**Windows 产物说明**：`src-tauri/tauri.windows.conf.json` 与主配置合并后，Windows 上仅打 **NSIS（`*-setup.exe`）** 与 **MSI**，不再打便携版 `app` 目录。发布工作流里的 **`rshell-windows-x64.zip` 内只放入该 `*-setup.exe`**，用户解压后运行安装程序即可，与单独下载 setup 等价；面向更新器的 **`*.nsis.zip`** 仍为签名包，用途不同。
+
 ## 9. 建议的提交检查清单
 
 - 功能是否覆盖异常路径（失败提示、空态、禁用态）

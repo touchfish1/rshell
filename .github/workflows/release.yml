@@ -200,12 +200,21 @@ jobs:
           fi
           echo "Strict mode passed: Linux updater bundle + .sig found."
 
-      - name: Create Windows zip
+      - name: Create Windows zip (installer only)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path release-assets -Force | Out-Null
-          Compress-Archive -Path "src-tauri/target/release/rshell.exe" -DestinationPath "release-assets/rshell-windows-x64.zip" -Force
+          $setup = Get-ChildItem -Recurse "src-tauri/target/release/bundle/nsis" -File -Filter "*-setup.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $setup) {
+            Write-Error "NSIS *-setup.exe not found under src-tauri/target/release/bundle/nsis"
+            exit 1
+          }
+          $stage = "release-assets/_win_zip_stage"
+          New-Item -ItemType Directory -Path $stage -Force | Out-Null
+          Copy-Item -LiteralPath $setup.FullName -Destination (Join-Path $stage $setup.Name) -Force
+          Compress-Archive -Path (Join-Path $stage $setup.Name) -DestinationPath "release-assets/rshell-windows-x64.zip" -Force
+          Remove-Item -Recurse -Force $stage
 
       - name: Create macOS zip
         if: runner.os == 'macOS'

@@ -1,8 +1,21 @@
 :root {
   color: #e7e8ea;
   background: #0b0f17;
-  font-family: Inter, Segoe UI, system-ui, -apple-system, sans-serif;
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   color-scheme: dark;
+
+  /* 弹窗 / 浮层（与 modals.css、terminal 内嵌层共用） */
+  --overlay-backdrop: rgba(2, 4, 8, 0.62);
+  --overlay-blur: 10px;
+  --modal-surface: #0d1016;
+  --modal-surface-muted: #0a0d12;
+  --modal-border: rgba(255, 255, 255, 0.07);
+  --modal-border-inner: rgba(255, 255, 255, 0.045);
+  --modal-text: #e9edf3;
+  --modal-text-muted: #9aa3b2;
+  --modal-radius: 8px;
+  --modal-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
+  --modal-accent: #5b8def;
 }
 
 body {
@@ -36,13 +49,12 @@ body {
 }
 
 .btn:hover:not(:disabled) {
-  transform: translateY(-1px);
-  border-color: rgba(79, 131, 255, 0.55);
-  background: rgba(31, 38, 51, 0.85);
+  border-color: rgba(91, 141, 239, 0.45);
+  background: rgba(30, 36, 48, 0.92);
 }
 
 .btn:active:not(:disabled) {
-  transform: translateY(0);
+  background: rgba(24, 29, 40, 0.95);
 }
 
 .btn:disabled {
@@ -58,6 +70,18 @@ body {
 .btn-primary:hover:not(:disabled) {
   border-color: rgba(79, 131, 255, 0.85);
   background: rgba(38, 71, 124, 0.78);
+}
+
+.btn-danger {
+  border-color: rgba(200, 88, 102, 0.55);
+  background: rgba(100, 32, 44, 0.45);
+  color: #f2d6da;
+}
+
+.btn-danger:hover:not(:disabled) {
+  border-color: rgba(220, 105, 118, 0.7);
+  background: rgba(120, 38, 52, 0.55);
+  color: #fff;
 }
 
 .btn-ghost {
@@ -144,19 +168,48 @@ html[data-theme="light"] .btn-ghost:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.75);
 }
 
+html[data-theme="light"] .btn-danger {
+  border-color: rgba(180, 70, 85, 0.55);
+  background: rgba(255, 236, 238, 0.95);
+  color: #7a1e2d;
+}
+
+html[data-theme="light"] .btn-danger:hover:not(:disabled) {
+  background: rgba(255, 220, 224, 1);
+  border-color: rgba(200, 80, 95, 0.65);
+}
+
+html[data-theme="light"] {
+  --overlay-backdrop: rgba(18, 22, 30, 0.4);
+  --overlay-blur: 12px;
+  --modal-surface: #ffffff;
+  --modal-surface-muted: #f6f7f9;
+  --modal-border: rgba(15, 22, 35, 0.1);
+  --modal-border-inner: rgba(15, 22, 35, 0.06);
+  --modal-text: #141820;
+  --modal-text-muted: #5c6678;
+  --modal-shadow: 0 24px 48px rgba(20, 28, 45, 0.12);
+  --modal-accent: #2d62c9;
+}
+
 html[data-theme="light"] .modal-card {
-  background: #ffffff;
-  border-color: #c5cedd;
+  background: var(--modal-surface);
+  border-color: var(--modal-border);
 }
 
 html[data-theme="light"] .modal-header h4 {
-  color: #1b2230;
+  color: var(--modal-text);
 }
 
+html[data-theme="light"] .modal-body {
+  color: var(--modal-text-muted);
+}
+
+html[data-theme="light"] .modal-inline-notice,
 html[data-theme="light"] .placeholder-row {
-  background: rgba(245, 247, 251, 0.95);
-  border-color: #d5dce8;
-  color: #3a4558;
+  background: var(--modal-surface-muted);
+  border-color: var(--modal-border);
+  color: var(--modal-text-muted);
 }
 
 html[data-theme="light"] .session-list {

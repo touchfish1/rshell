@@ -67,9 +67,12 @@ export function SftpTextEditorModal({
           placeholder={editorLoading ? tr("sftp.loading") : tr("sftp.editorPlaceholder")}
         />
         <div className="sftp-editor-actions">
-          <button onClick={onClose}>{tr("modal.close")}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            {tr("modal.close")}
+          </button>
           <button
-            className="primary"
+            type="button"
+            className="btn btn-primary"
             disabled={editorReadOnly || editorLoading || editorSaving || !editorDirty}
             onClick={() => void onSave()}
           >

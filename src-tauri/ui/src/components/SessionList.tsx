@@ -11,6 +11,7 @@ import { getRecentSessionIds } from "../lib/recentSessions";
 import { orderSessionsByRecent } from "../lib/orderSessionsByRecent";
 import { sessionInputFromSession } from "../lib/sessionInput";
 import { useSessionListColumns } from "../hooks/useSessionListColumns";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 interface Props {
   sessions: Session[];
@@ -44,6 +45,7 @@ export default function SessionList({
   const { tr } = useI18n();
   const [hostQuery, setHostQuery] = useState("");
   const [recentIds, setRecentIds] = useState(() => getRecentSessionIds());
+  const [pendingDelete, setPendingDelete] = useState<Session | null>(null);
 
   const { gridStyle, onResizeNameStart, onResizeHostStart } = useSessionListColumns();
 
@@ -76,10 +78,9 @@ export default function SessionList({
     await onCreate(input, secret ?? undefined);
   };
 
-  const confirmDelete = async (session: Session) => {
-    const ok = window.confirm(tr("session.deleteConfirm", { name: session.name }));
-    if (!ok) return;
+  const runDelete = async (session: Session) => {
     await onDelete(session.id);
+    setPendingDelete(null);
   };
 
   const {
@@ -131,7 +132,7 @@ export default function SessionList({
   );
 
   const onListKeyDown = (e: KeyboardEvent<HTMLUListElement>) => {
-    if (showCreateModal || editSession) return;
+    if (showCreateModal || editSession || pendingDelete) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
       moveListSelection(1);
@@ -213,7 +214,7 @@ export default function SessionList({
               onDelete={(id) => {
                 const target = sessions.find((item) => item.id === id);
                 if (!target) return;
-                void confirmDelete(target);
+                setPendingDelete(target);
               }}
             />
           );
@@ -237,6 +238,20 @@ export default function SessionList({
         onChangeSecret={setCreateSecret}
         onTest={() => void testCreateConnect()}
         onSubmit={() => void submitCreate()}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={tr("session.delete")}
+        message={
+          pendingDelete ? tr("session.deleteConfirm", { name: pendingDelete.name }) : ""
+        }
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) void runDelete(pendingDelete);
+        }}
       />
       <HostEditModal
         session={editSession}

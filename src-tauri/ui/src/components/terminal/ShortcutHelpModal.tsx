@@ -84,7 +84,7 @@ export function ShortcutHelpModal({ open, onClose, tr }: Props) {
           </section>
         </div>
         <div className="modal-actions">
-          <button type="button" onClick={onClose}>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
             {tr("modal.close")}
           </button>
         </div>

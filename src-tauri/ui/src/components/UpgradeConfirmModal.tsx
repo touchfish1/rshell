@@ -10,7 +10,7 @@ interface Props {
 
 export function UpgradeConfirmModal({ current, next, tr, onConfirm, onCancel }: Props) {
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="upgrade-confirm-title">
+    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="upgrade-confirm-title" onClick={onCancel}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h4 id="upgrade-confirm-title">{tr("updater.modalTitle")}</h4>
@@ -18,11 +18,9 @@ export function UpgradeConfirmModal({ current, next, tr, onConfirm, onCancel }: 
             ×
           </button>
         </div>
-        <p className="placeholder-row" style={{ marginBottom: 10 }}>
-          {tr("updater.modalBody", { next, current })}
-        </p>
+        <p className="modal-body modal-body--preline">{tr("updater.modalBody", { next, current })}</p>
         <div className="modal-actions">
-          <button type="button" onClick={onCancel}>
+          <button type="button" className="btn btn-ghost" onClick={onCancel}>
             {tr("modal.cancel")}
           </button>
           <button type="button" className="btn btn-primary" onClick={onConfirm}>

@@ -87,7 +87,7 @@ export async function testHostReachability(
   port: number,
   timeoutMs = 2000
 ): Promise<boolean> {
-  return invoke("test_host_reachability", { host, port, timeoutMs });
+  return invoke("test_host_reachability", { host, port, timeout_ms: timeoutMs });
 }
 
 export async function getHostMetrics(id: string): Promise<HostMetrics> {

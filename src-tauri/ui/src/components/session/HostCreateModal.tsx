@@ -38,79 +38,82 @@ export function HostCreateModal({
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h4>{tr("modal.newHost")}</h4>
-          <button className="modal-close" onClick={onClose} title={tr("modal.close")}>
+          <button type="button" className="modal-close" onClick={onClose} title={tr("modal.close")}>
             ×
           </button>
         </div>
-        <div className="session-form">
-          <input
-            placeholder={tr("form.name")}
-            value={form.name}
-            onChange={(e) => onChangeForm({ ...form, name: e.target.value })}
-          />
-          <select
-            value={form.protocol}
-            onChange={(e) => {
-              const protocol = e.target.value as Protocol;
-              onChangeForm({ ...form, protocol, port: protocol === "ssh" ? 22 : 23 });
-            }}
-          >
-            <option value="ssh">SSH</option>
-            <option value="telnet">Telnet</option>
-          </select>
-          <input
-            ref={hostInputRef}
-            placeholder={tr("form.host")}
-            value={form.host}
-            onChange={(e) => {
-              const host = e.target.value;
-              onChangeForm({
-                ...form,
-                host,
-                name: form.name || host,
-              });
-            }}
-          />
-          <input
-            placeholder={tr("form.port")}
-            type="number"
-            value={form.port || protocolPort}
-            onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })}
-          />
-          <input
-            placeholder={tr("form.username")}
-            value={form.username}
-            onChange={(e) => onChangeForm({ ...form, username: e.target.value })}
-          />
-          <input
-            placeholder={form.protocol === "ssh" ? tr("form.sshPasswordSaved") : tr("form.secretOptional")}
-            type="password"
-            value={secret}
-            onChange={(e) => onChangeSecret(e.target.value)}
-          />
-          {testResult ? <div className="placeholder-row">{testResult}</div> : null}
-          <div className="modal-actions">
-            <button className="btn btn-ghost" onClick={onClose}>
-              {tr("modal.cancel")}
-            </button>
-            <button
-              className="btn btn-ghost"
-              onClick={onTest}
-              disabled={testing || !form.host.trim() || !form.port}
+        <div className="modal-form">
+          <div className="session-form">
+            <input
+              placeholder={tr("form.name")}
+              value={form.name}
+              onChange={(e) => onChangeForm({ ...form, name: e.target.value })}
+            />
+            <select
+              value={form.protocol}
+              onChange={(e) => {
+                const protocol = e.target.value as Protocol;
+                onChangeForm({ ...form, protocol, port: protocol === "ssh" ? 22 : 23 });
+              }}
             >
-              {testing ? tr("modal.testing") : tr("modal.testConnection")}
-            </button>
-            <button
-              className="btn btn-primary"
-              onClick={onSubmit}
-              disabled={!form.host.trim() || !form.username.trim() || (form.protocol === "ssh" && !secret.trim())}
-            >
-              {tr("modal.add")}
-            </button>
+              <option value="ssh">SSH</option>
+              <option value="telnet">Telnet</option>
+            </select>
+            <input
+              ref={hostInputRef}
+              placeholder={tr("form.host")}
+              value={form.host}
+              onChange={(e) => {
+                const host = e.target.value;
+                onChangeForm({
+                  ...form,
+                  host,
+                  name: form.name || host,
+                });
+              }}
+            />
+            <input
+              placeholder={tr("form.port")}
+              type="number"
+              value={form.port || protocolPort}
+              onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })}
+            />
+            <input
+              placeholder={tr("form.username")}
+              value={form.username}
+              onChange={(e) => onChangeForm({ ...form, username: e.target.value })}
+            />
+            <input
+              placeholder={form.protocol === "ssh" ? tr("form.sshPasswordSaved") : tr("form.secretOptional")}
+              type="password"
+              value={secret}
+              onChange={(e) => onChangeSecret(e.target.value)}
+            />
+            {testResult ? <div className="modal-inline-notice">{testResult}</div> : null}
           </div>
+        </div>
+        <div className="modal-actions">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>
+            {tr("modal.cancel")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            onClick={onTest}
+            disabled={testing || !form.host.trim() || !form.port}
+          >
+            {testing ? tr("modal.testing") : tr("modal.testConnection")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onSubmit}
+            disabled={!form.host.trim() || !form.username.trim() || (form.protocol === "ssh" && !secret.trim())}
+          >
+            {tr("modal.add")}
+          </button>
         </div>
       </div>
     </div>
   );
 }
-

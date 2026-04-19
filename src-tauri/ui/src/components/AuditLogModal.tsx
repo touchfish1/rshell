@@ -112,55 +112,57 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
         <div className="modal-header">
           <h4>{tr("home.auditTitle")}</h4>
           <div className="audit-modal-actions">
-            <button className="btn btn-ghost" onClick={onRefresh} disabled={loading}>
+            <button type="button" className="btn btn-ghost" onClick={onRefresh} disabled={loading}>
               {tr("home.auditRefresh")}
             </button>
-            <button className="modal-close" onClick={onClose} title={tr("modal.close")}>
+            <button type="button" className="modal-close" onClick={onClose} title={tr("modal.close")}>
               ×
             </button>
           </div>
         </div>
-        <div className="audit-toolbar">
-          <select value={filterType} onChange={(event) => setFilterType(event.target.value as FilterType)}>
-            <option value="all">{tr("home.auditFilterAll")}</option>
-            <option value="connect">{tr("home.auditFilterConnect")}</option>
-            <option value="command">{tr("home.auditFilterCommand")}</option>
-            <option value="disconnect">{tr("home.auditFilterDisconnect")}</option>
-            <option value="control">{tr("home.auditFilterControl" as I18nKey)}</option>
-          </select>
-          <input
-            value={keyword}
-            onChange={(event) => setKeyword(event.target.value)}
-            placeholder={tr("home.auditSearchPlaceholder")}
-          />
-        </div>
-        <div className="audit-export-actions">
-          <button className="btn btn-ghost" onClick={exportCsv} disabled={rows.length === 0}>
-            {tr("home.auditExportCsv")}
-          </button>
-          <button className="btn btn-ghost" onClick={exportJson} disabled={rows.length === 0}>
-            {tr("home.auditExportJson")}
-          </button>
-        </div>
-        <div className="audit-list">
-          {rows.length === 0 ? (
-            <div className="audit-empty">{loading ? tr("sftp.loading") : tr("home.auditEmpty")}</div>
-          ) : (
-            rows.map((record) => (
-              <div key={record.id} className="audit-item">
-                <div className="audit-item-head">
-                  <span>{new Date(record.timestamp_ms).toLocaleString()}</span>
-                  <span>{record.event_type}</span>
+        <div className="audit-modal-body">
+          <div className="audit-toolbar">
+            <select value={filterType} onChange={(event) => setFilterType(event.target.value as FilterType)}>
+              <option value="all">{tr("home.auditFilterAll")}</option>
+              <option value="connect">{tr("home.auditFilterConnect")}</option>
+              <option value="command">{tr("home.auditFilterCommand")}</option>
+              <option value="disconnect">{tr("home.auditFilterDisconnect")}</option>
+              <option value="control">{tr("home.auditFilterControl" as I18nKey)}</option>
+            </select>
+            <input
+              value={keyword}
+              onChange={(event) => setKeyword(event.target.value)}
+              placeholder={tr("home.auditSearchPlaceholder")}
+            />
+          </div>
+          <div className="audit-export-actions">
+            <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={rows.length === 0}>
+              {tr("home.auditExportCsv")}
+            </button>
+            <button type="button" className="btn btn-ghost" onClick={exportJson} disabled={rows.length === 0}>
+              {tr("home.auditExportJson")}
+            </button>
+          </div>
+          <div className="audit-list">
+            {rows.length === 0 ? (
+              <div className="audit-empty">{loading ? tr("sftp.loading") : tr("home.auditEmpty")}</div>
+            ) : (
+              rows.map((record) => (
+                <div key={record.id} className="audit-item">
+                  <div className="audit-item-head">
+                    <span>{new Date(record.timestamp_ms).toLocaleString()}</span>
+                    <span>{record.event_type}</span>
+                  </div>
+                  <div className="audit-item-main">
+                    <span>{record.session_name ?? "-"}</span>
+                    <span>{record.host ?? "-"}</span>
+                  </div>
+                  {record.command ? <div className="audit-command">{maskSensitiveCommand(record.command)}</div> : null}
+                  <div className="audit-detail">{record.detail}</div>
                 </div>
-                <div className="audit-item-main">
-                  <span>{record.session_name ?? "-"}</span>
-                  <span>{record.host ?? "-"}</span>
-                </div>
-                {record.command ? <div className="audit-command">{maskSensitiveCommand(record.command)}</div> : null}
-                <div className="audit-detail">{record.detail}</div>
-              </div>
-            ))
-          )}
+              ))
+            )}
+          </div>
         </div>
       </div>
     </div>

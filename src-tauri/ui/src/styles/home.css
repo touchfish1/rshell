@@ -272,11 +272,21 @@
 }
 
 .audit-modal-card {
-  width: min(980px, calc(100vw - 28px));
-  max-height: calc(100vh - 28px);
+  width: min(960px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  gap: 0;
+}
+
+.audit-modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 0 4px 10px;
 }
 
 .audit-modal-actions {
@@ -293,11 +303,12 @@
 
 .audit-toolbar select,
 .audit-toolbar input {
-  background: rgba(15, 20, 29, 0.75);
-  border: 1px solid rgba(48, 56, 74, 0.9);
-  color: #e7e8ea;
+  background: var(--modal-surface-muted);
+  border: 1px solid var(--modal-border);
+  color: var(--modal-text);
   padding: 8px 10px;
-  border-radius: 10px;
+  border-radius: 6px;
+  font-size: 13px;
 }
 
 .audit-export-actions {
@@ -307,9 +318,9 @@
 }
 
 .audit-list {
-  border: 1px solid rgba(48, 56, 74, 0.7);
-  border-radius: 10px;
-  background: rgba(9, 14, 22, 0.55);
+  border: 1px solid var(--modal-border-inner);
+  border-radius: 6px;
+  background: var(--modal-surface-muted);
   overflow: auto;
   min-height: 220px;
   max-height: 62vh;
@@ -319,10 +330,10 @@
 }
 
 .audit-item {
-  border: 1px solid rgba(48, 56, 74, 0.72);
-  border-radius: 8px;
-  background: rgba(14, 19, 29, 0.72);
-  padding: 8px 10px;
+  border: 1px solid var(--modal-border-inner);
+  border-radius: 6px;
+  background: var(--modal-surface);
+  padding: 10px 12px;
 }
 
 .audit-item-head,
@@ -344,12 +355,12 @@
 
 .audit-command {
   margin-top: 6px;
-  border: 1px solid rgba(56, 65, 86, 0.8);
-  border-radius: 6px;
-  background: rgba(8, 12, 20, 0.85);
+  border: 1px solid var(--modal-border-inner);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.2);
   color: #d6e4ff;
-  padding: 6px 8px;
-  font-family: Consolas, "Courier New", monospace;
+  padding: 8px 10px;
+  font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
   font-size: 12px;
   overflow-wrap: anywhere;
 }

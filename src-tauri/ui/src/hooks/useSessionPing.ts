@@ -9,7 +9,18 @@ export function useSessionPing(opts: { currentPage: "home" | "terminal"; session
 
   useEffect(() => {
     let cancelled = false;
-    if (currentPage !== "home" || sessions.length === 0) return;
+
+    if (currentPage !== "home") {
+      setOnlineMap({});
+      setPingingIds([]);
+      return;
+    }
+
+    if (sessions.length === 0) {
+      setOnlineMap({});
+      setPingingIds([]);
+      return;
+    }
 
     const runPing = async () => {
       const ids = sessions.map((session) => session.id);
@@ -25,11 +36,11 @@ export function useSessionPing(opts: { currentPage: "home" | "terminal"; session
         })
       );
       if (cancelled) return;
-      setOnlineMap((prev) => {
-        const next = { ...prev };
-        results.forEach(([id, ok]) => {
+      setOnlineMap(() => {
+        const next: Record<string, boolean> = {};
+        for (const [id, ok] of results) {
           next[id] = ok;
-        });
+        }
         return next;
       });
       setPingingIds([]);
