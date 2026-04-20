@@ -9,6 +9,25 @@ use crate::domain::zookeeper::{ZookeeperConnection, ZookeeperConnectionInput};
 use std::time::Duration;
 use zookeeper_client::Client;
 
+async fn audit_zk_event(
+    state: &AppState,
+    id: Uuid,
+    event_type: &str,
+    detail: String,
+    command: Option<String>,
+) {
+    let meta = state
+        .list_zookeeper_connections()
+        .await
+        .into_iter()
+        .find(|item| item.id == id);
+    let session_name = meta.as_ref().map(|item| item.name.clone());
+    let host = meta.as_ref().map(|item| item.connect_string.clone());
+    let _ = state
+        .record_custom_audit(event_type, Some(id), session_name, host, command, detail)
+        .await;
+}
+
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ZkNodeData {
     pub data_base64: String,
@@ -64,7 +83,23 @@ pub async fn connect_zookeeper(
     secret: Option<String>,
 ) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.connect_zookeeper(id, secret).await
+    match state.connect_zookeeper(id, secret).await {
+        Ok(_) => {
+            audit_zk_event(&state, id, "zk_connect", "zookeeper connected".to_string(), None).await;
+            Ok(())
+        }
+        Err(err) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_connect_failed",
+                format!("zookeeper connect failed: {err}"),
+                None,
+            )
+            .await;
+            Err(err)
+        }
+    }
 }
 
 pub async fn test_zookeeper_connection(
@@ -86,7 +121,30 @@ pub async fn test_zookeeper_connection(
 
 pub async fn disconnect_zookeeper(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.disconnect_zookeeper(id).await
+    match state.disconnect_zookeeper(id).await {
+        Ok(_) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_disconnect",
+                "zookeeper disconnected".to_string(),
+                None,
+            )
+            .await;
+            Ok(())
+        }
+        Err(err) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_disconnect_failed",
+                format!("zookeeper disconnect failed: {err}"),
+                None,
+            )
+            .await;
+            Err(err)
+        }
+    }
 }
 
 pub async fn zk_list_children(
@@ -95,14 +153,60 @@ pub async fn zk_list_children(
     path: String,
 ) -> Result<Vec<String>, String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.zk_list_children(id, path).await
+    let op_path = path.clone();
+    match state.zk_list_children(id, path).await {
+        Ok(children) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_list_children",
+                format!("list children path={op_path} count={}", children.len()),
+                None,
+            )
+            .await;
+            Ok(children)
+        }
+        Err(err) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_list_children_failed",
+                format!("list children failed path={op_path}: {err}"),
+                None,
+            )
+            .await;
+            Err(err)
+        }
+    }
 }
 
 pub async fn zk_get_data(state: State<'_, AppState>, id: String, path: String) -> Result<ZkNodeData, String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    let (data, _stat) = state.zk_get_data(id, path).await?;
+    let op_path = path.clone();
+    let (data, _stat) = match state.zk_get_data(id, path).await {
+        Ok(res) => res,
+        Err(err) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_get_data_failed",
+                format!("get data failed path={op_path}: {err}"),
+                None,
+            )
+            .await;
+            return Err(err);
+        }
+    };
     let data_utf8 = String::from_utf8(data.clone()).ok();
     let data_base64 = base64::engine::general_purpose::STANDARD.encode(&data);
+    audit_zk_event(
+        &state,
+        id,
+        "zk_get_data",
+        format!("get data path={op_path} bytes={}", data.len()),
+        None,
+    )
+    .await;
     Ok(ZkNodeData {
         data_base64,
         data_utf8,
@@ -117,6 +221,31 @@ pub async fn zk_set_data(
     data_utf8: String,
 ) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.zk_set_data(id, path, data_utf8.into_bytes()).await
+    let op_path = path.clone();
+    let payload_len = data_utf8.len();
+    match state.zk_set_data(id, path, data_utf8.into_bytes()).await {
+        Ok(_) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_set_data",
+                format!("set data path={op_path} bytes={payload_len}"),
+                None,
+            )
+            .await;
+            Ok(())
+        }
+        Err(err) => {
+            audit_zk_event(
+                &state,
+                id,
+                "zk_set_data_failed",
+                format!("set data failed path={op_path}: {err}"),
+                None,
+            )
+            .await;
+            Err(err)
+        }
+    }
 }
 

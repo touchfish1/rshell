@@ -15,6 +15,34 @@ impl AppState {
         self.store.list_audits(limit).map_err(|e| e.to_string())
     }
 
+    pub async fn record_custom_audit(
+        &self,
+        event_type: &str,
+        session_id: Option<Uuid>,
+        session_name: Option<String>,
+        host: Option<String>,
+        command: Option<String>,
+        detail: String,
+    ) -> Result<(), String> {
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map_err(|e| e.to_string())?
+            .as_millis() as i64;
+        let record = AuditRecord {
+            id: Uuid::new_v4().to_string(),
+            timestamp_ms: now,
+            session_id: session_id.map(|id| id.to_string()),
+            session_name,
+            host,
+            event_type: event_type.to_string(),
+            command,
+            detail,
+        };
+        self.store
+            .append_audit(record, AUDIT_MAX_KEEP)
+            .map_err(|e| e.to_string())
+    }
+
     pub async fn record_session_audit(
         &self,
         session_id: Uuid,
@@ -29,23 +57,15 @@ impl AppState {
             .iter()
             .find(|s| s.id == session_id)
             .cloned();
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| e.to_string())?
-            .as_millis() as i64;
-        let record = AuditRecord {
-            id: Uuid::new_v4().to_string(),
-            timestamp_ms: now,
-            session_id: Some(session_id.to_string()),
-            session_name: session.as_ref().map(|s| s.name.clone()),
-            host: session.map(|s| s.host),
-            event_type: event_type.to_string(),
+        self.record_custom_audit(
+            event_type,
+            Some(session_id),
+            session.as_ref().map(|s| s.name.clone()),
+            session.map(|s| s.host),
             command,
             detail,
-        };
-        self.store
-            .append_audit(record, AUDIT_MAX_KEEP)
-            .map_err(|e| e.to_string())
+        )
+        .await
     }
 
     pub async fn collect_input_events_for_audit(

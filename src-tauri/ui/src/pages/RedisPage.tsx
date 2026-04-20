@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { I18nKey } from "../i18n";
 import type {
   RedisConnection,
@@ -174,9 +174,24 @@ export default function RedisPage({
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
   const [selectedKeyData, setSelectedKeyData] = useState<RedisKeyData | null>(null);
   const [editorText, setEditorText] = useState("");
+  const [hashEntries, setHashEntries] = useState<RedisHashEntry[]>([]);
+  const [listItems, setListItems] = useState<string[]>([]);
+  const [setMembers, setSetMembers] = useState<string[]>([]);
+  const [setEditIndex, setSetEditIndex] = useState<number | null>(null);
+  const [setDraft, setSetDraft] = useState("");
+  const [zsetEntries, setZsetEntries] = useState<RedisZsetEntry[]>([]);
   const [ttlInput, setTtlInput] = useState("");
   const [saveResult, setSaveResult] = useState<string | null>(null);
   const [commandLogs, setCommandLogs] = useState<string[]>([]);
+  const [connPanelWidth, setConnPanelWidth] = useState(320);
+  const [resizingConnPanel, setResizingConnPanel] = useState(false);
+  const [commandPanelHeight, setCommandPanelHeight] = useState(156);
+  const [resizingCommandPanel, setResizingCommandPanel] = useState(false);
+  const [zkDataWidth, setZkDataWidth] = useState(460);
+  const [resizingDataPane, setResizingDataPane] = useState(false);
+  const terminalLayoutRef = useRef<HTMLDivElement | null>(null);
+  const redisPageRef = useRef<HTMLElement | null>(null);
+  const browserBodyRef = useRef<HTMLDivElement | null>(null);
 
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<RedisConnectionInput>(defaultForm);
@@ -213,6 +228,12 @@ export default function RedisPage({
     setKeysLoaded(false);
     setSelectedKeyData(null);
     setEditorText("");
+    setHashEntries([]);
+    setListItems([]);
+    setSetMembers([]);
+    setSetEditIndex(null);
+    setSetDraft("");
+    setZsetEntries([]);
     setTtlInput("");
     setSaveResult(null);
     setExpandedGroups({});
@@ -392,21 +413,57 @@ export default function RedisPage({
       switch (data.payload.kind) {
         case "string":
           setEditorText(data.payload.value ?? "");
+          setHashEntries([]);
+          setListItems([]);
+          setSetMembers([]);
+          setSetEditIndex(null);
+          setSetDraft("");
+          setZsetEntries([]);
           break;
         case "hash":
-          setEditorText(data.payload.entries.map((entry) => `${entry.field}\t${entry.value}`).join("\n"));
+          setEditorText("");
+          setHashEntries(data.payload.entries.length > 0 ? data.payload.entries : [{ field: "", value: "" }]);
+          setListItems([]);
+          setSetMembers([]);
+          setSetEditIndex(null);
+          setSetDraft("");
+          setZsetEntries([]);
           break;
         case "list":
-          setEditorText(data.payload.items.join("\n"));
+          setEditorText("");
+          setHashEntries([]);
+          setListItems(data.payload.items.length > 0 ? data.payload.items : [""]);
+          setSetMembers([]);
+          setSetEditIndex(null);
+          setSetDraft("");
+          setZsetEntries([]);
           break;
         case "set":
-          setEditorText(data.payload.members.join("\n"));
+          setEditorText("");
+          setHashEntries([]);
+          setListItems([]);
+          setSetMembers(data.payload.members.length > 0 ? data.payload.members : [""]);
+          setSetEditIndex(null);
+          setSetDraft("");
+          setZsetEntries([]);
           break;
         case "zset":
-          setEditorText(data.payload.entries.map((entry) => `${entry.score}\t${entry.member}`).join("\n"));
+          setEditorText("");
+          setHashEntries([]);
+          setListItems([]);
+          setSetMembers([]);
+          setSetEditIndex(null);
+          setSetDraft("");
+          setZsetEntries(data.payload.entries.length > 0 ? data.payload.entries : [{ score: 0, member: "" }]);
           break;
         default:
           setEditorText("");
+          setHashEntries([]);
+          setListItems([]);
+          setSetMembers([]);
+          setSetEditIndex(null);
+          setSetDraft("");
+          setZsetEntries([]);
       }
       setSaveResult(null);
     } catch (err) {
@@ -415,55 +472,231 @@ export default function RedisPage({
     }
   };
 
-  const toHashEntries = (text: string): RedisHashEntry[] =>
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const [field, ...rest] = line.split("\t");
-        return { field, value: rest.join("\t") };
-      });
-
-  const toZsetEntries = (text: string): RedisZsetEntry[] =>
-    text
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .map((line) => {
-        const [score, ...rest] = line.split("\t");
-        return { score: Number(score), member: rest.join("\t") };
-      });
-
   const buildPayload = (): RedisValueUpdate | null => {
     if (!selectedKeyData) return null;
     switch (selectedKeyData.payload.kind) {
       case "string":
         return { kind: "string", value: editorText };
       case "hash":
-        return { kind: "hash", entries: toHashEntries(editorText) };
+        return {
+          kind: "hash",
+          entries: hashEntries.filter((entry) => entry.field.trim().length > 0),
+        };
       case "list":
         return {
           kind: "list",
-          items: editorText
-            .split("\n")
-            .map((line) => line.trim())
-            .filter(Boolean),
+          items: listItems.map((item) => item.trim()).filter(Boolean),
         };
       case "set":
         return {
           kind: "set",
-          members: Array.from(
-            new Set(
-              editorText
-                .split("\n")
-                .map((line) => line.trim())
-                .filter(Boolean)
-            )
-          ),
+          members: Array.from(new Set(setMembers.map((item) => item.trim()).filter(Boolean))),
         };
       case "zset":
-        return { kind: "zset", entries: toZsetEntries(editorText) };
+        return {
+          kind: "zset",
+          entries: zsetEntries
+            .filter((entry) => entry.member.trim().length > 0)
+            .map((entry) => ({
+              member: entry.member,
+              score: Number.isFinite(entry.score) ? entry.score : 0,
+            })),
+        };
+      default:
+        return null;
+    }
+  };
+
+  const renderTypedEditor = () => {
+    if (!selectedKeyData) return null;
+    switch (selectedKeyData.payload.kind) {
+      case "string":
+        return (
+          <textarea
+            className="zk-data-textarea"
+            value={editorText}
+            onChange={(e) => setEditorText(e.target.value)}
+            placeholder={tr("redis.page.valuePlaceholder")}
+          />
+        );
+      case "hash":
+        return (
+          <div className="redis-typed-editor">
+            {hashEntries.map((entry, index) => (
+              <div className="redis-typed-row" key={`hash-${index}`}>
+                <input
+                  value={entry.field}
+                  placeholder="field"
+                  onChange={(e) =>
+                    setHashEntries((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, field: e.target.value } : item))
+                    )
+                  }
+                />
+                <input
+                  value={entry.value}
+                  placeholder="value"
+                  onChange={(e) =>
+                    setHashEntries((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, value: e.target.value } : item))
+                    )
+                  }
+                />
+                <button
+                  className="btn btn-ghost"
+                  onClick={() => setHashEntries((prev) => prev.filter((_, i) => i !== index))}
+                >
+                  删除
+                </button>
+              </div>
+            ))}
+            <button className="btn btn-ghost" onClick={() => setHashEntries((prev) => [...prev, { field: "", value: "" }])}>
+              新增 field
+            </button>
+          </div>
+        );
+      case "list":
+        return (
+          <div className="redis-typed-editor">
+            {listItems.map((item, index) => (
+              <div className="redis-typed-row" key={`list-${index}`}>
+                <input
+                  value={item}
+                  placeholder={`index ${index}`}
+                  onChange={(e) =>
+                    setListItems((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))
+                  }
+                />
+                <button className="btn btn-ghost" onClick={() => setListItems((prev) => prev.filter((_, i) => i !== index))}>
+                  删除
+                </button>
+              </div>
+            ))}
+            <button className="btn btn-ghost" onClick={() => setListItems((prev) => [...prev, ""])}>
+              新增 item
+            </button>
+          </div>
+        );
+      case "set":
+        return (
+          <div className="redis-typed-editor redis-typed-editor-set">
+            <div className="redis-set-chip-list">
+              {setMembers.map((item, index) => (
+                <div key={`set-chip-${index}`} className={`redis-set-chip ${setEditIndex === index ? "active" : ""}`}>
+                  <button
+                    className="redis-set-chip-main"
+                    title={item}
+                    onClick={() => {
+                      setSetEditIndex(index);
+                      setSetDraft(item);
+                    }}
+                  >
+                    {item}
+                  </button>
+                  <button
+                    className="redis-set-chip-remove"
+                    title="删除 member"
+                    onClick={() =>
+                      setSetMembers((prev) => {
+                        const next = prev.filter((_, i) => i !== index);
+                        if (setEditIndex === index) {
+                          setSetEditIndex(null);
+                          setSetDraft("");
+                        } else if (setEditIndex != null && setEditIndex > index) {
+                          setSetEditIndex(setEditIndex - 1);
+                        }
+                        return next;
+                      })
+                    }
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="redis-set-editor-bar">
+              <input
+                value={setDraft}
+                placeholder={setEditIndex == null ? "输入 member 后新增" : "编辑当前 member"}
+                onChange={(e) => setSetDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== "Enter") return;
+                  e.preventDefault();
+                  const next = setDraft.trim();
+                  if (!next) return;
+                  setSetMembers((prev) => {
+                    if (setEditIndex == null) return Array.from(new Set([...prev, next]));
+                    const updated = prev.map((item, i) => (i === setEditIndex ? next : item));
+                    return Array.from(new Set(updated));
+                  });
+                  setSetEditIndex(null);
+                  setSetDraft("");
+                }}
+              />
+              <button
+                className="btn btn-primary redis-set-apply-btn"
+                onClick={() => {
+                  const next = setDraft.trim();
+                  if (!next) return;
+                  setSetMembers((prev) => {
+                    if (setEditIndex == null) return Array.from(new Set([...prev, next]));
+                    const updated = prev.map((item, i) => (i === setEditIndex ? next : item));
+                    return Array.from(new Set(updated));
+                  });
+                  setSetEditIndex(null);
+                  setSetDraft("");
+                }}
+              >
+                {setEditIndex == null ? "新增 member" : "应用修改"}
+              </button>
+              {setEditIndex != null ? (
+                <button
+                  className="btn btn-ghost redis-set-cancel-btn"
+                  onClick={() => {
+                    setSetEditIndex(null);
+                    setSetDraft("");
+                  }}
+                >
+                  取消
+                </button>
+              ) : null}
+            </div>
+          </div>
+        );
+      case "zset":
+        return (
+          <div className="redis-typed-editor">
+            {zsetEntries.map((entry, index) => (
+              <div className="redis-typed-row" key={`zset-${index}`}>
+                <input
+                  type="number"
+                  value={entry.score}
+                  placeholder="score"
+                  onChange={(e) =>
+                    setZsetEntries((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, score: Number(e.target.value) } : item))
+                    )
+                  }
+                />
+                <input
+                  value={entry.member}
+                  placeholder="member"
+                  onChange={(e) =>
+                    setZsetEntries((prev) =>
+                      prev.map((item, i) => (i === index ? { ...item, member: e.target.value } : item))
+                    )
+                  }
+                />
+                <button className="btn btn-ghost" onClick={() => setZsetEntries((prev) => prev.filter((_, i) => i !== index))}>
+                  删除
+                </button>
+              </div>
+            ))}
+            <button className="btn btn-ghost" onClick={() => setZsetEntries((prev) => [...prev, { score: 0, member: "" }])}>
+              新增 member
+            </button>
+          </div>
+        );
       default:
         return null;
     }
@@ -472,46 +705,61 @@ export default function RedisPage({
   const saveValue = async () => {
     if (!selected || !selectedKeyData) return;
     const payload = buildPayload();
-    if (!payload) return;
-    await ensureConnected();
-    switch (payload.kind) {
-      case "string":
-        appendCommandLog(`SET ${selectedKeyData.key_base64}`);
-        break;
-      case "hash":
-        appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-        appendCommandLog(`HSET ${selectedKeyData.key_base64} ...`);
-        break;
-      case "list":
-        appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-        appendCommandLog(`RPUSH ${selectedKeyData.key_base64} ...`);
-        break;
-      case "set":
-        appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-        appendCommandLog(`SADD ${selectedKeyData.key_base64} ...`);
-        break;
-      case "zset":
-        appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-        appendCommandLog(`ZADD ${selectedKeyData.key_base64} ...`);
-        break;
-      default:
-        break;
+    if (!payload) {
+      setSaveResult(tr("redis.page.unsupportedType", { type: selectedKeyData.key_type }));
+      return;
     }
-    await redisSetKeyData(selected.id, selectedKeyData.key_base64, payload);
-    await pickKey(selectedKeyData.key_base64);
-    setSaveResult(tr("redis.page.saveSuccess"));
+    try {
+      await ensureConnected();
+      switch (payload.kind) {
+        case "string":
+          appendCommandLog(`SET ${selectedKeyData.key_base64}`);
+          break;
+        case "hash":
+          appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
+          appendCommandLog(`HSET ${selectedKeyData.key_base64} ...`);
+          break;
+        case "list":
+          appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
+          appendCommandLog(`RPUSH ${selectedKeyData.key_base64} ...`);
+          break;
+        case "set":
+          appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
+          appendCommandLog(`SADD ${selectedKeyData.key_base64} ...`);
+          break;
+        case "zset":
+          appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
+          appendCommandLog(`ZADD ${selectedKeyData.key_base64} ...`);
+          break;
+        default:
+          break;
+      }
+      await redisSetKeyData(selected.id, selectedKeyData.key_base64, payload);
+      await pickKey(selectedKeyData.key_base64);
+      setSaveResult(tr("redis.page.saveSuccess"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      appendCommandLog(`SAVE FAILED: ${message}`);
+      setSaveResult(tr("modal.testFailed", { message }));
+    }
   };
 
   const saveTtl = async () => {
     if (!selected || !selectedKeyData) return;
-    await ensureConnected();
-    const nextTtl = ttlInput.trim() ? Number(ttlInput) : undefined;
-    appendCommandLog(
-      Number.isFinite(nextTtl) ? `EXPIRE ${selectedKeyData.key_base64} ${nextTtl}` : `PERSIST ${selectedKeyData.key_base64}`
-    );
-    await redisSetTtl(selected.id, selectedKeyData.key_base64, Number.isFinite(nextTtl) ? nextTtl : undefined);
-    await pickKey(selectedKeyData.key_base64);
-    setSaveResult(tr("redis.page.ttlSaved"));
+    try {
+      await ensureConnected();
+      const nextTtl = ttlInput.trim() ? Number(ttlInput) : undefined;
+      appendCommandLog(
+        Number.isFinite(nextTtl) ? `EXPIRE ${selectedKeyData.key_base64} ${nextTtl}` : `PERSIST ${selectedKeyData.key_base64}`
+      );
+      await redisSetTtl(selected.id, selectedKeyData.key_base64, Number.isFinite(nextTtl) ? nextTtl : undefined);
+      await pickKey(selectedKeyData.key_base64);
+      setSaveResult(tr("redis.page.ttlSaved"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      appendCommandLog(`TTL FAILED: ${message}`);
+      setSaveResult(tr("modal.testFailed", { message }));
+    }
   };
 
   const openDbSwitchModal = (conn: RedisConnection) => {
@@ -594,8 +842,72 @@ export default function RedisPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id, keysLoaded, scanLoading]);
 
+  useEffect(() => {
+    if (!resizingDataPane) return;
+    const onMouseMove = (event: MouseEvent) => {
+      const root = browserBodyRef.current;
+      if (!root) return;
+      const rect = root.getBoundingClientRect();
+      const minTree = 260;
+      const minData = 320;
+      const nextDataWidth = rect.right - event.clientX;
+      const maxData = Math.max(minData, rect.width - minTree - 8);
+      const clamped = Math.max(minData, Math.min(nextDataWidth, maxData));
+      setZkDataWidth(Math.round(clamped));
+    };
+    const onMouseUp = () => setResizingDataPane(false);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [resizingDataPane]);
+
+  useEffect(() => {
+    if (!resizingConnPanel) return;
+    const onMouseMove = (event: MouseEvent) => {
+      const root = terminalLayoutRef.current;
+      if (!root) return;
+      const rect = root.getBoundingClientRect();
+      const next = event.clientX - rect.left;
+      const min = 240;
+      const max = Math.max(360, rect.width * 0.46);
+      const clamped = Math.max(min, Math.min(max, next));
+      setConnPanelWidth(Math.round(clamped));
+    };
+    const onMouseUp = () => setResizingConnPanel(false);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [resizingConnPanel]);
+
+  useEffect(() => {
+    if (!resizingCommandPanel) return;
+    const onMouseMove = (event: MouseEvent) => {
+      const root = redisPageRef.current;
+      if (!root) return;
+      const rect = root.getBoundingClientRect();
+      const next = rect.bottom - event.clientY;
+      const min = 120;
+      const max = Math.max(260, rect.height * 0.45);
+      const clamped = Math.max(min, Math.min(max, next));
+      setCommandPanelHeight(Math.round(clamped));
+    };
+    const onMouseUp = () => setResizingCommandPanel(false);
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+  }, [resizingCommandPanel]);
+
   return (
-    <section className="workspace zk-page redis-page">
+    <section className="workspace zk-page redis-page" ref={redisPageRef}>
       <header className="topbar">
         <div className="topbar-title">
           <div className="topbar-title-text">
@@ -636,7 +948,11 @@ export default function RedisPage({
 
       {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
 
-      <div className="terminal-layout">
+      <div
+        className="terminal-layout"
+        ref={terminalLayoutRef}
+        style={{ gridTemplateColumns: `${connPanelWidth}px 8px minmax(0, 1fr)` }}
+      >
         <aside className="session-list">
           <div className="session-list-header">{tr("redis.page.connectionList")}</div>
           <ul className="session-table-body">
@@ -656,6 +972,11 @@ export default function RedisPage({
             ))}
           </ul>
         </aside>
+        <div
+          className="terminal-splitter redis-layout-splitter"
+          onMouseDown={() => setResizingConnPanel(true)}
+          title="拖动调整连接列表宽度"
+        />
         <div className="terminal-main">
           {!selected ? (
             <div className="empty-state">
@@ -675,7 +996,11 @@ export default function RedisPage({
                   {scanLoading ? tr("modal.testing") : tr("redis.page.loadKeys")}
                 </button>
               </div>
-              <div className="zk-browser-body" style={{ ["--zk-data-width" as string]: "460px" }}>
+              <div
+                className={`zk-browser-body ${resizingDataPane ? "resizing" : ""}`}
+                ref={browserBodyRef}
+                style={{ ["--zk-data-width" as string]: `${zkDataWidth}px` }}
+              >
                 <div className="zk-tree redis-key-tree">
                   {keyTree.map((node) => (
                     <KeyTreeNode
@@ -701,7 +1026,7 @@ export default function RedisPage({
                     <div className="card-subtitle">{tr("home.searchNoResults")}</div>
                   ) : null}
                 </div>
-                <div className="zk-pane-splitter" />
+                <div className="zk-pane-splitter" onMouseDown={() => setResizingDataPane(true)} title="拖动调整详情宽度" />
                 <div className="zk-data">
                   <div className="zk-data-head">
                     <div className="card-title">
@@ -740,12 +1065,7 @@ export default function RedisPage({
                       {tr("redis.page.unsupportedType", { type: selectedKeyData.payload.raw_type })}
                     </div>
                   ) : (
-                    <textarea
-                      className="zk-data-textarea"
-                      value={editorText}
-                      onChange={(e) => setEditorText(e.target.value)}
-                      placeholder={tr("redis.page.valuePlaceholder")}
-                    />
+                    renderTypedEditor()
                   )}
                 </div>
               </div>
@@ -753,7 +1073,8 @@ export default function RedisPage({
           )}
         </div>
       </div>
-      <section className="redis-command-panel">
+      <div className="redis-log-splitter" onMouseDown={() => setResizingCommandPanel(true)} title="拖动调整日志面板高度" />
+      <section className="redis-command-panel" style={{ flex: `0 0 ${commandPanelHeight}px` }}>
         <div className="redis-command-panel-header">Redis Commands</div>
         <div className="redis-command-panel-body">
           {commandLogs.length === 0 ? (

@@ -11,6 +11,24 @@ html[data-theme="light"] .password-toggle-btn:hover {
   background: rgba(15, 23, 42, 0.06);
 }
 
+html[data-theme="light"] .modal-inline-notice-success {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+}
+
+html[data-theme="light"] .modal-inline-notice-warning {
+  border-color: rgba(217, 119, 6, 0.35);
+  background: rgba(255, 247, 237, 0.96);
+  color: #9a3412;
+}
+
+html[data-theme="light"] .modal-inline-notice-error {
+  border-color: rgba(180, 70, 85, 0.45);
+  background: rgba(254, 242, 242, 0.96);
+  color: #991b1b;
+}
+
 /* —— 首页顶栏与信息区 —— */
 html[data-theme="light"] .topbar {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(243, 245, 249, 0.85));
@@ -546,6 +564,26 @@ html[data-theme="light"] .zk-browser-header {
   background: #ffffff;
 }
 
+html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input:hover {
+  border-color: #aebad0;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input:focus {
+  border-color: rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
 html[data-theme="light"] .zk-tree,
 html[data-theme="light"] .zk-data {
   border-color: #c5cedd;
@@ -584,8 +622,94 @@ html[data-theme="light"] .zk-data-textarea {
   color: #0f172a;
 }
 
+html[data-theme="light"] .zk-data-head .card-title {
+  color: #0f172a;
+}
+
 html[data-theme="light"] .zk-save-result {
   border-color: rgba(22, 163, 74, 0.35);
   background: rgba(220, 252, 231, 0.9);
   color: #166534;
+}
+
+html[data-theme="light"] .redis-log-splitter {
+  border-top-color: #d5dce8;
+  border-bottom-color: #d5dce8;
+  background: #e2e8f0;
+}
+
+html[data-theme="light"] .redis-log-splitter:hover {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+html[data-theme="light"] .redis-command-panel {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .redis-command-panel-header {
+  border-bottom-color: #d5dce8;
+  color: #475569;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .redis-command-panel-body {
+  background: #ffffff;
+}
+
+html[data-theme="light"] .redis-command-line {
+  color: #1f2937;
+}
+
+html[data-theme="light"] .redis-typed-editor input {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .redis-typed-editor input::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="light"] .redis-typed-editor-set {
+  border-color: #d5dce8;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .redis-set-chip-list {
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .redis-set-chip {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .redis-set-chip.active {
+  border-color: rgba(37, 99, 235, 0.55);
+  background: rgba(219, 234, 254, 0.92);
+}
+
+html[data-theme="light"] .redis-set-chip-main {
+  color: #1e293b;
+}
+
+html[data-theme="light"] .redis-set-chip-remove {
+  border-left-color: #d5dce8;
+  color: #64748b;
+}
+
+html[data-theme="light"] .redis-set-chip-remove:hover {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1e3a8a;
+}
+
+html[data-theme="light"] .redis-set-editor-bar input {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .redis-set-cancel-btn {
+  border-color: #c5cedd;
+  color: #334155;
 }

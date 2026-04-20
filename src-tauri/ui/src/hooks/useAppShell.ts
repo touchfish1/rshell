@@ -155,8 +155,10 @@ export function useAppShell() {
   }, [activeTabId, hookSetActiveTabId]);
 
   useEffect(() => {
-    if (currentPage !== "home" && currentPage !== "terminal") return;
-    setCurrentPage(hookCurrentPage);
+    // 仅在「终端页因内部状态回退到首页」时回写，避免点击返回时 home/terminal 来回抖动。
+    if (currentPage === "terminal" && hookCurrentPage === "home") {
+      setCurrentPage("home");
+    }
   }, [currentPage, hookCurrentPage]);
 
   useEffect(() => {
@@ -228,6 +230,15 @@ export function useAppShell() {
     await testZookeeperConnection(input.connect_string, input.session_timeout_ms, secret);
   }, []);
 
+  const connectWithPageSwitch = useCallback(
+    async (id?: string) => {
+      // App 层 page 状态与 workspace page 状态已解耦，连接时显式切页避免“点击无反应”。
+      setCurrentPage("terminal");
+      await connect(id);
+    },
+    [connect]
+  );
+
   return {
     lang,
     tr,
@@ -257,7 +268,7 @@ export function useAppShell() {
     sftpOpenDir,
     sftpUp,
     loadSftp,
-    connect,
+    connect: connectWithPageSwitch,
     disconnect,
     closeTab,
     duplicateTab,

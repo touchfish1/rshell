@@ -109,6 +109,35 @@
   background: #0b1018;
 }
 
+.workspace.zk-page.redis-page .zk-browser-header input {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(66, 77, 102, 0.95);
+  border-radius: 8px;
+  background: rgba(17, 24, 36, 0.9);
+  color: #dbe4f5;
+  font-size: 12px;
+  line-height: 1;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.workspace.zk-page.redis-page .zk-browser-header input::placeholder {
+  color: #7f8ea8;
+}
+
+.workspace.zk-page.redis-page .zk-browser-header input:hover {
+  border-color: rgba(98, 116, 149, 0.95);
+  background: rgba(21, 30, 44, 0.92);
+}
+
+.workspace.zk-page.redis-page .zk-browser-header input:focus {
+  outline: none;
+  border-color: rgba(79, 131, 255, 0.78);
+  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+}
+
 .zk-browser-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -161,6 +190,19 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  min-width: 0;
+}
+
+.zk-data-head .card-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zk-data-head .btn {
+  flex: 0 0 auto;
 }
 
 .zk-save-result {
@@ -253,6 +295,19 @@
   overflow: hidden;
 }
 
+.redis-log-splitter {
+  flex: 0 0 8px;
+  margin-top: 6px;
+  cursor: row-resize;
+  border-top: 1px solid rgba(43, 49, 64, 0.55);
+  border-bottom: 1px solid rgba(43, 49, 64, 0.55);
+  background: rgba(43, 49, 64, 0.35);
+}
+
+.redis-log-splitter:hover {
+  background: rgba(79, 131, 255, 0.22);
+}
+
 .redis-command-panel-header {
   padding: 8px 10px;
   border-bottom: 1px solid rgba(48, 56, 74, 0.85);
@@ -262,7 +317,7 @@
 }
 
 .redis-command-panel-body {
-  max-height: 140px;
+  height: calc(100% - 36px);
   overflow: auto;
   padding: 6px 8px;
   font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
@@ -277,10 +332,138 @@
   text-overflow: ellipsis;
 }
 
+.redis-typed-editor {
+  margin-top: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  display: grid;
+  gap: 8px;
+}
+
+.redis-typed-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 72px;
+  gap: 8px;
+  align-items: center;
+}
+
+.redis-typed-editor input {
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(66, 77, 102, 0.95);
+  border-radius: 8px;
+  background: rgba(17, 24, 36, 0.9);
+  color: #dbe4f5;
+  font-size: 12px;
+}
+
+.redis-typed-editor input::placeholder {
+  color: #7f8ea8;
+}
+
+.redis-typed-editor-set {
+  padding: 2px;
+  border: 1px solid rgba(48, 56, 74, 0.7);
+  border-radius: 10px;
+  background: rgba(12, 18, 28, 0.72);
+}
+
+.redis-set-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  max-height: 96px;
+  overflow: auto;
+  border-radius: 8px;
+  background: rgba(9, 14, 23, 0.72);
+}
+
+.redis-set-chip {
+  min-width: 0;
+  max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(66, 78, 102, 0.8);
+  border-radius: 999px;
+  background: rgba(23, 32, 47, 0.85);
+  overflow: hidden;
+  height: 28px;
+}
+
+.redis-set-chip.active {
+  border-color: rgba(79, 131, 255, 0.72);
+  background: rgba(39, 60, 95, 0.76);
+}
+
+.redis-set-chip-main {
+  min-width: 0;
+  max-width: 240px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  border: none;
+  background: transparent;
+  color: #deebff;
+  font-size: 11px;
+  padding: 0 8px;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.redis-set-chip-remove {
+  border: none;
+  border-left: 1px solid rgba(84, 96, 122, 0.52);
+  background: transparent;
+  color: #b9c8e6;
+  width: 26px;
+  height: 28px;
+  line-height: 1;
+}
+
+.redis-set-chip-remove:hover {
+  color: #ffffff;
+  background: rgba(79, 131, 255, 0.22);
+}
+
+.redis-set-editor-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 90px 64px;
+  gap: 8px;
+  padding: 6px;
+}
+
+.redis-set-editor-bar input {
+  height: 32px;
+  border-color: rgba(74, 88, 116, 0.95);
+  background: rgba(14, 21, 33, 0.9);
+}
+
+.redis-set-apply-btn,
+.redis-set-cancel-btn {
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.redis-set-cancel-btn {
+  border-color: rgba(81, 93, 118, 0.92);
+  color: #d3ddf3;
+}
+
 .workspace.zk-page.redis-page .terminal-layout {
   flex: 1 1 auto;
   min-height: 0;
   height: 0;
+}
+
+.workspace.zk-page.redis-page .redis-layout-splitter {
+  margin: 0;
 }
 
 .workspace.zk-page.redis-page .redis-resizable-modal {
