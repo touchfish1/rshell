@@ -7,6 +7,8 @@ import { CloseConfirmModal } from "./components/CloseConfirmModal";
 import { I18nProvider } from "./i18n-context";
 import { AppRedisSection } from "./app/AppRedisSection";
 import { useAppShell } from "./hooks/useAppShell";
+import { CommandPaletteModal, type CommandPaletteItem } from "./components/CommandPaletteModal";
+import { useEffect, useMemo, useState } from "react";
 
 export default function App() {
   const {
@@ -80,6 +82,156 @@ export default function App() {
     setCloseConfirmOpen,
     confirmQuitApp,
   } = useAppShell();
+
+  const [cmdkOpen, setCmdkOpen] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCmdkOpen(true);
+        return;
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
+
+  const cmdkItems = useMemo<CommandPaletteItem[]>(() => {
+    const items: CommandPaletteItem[] = [];
+
+    items.push({
+      id: "nav:home",
+      label: "返回首页",
+      keywords: ["home", "首页", "返回"],
+      run: () => setCurrentPage("home"),
+    });
+    items.push({
+      id: "nav:terminal",
+      label: "打开终端页",
+      keywords: ["terminal", "终端", "host"],
+      run: () => setCurrentPage("terminal"),
+    });
+    items.push({
+      id: "nav:zookeeper",
+      label: "打开 Zookeeper",
+      keywords: ["zk", "zookeeper", "zoo", "zookeeper页"],
+      run: () => setCurrentPage("zookeeper"),
+    });
+    items.push({
+      id: "nav:redis",
+      label: "打开 Redis",
+      keywords: ["redis", "cache", "kv", "redis页"],
+      run: () => setCurrentPage("redis"),
+    });
+
+    if (currentPage === "home") {
+      items.push({
+        id: "home:refreshReachability",
+        label: "刷新主机状态",
+        keywords: ["刷新", "状态", "ping", "reachability"],
+        disabled: refreshBusy,
+        hint: refreshBusy ? "检测中…" : undefined,
+        run: () => refreshReachability(),
+      });
+      items.push({
+        id: "home:audit",
+        label: "打开审计日志",
+        keywords: ["audit", "日志", "审计"],
+        run: () => {
+          setAuditOpen(true);
+          void loadAudits();
+        },
+      });
+    }
+
+    if (currentPage === "terminal") {
+      items.push({
+        id: "terminal:disconnect",
+        label: "断开当前会话",
+        keywords: ["disconnect", "断开", "close"],
+        disabled: !activeTabId,
+        run: () => {
+          if (activeTabId) disconnect(activeTabId);
+        },
+      });
+      items.push({
+        id: "terminal:closeTab",
+        label: "关闭当前标签",
+        keywords: ["tab", "close", "关闭标签"],
+        disabled: !activeTabId,
+        run: () => {
+          if (activeTabId) closeTab(activeTabId);
+        },
+      });
+      items.push({
+        id: "terminal:retry",
+        label: "重试连接（当前标签）",
+        keywords: ["retry", "重试", "reconnect"],
+        disabled: !activeTabId,
+        run: () => {
+          if (activeTabId) retryConnect(activeTabId);
+        },
+      });
+      items.push({
+        id: "terminal:sftpReload",
+        label: "刷新 SFTP 列表",
+        keywords: ["sftp", "refresh", "刷新文件"],
+        disabled: !activeTabId,
+        run: () => {
+          if (!activeTabId) return;
+          const tab = tabs.find((t) => t.id === activeTabId);
+          if (!tab) return;
+          void loadSftp(activeTabId, tab.sessionId, sftpProps.path);
+        },
+      });
+    }
+
+    if (currentPage === "redis") {
+      items.push({
+        id: "redis:disconnect",
+        label: "断开 Redis 当前连接",
+        keywords: ["redis", "disconnect", "断开"],
+        disabled: !selectedRedisId,
+        run: () => {
+          if (!selectedRedisId) return;
+          // RedisPage 内也有断开按钮，这里回到首页级别只做页面切换触发用户手动断开
+          setCurrentPage("redis");
+        },
+      });
+    }
+
+    // 常用：连接选中主机（无论在哪个页都可用）
+    items.push({
+      id: "host:connectSelected",
+      label: "连接选中主机（新建标签）",
+      keywords: ["connect", "连接", "ssh", "telnet"],
+      disabled: !selectedId,
+      run: async () => {
+        if (!selectedId) return;
+        await connect(selectedId);
+      },
+    });
+
+    return items;
+  }, [
+    activeTabId,
+    closeTab,
+    connect,
+    currentPage,
+    disconnect,
+    loadAudits,
+    loadSftp,
+    refreshBusy,
+    refreshReachability,
+    retryConnect,
+    sftpProps.path,
+    selectedId,
+    selectedRedisId,
+    setAuditOpen,
+    setCurrentPage,
+    tabs,
+  ]);
 
   return (
     <I18nProvider value={{ lang, tr }}>
@@ -240,6 +392,7 @@ export default function App() {
             onCancel={() => setCloseConfirmOpen(false)}
           />
         ) : null}
+        <CommandPaletteModal open={cmdkOpen} tr={tr} items={cmdkItems} onClose={() => setCmdkOpen(false)} />
       </main>
     </I18nProvider>
   );

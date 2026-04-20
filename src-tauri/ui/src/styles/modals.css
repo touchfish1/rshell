@@ -237,6 +237,125 @@
   color: var(--modal-text-muted);
 }
 
+/* —— Command Palette（Ctrl+K）—— */
+.cmdk-card {
+  width: min(680px, calc(100vw - 32px));
+  max-height: min(78vh, 720px);
+}
+
+.cmdk-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px 14px;
+  min-height: 0;
+}
+
+.cmdk-input {
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--modal-border);
+  background: var(--modal-surface-muted);
+  color: var(--modal-text);
+  font-size: 13px;
+  outline: none;
+}
+
+.cmdk-input::placeholder {
+  color: var(--modal-text-muted);
+}
+
+.cmdk-input:focus {
+  border-color: rgba(79, 131, 255, 0.7);
+  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+}
+
+.cmdk-list {
+  border: 1px solid var(--modal-border-inner);
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.12);
+  overflow: auto;
+  min-height: 140px;
+  max-height: 52vh;
+}
+
+.cmdk-empty {
+  padding: 14px 12px;
+  color: var(--modal-text-muted);
+  font-size: 13px;
+}
+
+.cmdk-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--modal-text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--modal-border-inner);
+}
+
+.cmdk-item:last-child {
+  border-bottom: none;
+}
+
+.cmdk-item:hover:not(:disabled),
+.cmdk-item.active {
+  background: rgba(79, 131, 255, 0.14);
+}
+
+.cmdk-item:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cmdk-item-label {
+  font-size: 13px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cmdk-item-hint {
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: var(--modal-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.cmdk-footer {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--modal-text-muted);
+  font-size: 12px;
+  padding-top: 2px;
+}
+
+.cmdk-kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--modal-border-inner);
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--modal-text);
+  font-size: 11px;
+}
+
+.cmdk-dot {
+  opacity: 0.7;
+}
+
 .shortcut-help-section ul {
   margin: 0;
   padding-left: 18px;
