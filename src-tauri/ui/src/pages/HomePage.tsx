@@ -6,6 +6,8 @@ import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
 import type {
   HostReachability,
+  RedisConnection,
+  RedisConnectionInput,
   Session,
   SessionInput,
   ZookeeperConnection,
@@ -27,6 +29,7 @@ interface Props {
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
+  onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -37,6 +40,11 @@ interface Props {
   onConnectZk: (id: string) => void;
   onUpdateZk: (id: string, input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onDeleteZk: (id: string) => Promise<void>;
+  redisConnections: RedisConnection[];
+  onConnectRedis: (id: string) => void;
+  onGetRedisSecret: (id: string) => Promise<string | null>;
+  onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
+  onDeleteRedis: (id: string) => Promise<void>;
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
@@ -50,6 +58,7 @@ interface Props {
   onSwitchLang: (lang: Lang) => void;
   onRefreshHostStatus: () => void;
   onOpenZookeeper: () => void;
+  onOpenRedis: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -66,6 +75,7 @@ export default function HomePage({
   onSelect,
   onCreate,
   onCreateZk,
+  onCreateRedis,
   onUpdate,
   onDelete,
   onTestConnect,
@@ -76,6 +86,11 @@ export default function HomePage({
   onConnectZk,
   onUpdateZk,
   onDeleteZk,
+  redisConnections,
+  onConnectRedis,
+  onGetRedisSecret,
+  onUpdateRedis,
+  onDeleteRedis,
   onConnect,
   onOnlineUpgrade,
   auditOpen,
@@ -89,10 +104,12 @@ export default function HomePage({
   onSwitchLang,
   onRefreshHostStatus,
   onOpenZookeeper,
+  onOpenRedis,
   tr,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
+  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0;
   const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {
@@ -144,6 +161,9 @@ export default function HomePage({
           <button className="btn btn-ghost" onClick={onOpenZookeeper}>
             {tr("home.zookeeper")}
           </button>
+          <button className="btn btn-ghost" onClick={onOpenRedis}>
+            {tr("home.redis")}
+          </button>
           <span className={connected ? "pill pill-ok" : "pill"}>
             {connected ? tr("top.online") : tr("top.offline")}
           </span>
@@ -185,6 +205,7 @@ export default function HomePage({
                 onSelect={onSelect}
                 onCreate={onCreate}
                 onCreateZk={onCreateZk}
+                onCreateRedis={onCreateRedis}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onTestConnect={onTestConnect}
@@ -196,8 +217,13 @@ export default function HomePage({
                 onConnectZk={onConnectZk}
                 onUpdateZk={onUpdateZk}
                 onDeleteZk={onDeleteZk}
+                redisConnections={redisConnections}
+                onConnectRedis={onConnectRedis}
+                onGetRedisSecret={onGetRedisSecret}
+                onUpdateRedis={onUpdateRedis}
+                onDeleteRedis={onDeleteRedis}
               />
-              {!hasSessions ? (
+              {!hasAnyConnections ? (
                 <div className="empty-state" role="note" aria-label={tr("home.ariaNoSession")}>
                   <div className="empty-title">{tr("home.emptyTitle")}</div>
                   <div className="empty-subtitle">{tr("home.emptySubtitle")}</div>

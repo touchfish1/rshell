@@ -1,11 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   HostReachability,
+  RedisConnection,
+  RedisConnectionInput,
   Session,
   SessionInput,
   ZookeeperConnection,
   ZookeeperConnectionInput,
 } from "../../services/types";
+import { testRedisConnection } from "../../services/bridge";
 import type { I18nKey } from "../../i18n";
 
 const defaultForm: SessionInput = {
@@ -21,12 +24,14 @@ const defaultForm: SessionInput = {
 interface Options {
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
+  onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onTestZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onGetSecret: (id: string) => Promise<string | null>;
   onConnect?: (id: string) => void;
   onConnectZk?: (id: string) => void;
+  onConnectRedis?: (id: string) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -69,12 +74,14 @@ function mapConnectErrorToMessage(tr: Options["tr"], err: unknown) {
 export function useSessionListForms({
   onCreate,
   onCreateZk,
+  onCreateRedis,
   onUpdate,
   onTestConnect,
   onTestZk,
   onGetSecret,
   onConnect,
   onConnectZk,
+  onConnectRedis,
   tr,
 }: Options) {
   const [createForm, setCreateForm] = useState<SessionInput>(defaultForm);
@@ -98,6 +105,7 @@ export function useSessionListForms({
   const createProtocolPort = useMemo(() => {
     if (createForm.protocol === "ssh") return 22;
     if (createForm.protocol === "telnet") return 23;
+    if (createForm.protocol === "redis") return 6379;
     return 2181;
   }, [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
@@ -105,7 +113,7 @@ export function useSessionListForms({
   const submitCreate = async (connectAfterSave = false) => {
     if (createSubmitting) return;
     if (!createForm.host.trim()) return;
-    if (createForm.protocol !== "zookeeper" && !createForm.username.trim()) return;
+    if (createForm.protocol !== "zookeeper" && createForm.protocol !== "redis" && !createForm.username.trim()) return;
     if (createForm.protocol === "ssh" && !createSecret.trim()) return;
     setCreateSubmitting(true);
     try {
@@ -121,6 +129,19 @@ export function useSessionListForms({
         if (!created) return;
         if (connectAfterSave) {
           onConnectZk?.(created.id);
+        }
+      } else if (createForm.protocol === "redis") {
+        const created = await onCreateRedis(
+          {
+            name: createForm.name,
+            address: `${createForm.host}:${createForm.port}`,
+            db: 0,
+          },
+          createSecret || undefined
+        );
+        if (!created) return;
+        if (connectAfterSave) {
+          onConnectRedis?.(created.id);
         }
       } else {
         const created = await onCreate(createForm, createSecret || undefined);
@@ -206,6 +227,9 @@ export function useSessionListForms({
           },
           createSecret || undefined
         );
+        setCreateTestResult(tr("modal.testSuccess"));
+      } else if (createForm.protocol === "redis") {
+        await testRedisConnection(`${createForm.host}:${createForm.port}`, 0, createSecret || undefined);
         setCreateTestResult(tr("modal.testSuccess"));
       } else {
         const r = await onTestConnect(createForm);

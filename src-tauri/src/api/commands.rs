@@ -11,6 +11,7 @@ mod audit;
 mod common;
 mod metrics;
 mod reachability;
+mod redis;
 mod sessions;
 mod sftp;
 mod system;
@@ -21,8 +22,10 @@ use tauri::{AppHandle, State};
 
 use crate::app::{AppState, AuditRecord, HostMetrics, SftpEntry, SftpTextReadResult};
 use crate::domain::session::{Session, SessionInput};
+use crate::domain::redis::{RedisConnection, RedisConnectionInput};
 use crate::domain::zookeeper::{ZookeeperConnection, ZookeeperConnectionInput};
 pub use reachability::HostReachability;
+pub use redis::{RedisDatabaseInfo, RedisKeyData, RedisScanResult, RedisValueData, RedisValueUpdate};
 pub use zookeeper::ZkNodeData;
 
 #[tauri::command]
@@ -299,4 +302,137 @@ pub async fn zk_set_data(
     data_utf8: String,
 ) -> Result<(), String> {
     zookeeper::zk_set_data(state, id, path, data_utf8).await
+}
+
+#[tauri::command]
+pub async fn list_redis_connections(state: State<'_, AppState>) -> Result<Vec<RedisConnection>, String> {
+    redis::list_redis_connections(state).await
+}
+
+#[tauri::command]
+pub async fn create_redis_connection(
+    state: State<'_, AppState>,
+    input: RedisConnectionInput,
+    secret: Option<String>,
+) -> Result<RedisConnection, String> {
+    redis::create_redis_connection(state, input, secret).await
+}
+
+#[tauri::command]
+pub async fn update_redis_connection(
+    state: State<'_, AppState>,
+    id: String,
+    input: RedisConnectionInput,
+    secret: Option<String>,
+) -> Result<RedisConnection, String> {
+    redis::update_redis_connection(state, id, input, secret).await
+}
+
+#[tauri::command]
+pub async fn delete_redis_connection(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    redis::delete_redis_connection(state, id).await
+}
+
+#[tauri::command]
+pub async fn get_redis_secret(state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+    redis::get_redis_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn connect_redis(
+    state: State<'_, AppState>,
+    id: String,
+    secret: Option<String>,
+) -> Result<(), String> {
+    redis::connect_redis(state, id, secret).await
+}
+
+#[tauri::command]
+pub async fn test_redis_connection(
+    address: String,
+    db: Option<u32>,
+    secret: Option<String>,
+) -> Result<(), String> {
+    redis::test_redis_connection(address, db, secret).await
+}
+
+#[tauri::command]
+pub async fn disconnect_redis(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    redis::disconnect_redis(state, id).await
+}
+
+#[tauri::command]
+pub async fn redis_list_keys(
+    state: State<'_, AppState>,
+    id: String,
+    pattern: Option<String>,
+) -> Result<Vec<String>, String> {
+    redis::redis_list_keys(state, id, pattern).await
+}
+
+#[tauri::command]
+pub async fn redis_get_value(
+    state: State<'_, AppState>,
+    id: String,
+    key_base64: String,
+) -> Result<RedisValueData, String> {
+    redis::redis_get_value(state, id, key_base64).await
+}
+
+#[tauri::command]
+pub async fn redis_set_value(
+    state: State<'_, AppState>,
+    id: String,
+    key_base64: String,
+    value: String,
+) -> Result<(), String> {
+    redis::redis_set_value(state, id, key_base64, value).await
+}
+
+#[tauri::command]
+pub async fn redis_scan_keys(
+    state: State<'_, AppState>,
+    id: String,
+    cursor: Option<u64>,
+    pattern: Option<String>,
+    count: Option<u64>,
+) -> Result<RedisScanResult, String> {
+    redis::redis_scan_keys(state, id, cursor, pattern, count).await
+}
+
+#[tauri::command]
+pub async fn redis_list_databases(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Vec<RedisDatabaseInfo>, String> {
+    redis::redis_list_databases(state, id).await
+}
+
+#[tauri::command]
+pub async fn redis_get_key_data(
+    state: State<'_, AppState>,
+    id: String,
+    key_base64: String,
+) -> Result<RedisKeyData, String> {
+    redis::redis_get_key_data(state, id, key_base64).await
+}
+
+#[tauri::command]
+pub async fn redis_set_key_data(
+    state: State<'_, AppState>,
+    id: String,
+    key_base64: String,
+    payload: RedisValueUpdate,
+) -> Result<(), String> {
+    redis::redis_set_key_data(state, id, key_base64, payload).await
+}
+
+#[tauri::command]
+pub async fn redis_set_ttl(
+    state: State<'_, AppState>,
+    id: String,
+    key_base64: String,
+    ttl_seconds: Option<i64>,
+) -> Result<(), String> {
+    redis::redis_set_ttl(state, id, key_base64, ttl_seconds).await
 }

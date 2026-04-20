@@ -70,6 +70,22 @@ fn main() {
             api::commands::zk_list_children,
             api::commands::zk_get_data,
             api::commands::zk_set_data,
+            api::commands::list_redis_connections,
+            api::commands::create_redis_connection,
+            api::commands::update_redis_connection,
+            api::commands::delete_redis_connection,
+            api::commands::get_redis_secret,
+            api::commands::connect_redis,
+            api::commands::test_redis_connection,
+            api::commands::disconnect_redis,
+            api::commands::redis_list_keys,
+            api::commands::redis_scan_keys,
+            api::commands::redis_list_databases,
+            api::commands::redis_get_value,
+            api::commands::redis_set_value,
+            api::commands::redis_get_key_data,
+            api::commands::redis_set_key_data,
+            api::commands::redis_set_ttl,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

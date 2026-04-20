@@ -230,6 +230,118 @@
   background: rgba(30, 45, 67, 0.55);
 }
 
+.redis-key-tree .zk-node-name {
+  white-space: nowrap;
+  word-break: normal;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.35;
+}
+
+.redis-key-tree .zk-node {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+}
+
+.redis-command-panel {
+  flex: 0 0 156px;
+  min-height: 120px;
+  margin-top: 8px;
+  border: 1px solid rgba(48, 56, 74, 0.85);
+  border-radius: 8px;
+  background: rgba(18, 24, 35, 0.75);
+  overflow: hidden;
+}
+
+.redis-command-panel-header {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(48, 56, 74, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  color: #a8b3c7;
+}
+
+.redis-command-panel-body {
+  max-height: 140px;
+  overflow: auto;
+  padding: 6px 8px;
+  font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+  font-size: 12px;
+}
+
+.redis-command-line {
+  color: #d7ddea;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.workspace.zk-page.redis-page .terminal-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 0;
+}
+
+.workspace.zk-page.redis-page .redis-resizable-modal {
+  width: min(560px, calc(100vw - 32px));
+  min-width: 360px;
+  min-height: 240px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  resize: both;
+  overflow: auto;
+}
+
+.workspace.zk-page.redis-page .redis-conn-line {
+  grid-template-columns: minmax(0, 1fr) 96px;
+}
+
+.workspace.zk-page.redis-page .redis-conn-main {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.workspace.zk-page.redis-page .redis-conn-host {
+  min-width: 0;
+}
+
+.workspace.zk-page.redis-page .redis-db-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(79, 131, 255, 0.5);
+  color: #a9c3ff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.workspace.zk-page.redis-page .redis-conn-actions {
+  justify-content: center;
+  padding: 6px;
+}
+
+.workspace.zk-page.redis-page .redis-conn-actions .btn {
+  width: 84px;
+  min-width: 84px;
+  padding: 6px 0;
+}
+
+.redis-db-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.redis-db-option.active {
+  border-color: rgba(79, 131, 255, 0.65);
+  background: rgba(79, 131, 255, 0.18);
+  color: #dbe8ff;
+}
+
 .zk-node-children {
   grid-column: 2 / 3;
   width: 100%;

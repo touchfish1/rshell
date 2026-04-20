@@ -25,7 +25,7 @@ export function useWorkspaceTabs(opts: {
   const [connectedIds, setConnectedIds] = useState<string[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | undefined>();
   const [tabs, setTabs] = useState<WorkspaceTab[]>([]);
-  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper">("home");
+  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper" | "redis">("home");
   /** 首页/侧栏用于显示「该主机正在握手连接」 */
   const [connectingHostId, setConnectingHostId] = useState<string | null>(null);
 

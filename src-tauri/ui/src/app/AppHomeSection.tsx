@@ -1,6 +1,8 @@
 import HomePage from "../pages/HomePage";
 import type {
   HostReachability,
+  RedisConnection,
+  RedisConnectionInput,
   Session,
   SessionInput,
   ZookeeperConnection,
@@ -14,6 +16,7 @@ type TranslateFn = (key: I18nKey, vars?: Record<string, string | number>) => str
 interface AppHomeSectionProps {
   sessions: Session[];
   zkConnections: ZookeeperConnection[];
+  redisConnections: RedisConnection[];
   connectingSessionId?: string | null;
   selectedId?: string;
   reachabilityMap: Record<string, HostReachability>;
@@ -25,6 +28,7 @@ interface AppHomeSectionProps {
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
+  onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -35,6 +39,11 @@ interface AppHomeSectionProps {
   onConnectZk: (id: string) => void;
   onUpdateZk: (id: string, input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onDeleteZk: (id: string) => Promise<void>;
+  redisConnections: RedisConnection[];
+  onConnectRedis: (id: string) => void;
+  onGetRedisSecret: (id: string) => Promise<string | null>;
+  onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
+  onDeleteRedis: (id: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
   auditLoading: boolean;
@@ -47,6 +56,7 @@ interface AppHomeSectionProps {
   onSwitchLang: (lang: Lang) => void;
   onRefreshHostStatus: () => void;
   onOpenZookeeper: () => void;
+  onOpenRedis: () => void;
   tr: TranslateFn;
 }
 

@@ -47,7 +47,7 @@ export function HostCreateModal({
   const hostError = !form.host.trim() ? tr("modal.requiredField", { field: tr("form.host") }) : "";
   const portError = !Number.isInteger(form.port) || form.port < 1 || form.port > 65535 ? tr("modal.portInvalid") : "";
   const usernameError =
-    form.protocol === "zookeeper" || form.username.trim()
+    form.protocol === "zookeeper" || form.protocol === "redis" || form.username.trim()
       ? ""
       : tr("modal.requiredField", { field: tr("form.username") });
   const secretError = form.protocol === "ssh" && !secret.trim() ? tr("modal.sshPasswordRequired") : "";
@@ -90,9 +90,9 @@ export function HostCreateModal({
               onChange={(e) => {
                 const protocol = e.target.value as Protocol;
                 const currentDefaultPort =
-                  form.protocol === "ssh" ? 22 : form.protocol === "telnet" ? 23 : 2181;
+                  form.protocol === "ssh" ? 22 : form.protocol === "telnet" ? 23 : form.protocol === "redis" ? 6379 : 2181;
                 const nextDefaultPort =
-                  protocol === "ssh" ? 22 : protocol === "telnet" ? 23 : 2181;
+                  protocol === "ssh" ? 22 : protocol === "telnet" ? 23 : protocol === "redis" ? 6379 : 2181;
                 const keepCustomPort = Boolean(form.port) && form.port !== currentDefaultPort;
                 onChangeForm({
                   ...form,
@@ -104,6 +104,7 @@ export function HostCreateModal({
               <option value="ssh">SSH</option>
               <option value="telnet">Telnet</option>
               <option value="zookeeper">Zookeeper</option>
+              <option value="redis">Redis</option>
             </select>
             <input
               ref={hostInputRef}
@@ -130,7 +131,7 @@ export function HostCreateModal({
               onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })}
             />
             {shouldShowError(touched.port, portError) ? <div className="modal-inline-notice modal-inline-notice-error">{portError}</div> : null}
-            {form.protocol !== "zookeeper" ? (
+            {form.protocol !== "zookeeper" && form.protocol !== "redis" ? (
               <>
                 <input
                   placeholder={tr("form.username")}

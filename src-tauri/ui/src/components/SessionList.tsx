@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import type {
   HostReachability,
+  RedisConnection,
+  RedisConnectionInput,
   Session,
   SessionInput,
   ZookeeperConnection,
   ZookeeperConnectionInput,
 } from "../services/types";
+import { testRedisConnection } from "../services/bridge";
 import { HostCreateModal } from "./session/HostCreateModal";
 import { HostEditModal } from "./session/HostEditModal";
 import { SessionRow } from "./session/SessionRow";
@@ -21,6 +24,8 @@ import { useSessionListColumns } from "../hooks/useSessionListColumns";
 import { ConfirmDialog } from "./ConfirmDialog";
 import { ZkConnectionEditModal } from "./zookeeper/ZkConnectionEditModal";
 import { ZkConnectionRow } from "./session/ZkConnectionRow";
+import { RedisConnectionRow } from "./session/RedisConnectionRow";
+import { RedisConnectionEditModal } from "./redis/RedisConnectionEditModal";
 
 interface Props {
   sessions: Session[];
@@ -30,6 +35,7 @@ interface Props {
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
+  onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -41,6 +47,11 @@ interface Props {
   onConnectZk?: (id: string) => void;
   onUpdateZk: (id: string, input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onDeleteZk: (id: string) => Promise<void>;
+  redisConnections: RedisConnection[];
+  onConnectRedis?: (id: string) => void;
+  onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
+  onDeleteRedis: (id: string) => Promise<void>;
+  onGetRedisSecret: (id: string) => Promise<string | null>;
 }
 
 export default function SessionList({
@@ -51,6 +62,7 @@ export default function SessionList({
   onSelect,
   onCreate,
   onCreateZk,
+  onCreateRedis,
   onUpdate,
   onDelete,
   onTestConnect,
@@ -62,11 +74,23 @@ export default function SessionList({
   onConnectZk,
   onUpdateZk,
   onDeleteZk,
+  redisConnections,
+  onConnectRedis,
+  onUpdateRedis,
+  onDeleteRedis,
+  onGetRedisSecret,
 }: Props) {
   const { tr } = useI18n();
   const [hostQuery, setHostQuery] = useState("");
   const [recentIds, setRecentIds] = useState(() => getRecentSessionIds());
   const [pendingDelete, setPendingDelete] = useState<Session | null>(null);
+  const [pendingDeleteRedis, setPendingDeleteRedis] = useState<RedisConnection | null>(null);
+  const [redisEditConnection, setRedisEditConnection] = useState<RedisConnection | null>(null);
+  const [redisEditForm, setRedisEditForm] = useState<RedisConnectionInput>({ name: "", address: "", db: 0 });
+  const [redisEditSecret, setRedisEditSecret] = useState("");
+  const [redisEditTesting, setRedisEditTesting] = useState(false);
+  const [redisEditSaving, setRedisEditSaving] = useState(false);
+  const [redisEditResult, setRedisEditResult] = useState<string | null>(null);
 
   const { gridStyle, onResizeNameStart, onResizeHostStart } = useSessionListColumns();
 
@@ -103,6 +127,18 @@ export default function SessionList({
       );
     });
   }, [hostQuery, zkConnections]);
+  const displayedRedisConnections = useMemo(() => {
+    const q = hostQuery.trim().toLowerCase();
+    if (!q) return redisConnections;
+    return redisConnections.filter((conn) => {
+      return (
+        conn.name.toLowerCase().includes(q) ||
+        conn.address.toLowerCase().includes(q) ||
+        "redis".includes(q) ||
+        `db${conn.db}`.includes(q)
+      );
+    });
+  }, [hostQuery, redisConnections]);
 
   const duplicateHost = async (session: Session) => {
     const copyName = `${session.name}-${tr("session.copySuffix")}`;
@@ -118,6 +154,51 @@ export default function SessionList({
   const runDeleteZk = async (conn: ZookeeperConnection) => {
     await onDeleteZk(conn.id);
     setPendingDeleteZk(null);
+  };
+  const runDeleteRedis = async (conn: RedisConnection) => {
+    await onDeleteRedis(conn.id);
+    setPendingDeleteRedis(null);
+  };
+  const openEditRedis = async (conn: RedisConnection) => {
+    setRedisEditConnection(conn);
+    setRedisEditForm({ name: conn.name, address: conn.address, db: conn.db });
+    setRedisEditResult(null);
+    try {
+      const secret = await onGetRedisSecret(conn.id);
+      setRedisEditSecret(secret ?? "");
+    } catch {
+      setRedisEditSecret("");
+    }
+  };
+  const closeEditRedis = () => {
+    setRedisEditConnection(null);
+    setRedisEditResult(null);
+    setRedisEditTesting(false);
+    setRedisEditSaving(false);
+  };
+  const testEditRedis = async () => {
+    if (!redisEditConnection) return;
+    setRedisEditTesting(true);
+    setRedisEditResult(null);
+    try {
+      await testRedisConnection(redisEditForm.address, redisEditForm.db, redisEditSecret || undefined);
+      setRedisEditResult(tr("modal.testSuccess"));
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setRedisEditResult(tr("modal.testFailed", { message }));
+    } finally {
+      setRedisEditTesting(false);
+    }
+  };
+  const submitEditRedis = async () => {
+    if (!redisEditConnection) return;
+    setRedisEditSaving(true);
+    try {
+      await onUpdateRedis(redisEditConnection.id, redisEditForm, redisEditSecret || undefined);
+      closeEditRedis();
+    } finally {
+      setRedisEditSaving(false);
+    }
   };
 
   const {
@@ -178,12 +259,14 @@ export default function SessionList({
   } = useSessionListForms({
     onCreate,
     onCreateZk,
+    onCreateRedis,
     onUpdate,
     onTestConnect,
     onTestZk,
     onGetSecret,
     onConnect,
     onConnectZk,
+    onConnectRedis,
     tr,
   });
 
@@ -302,6 +385,16 @@ export default function SessionList({
             onDelete={setPendingDeleteZk}
           />
         ))}
+        {displayedRedisConnections.map((conn) => (
+          <RedisConnectionRow
+            key={`redis-${conn.id}`}
+            conn={conn}
+            tr={tr}
+            onConnect={onConnectRedis}
+            onEdit={openEditRedis}
+            onDelete={setPendingDeleteRedis}
+          />
+        ))}
       </ul>
       <HostCreateModal
         open={showCreateModal}
@@ -331,6 +424,18 @@ export default function SessionList({
         onCancel={() => setPendingDelete(null)}
         onConfirm={() => {
           if (pendingDelete) void runDelete(pendingDelete);
+        }}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteRedis)}
+        title={tr("session.delete")}
+        message={pendingDeleteRedis ? tr("redis.page.deleteConfirm", { name: pendingDeleteRedis.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={() => setPendingDeleteRedis(null)}
+        onConfirm={() => {
+          if (pendingDeleteRedis) void runDeleteRedis(pendingDeleteRedis);
         }}
       />
       <ConfirmDialog
@@ -377,6 +482,19 @@ export default function SessionList({
         onToggleSecretVisible={() => setZkEditSecretVisible((prev) => !prev)}
         onTest={() => void testEditZk()}
         onSubmit={() => void submitEditZk()}
+      />
+      <RedisConnectionEditModal
+        connection={redisEditConnection}
+        form={redisEditForm}
+        secret={redisEditSecret}
+        testing={redisEditTesting}
+        saving={redisEditSaving}
+        testResult={redisEditResult}
+        onClose={closeEditRedis}
+        onChangeForm={setRedisEditForm}
+        onChangeSecret={setRedisEditSecret}
+        onTest={() => void testEditRedis()}
+        onSubmit={() => void submitEditRedis()}
       />
     </aside>
   );

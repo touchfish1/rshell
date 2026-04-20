@@ -1,4 +1,4 @@
-export type Protocol = "ssh" | "telnet" | "zookeeper";
+export type Protocol = "ssh" | "telnet" | "zookeeper" | "redis";
 
 /** 终端标签与后端的链路状态（用于加载态、失败重试、断开提示） */
 export type TabLinkState = "connecting" | "ready" | "failed";
@@ -93,3 +93,69 @@ export interface ZkNodeData {
   data_utf8: string | null;
   total_bytes: number;
 }
+
+export interface RedisConnection {
+  id: string;
+  name: string;
+  address: string;
+  db: number;
+}
+
+export interface RedisConnectionInput {
+  name: string;
+  address: string;
+  db?: number;
+}
+
+export interface RedisValueData {
+  key_base64: string;
+  value: string | null;
+}
+
+export interface RedisScanResult {
+  next_cursor: number;
+  keys: RedisKeyRef[];
+}
+
+export interface RedisDatabaseInfo {
+  db: number;
+  key_count: number;
+}
+
+export interface RedisKeyRef {
+  key_base64: string;
+  key_utf8: string | null;
+}
+
+export interface RedisHashEntry {
+  field: string;
+  value: string;
+}
+
+export interface RedisZsetEntry {
+  member: string;
+  score: number;
+}
+
+export type RedisValuePayload =
+  | { kind: "string"; value: string | null }
+  | { kind: "hash"; entries: RedisHashEntry[] }
+  | { kind: "list"; items: string[] }
+  | { kind: "set"; members: string[] }
+  | { kind: "zset"; entries: RedisZsetEntry[] }
+  | { kind: "unsupported"; raw_type: string };
+
+export interface RedisKeyData {
+  key_base64: string;
+  key_utf8: string | null;
+  key_type: string;
+  ttl_seconds: number;
+  payload: RedisValuePayload;
+}
+
+export type RedisValueUpdate =
+  | { kind: "string"; value: string }
+  | { kind: "hash"; entries: RedisHashEntry[] }
+  | { kind: "list"; items: string[] }
+  | { kind: "set"; members: string[] }
+  | { kind: "zset"; entries: RedisZsetEntry[] };
