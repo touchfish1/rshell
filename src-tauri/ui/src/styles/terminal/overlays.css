@@ -1,0 +1,64 @@
+.terminal-pane-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(4, 6, 10, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.terminal-pane-overlay-card {
+  max-width: 400px;
+  width: 100%;
+  margin: 0;
+  padding: 16px 18px;
+  border-radius: var(--modal-radius);
+  border: 1px solid var(--modal-border);
+  background: var(--modal-surface);
+  box-shadow: var(--modal-shadow);
+  color: var(--modal-text);
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.terminal-pane-overlay-card-error {
+  border-color: rgba(180, 75, 95, 0.4);
+  background: var(--modal-surface);
+}
+
+.terminal-pane-overlay-spinner {
+  width: 22px;
+  height: 22px;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+  border: 2px solid var(--modal-border-inner);
+  border-top-color: var(--modal-accent);
+  animation: terminal-spin 0.7s linear infinite;
+}
+
+@keyframes terminal-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.terminal-pane-overlay-title {
+  text-align: left;
+  margin-bottom: 12px;
+  word-break: break-word;
+  color: var(--modal-text-muted);
+  font-weight: 500;
+}
+
+.terminal-pane-overlay-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+

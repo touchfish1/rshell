@@ -1,4 +1,4 @@
-export type Protocol = "ssh" | "telnet";
+export type Protocol = "ssh" | "telnet" | "zookeeper";
 
 /** 终端标签与后端的链路状态（用于加载态、失败重试、断开提示） */
 export type TabLinkState = "connecting" | "ready" | "failed";
@@ -73,4 +73,23 @@ export interface AuditRecord {
   event_type: string;
   command?: string | null;
   detail: string;
+}
+
+export interface ZookeeperConnection {
+  id: string;
+  name: string;
+  connect_string: string;
+  session_timeout_ms: number;
+}
+
+export interface ZookeeperConnectionInput {
+  name: string;
+  connect_string: string;
+  session_timeout_ms?: number;
+}
+
+export interface ZkNodeData {
+  data_base64: string;
+  data_utf8: string | null;
+  total_bytes: number;
 }

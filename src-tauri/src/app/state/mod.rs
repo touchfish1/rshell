@@ -10,6 +10,7 @@ mod sessions;
 mod sftp;
 mod ssh_helpers;
 mod terminal_io;
+mod zookeeper;
 pub use self::sftp::SftpTextReadResult;
 
 use std::collections::HashMap;
@@ -20,6 +21,7 @@ use uuid::Uuid;
 
 use crate::domain::session::Session;
 use crate::domain::terminal::TerminalClient;
+use crate::domain::zookeeper::ZookeeperConnection;
 use crate::infra::store::SessionStore;
 
 /// 审计用：按会话缓冲终端输入，用于解析控制序列、归并命令行。
@@ -33,6 +35,11 @@ pub(crate) struct AuditInputState {
 /// 已连接会话在内存中的句柄，内层为异步 `TerminalClient`。
 pub struct ActiveTerminal {
     pub client: Mutex<Box<dyn TerminalClient>>,
+}
+
+/// 已连接的 Zookeeper 客户端（复用会话，减少反复握手）。
+pub struct ActiveZookeeper {
+    pub client: zookeeper_client::Client,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -61,8 +68,12 @@ pub struct AppState {
     store: SessionStore,
     /// 当前内存中的会话列表（与磁盘同步）
     sessions: Arc<Mutex<Vec<Session>>>,
+    /// Zookeeper 连接列表（与磁盘同步）
+    zookeeper_connections: Arc<Mutex<Vec<ZookeeperConnection>>>,
     /// 已建立终端连接：`session_id ->` 活跃客户端
     active: Arc<Mutex<HashMap<Uuid, Arc<ActiveTerminal>>>>,
+    /// 已建立 Zookeeper 连接：`conn_id ->` 活跃客户端
+    active_zookeeper: Arc<Mutex<HashMap<Uuid, Arc<ActiveZookeeper>>>>,
     /// 审计：每个会话的输入解析状态
     audit_input_buffers: Arc<Mutex<HashMap<Uuid, AuditInputState>>>,
 }
@@ -71,10 +82,13 @@ impl Default for AppState {
     fn default() -> Self {
         let store = SessionStore::new().expect("failed to init session store");
         let sessions = store.list().unwrap_or_default();
+        let zookeeper_connections = store.list_zk().unwrap_or_default();
         Self {
             store,
             sessions: Arc::new(Mutex::new(sessions)),
+            zookeeper_connections: Arc::new(Mutex::new(zookeeper_connections)),
             active: Arc::new(Mutex::new(HashMap::new())),
+            active_zookeeper: Arc::new(Mutex::new(HashMap::new())),
             audit_input_buffers: Arc::new(Mutex::new(HashMap::new())),
         }
     }

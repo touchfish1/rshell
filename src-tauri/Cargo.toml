@@ -1,6 +1,6 @@
 [package]
 name = "rshell"
-version = "0.1.22"
+version = "0.1.23"
 edition = "2021"
 
 [dependencies]
@@ -20,6 +20,7 @@ tauri-plugin-window-state = "2"
 thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "net", "process"] }
 uuid = { version = "1", features = ["v4", "serde"] }
+zookeeper-client = { version = "0.11.1", features = ["tokio"] }
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

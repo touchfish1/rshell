@@ -4,7 +4,13 @@ import SessionList from "../components/SessionList";
 import AuditLogModal from "../components/AuditLogModal";
 import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
-import type { HostReachability, Session, SessionInput } from "../services/types";
+import type {
+  HostReachability,
+  Session,
+  SessionInput,
+  ZookeeperConnection,
+  ZookeeperConnectionInput,
+} from "../services/types";
 import type { AuditRecord } from "../services/types";
 import type { I18nKey, Lang } from "../i18n";
 
@@ -20,10 +26,17 @@ interface Props {
   status: string;
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
+  onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
+  onTestZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onGetSecret: (id: string) => Promise<string | null>;
+  onGetZkSecret: (id: string) => Promise<string | null>;
+  zkConnections: ZookeeperConnection[];
+  onConnectZk: (id: string) => void;
+  onUpdateZk: (id: string, input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
+  onDeleteZk: (id: string) => Promise<void>;
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
@@ -36,6 +49,7 @@ interface Props {
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
   onRefreshHostStatus: () => void;
+  onOpenZookeeper: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -51,10 +65,17 @@ export default function HomePage({
   status,
   onSelect,
   onCreate,
+  onCreateZk,
   onUpdate,
   onDelete,
   onTestConnect,
+  onTestZk,
   onGetSecret,
+  onGetZkSecret,
+  zkConnections,
+  onConnectZk,
+  onUpdateZk,
+  onDeleteZk,
   onConnect,
   onOnlineUpgrade,
   auditOpen,
@@ -67,6 +88,7 @@ export default function HomePage({
   lang,
   onSwitchLang,
   onRefreshHostStatus,
+  onOpenZookeeper,
   tr,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
@@ -119,6 +141,9 @@ export default function HomePage({
           <button className="btn btn-ghost" onClick={onOpenAudit}>
             {tr("home.audit")}
           </button>
+          <button className="btn btn-ghost" onClick={onOpenZookeeper}>
+            {tr("home.zookeeper")}
+          </button>
           <span className={connected ? "pill pill-ok" : "pill"}>
             {connected ? tr("top.online") : tr("top.offline")}
           </span>
@@ -159,11 +184,18 @@ export default function HomePage({
                 reachabilityMap={reachabilityMap}
                 onSelect={onSelect}
                 onCreate={onCreate}
+                onCreateZk={onCreateZk}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onTestConnect={onTestConnect}
+                onTestZk={onTestZk}
                 onGetSecret={onGetSecret}
+                onGetZkSecret={onGetZkSecret}
                 onConnect={(id) => void onConnect(id)}
+                zkConnections={zkConnections}
+                onConnectZk={onConnectZk}
+                onUpdateZk={onUpdateZk}
+                onDeleteZk={onDeleteZk}
               />
               {!hasSessions ? (
                 <div className="empty-state" role="note" aria-label={tr("home.ariaNoSession")}>

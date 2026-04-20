@@ -1,24 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import HomePage from "./pages/HomePage";
-import TerminalPage from "./pages/TerminalPage";
-import TerminalPane from "./components/TerminalPane";
+import { AppHomeSection } from "./app/AppHomeSection";
+import { AppTerminalSection } from "./app/AppTerminalSection";
+import { AppZookeeperSection } from "./app/AppZookeeperSection";
 import { DownloadToastStack } from "./components/download/DownloadToastStack";
 import { UpgradeConfirmModal } from "./components/UpgradeConfirmModal";
 import { CloseConfirmModal } from "./components/CloseConfirmModal";
-import {
-  downloadSftpFile,
-  getHostMetrics,
-  readSftpTextFile,
-  resizeTerminal,
-  saveSftpTextFile,
-  sendInput,
-  uploadSftpFile,
-} from "./services/bridge";
-import type { Session, SessionInput } from "./services/types";
+import { downloadSftpFile, testZookeeperConnection, uploadSftpFile } from "./services/bridge";
+import type { Session } from "./services/types";
 import type { DownloadTask } from "./hooks/useDownloadTasks";
 import { useDownloadTasks } from "./hooks/useDownloadTasks";
 import { useSessionPing } from "./hooks/useSessionPing";
 import { useSessionActions } from "./hooks/useSessionActions";
+import { useZookeeperActions } from "./hooks/useZookeeperActions";
 import { useSftpState } from "./hooks/useSftpState";
 import { useTerminalOutput } from "./hooks/useTerminalOutput";
 import { useUpdater } from "./hooks/useUpdater";
@@ -28,12 +21,15 @@ import { useAuditLogs } from "./hooks/useAuditLogs";
 import { useQuitConfirm } from "./hooks/useQuitConfirm";
 import { detectInitialLang, setLangStorage, t, type I18nKey, type Lang } from "./i18n";
 import { I18nProvider } from "./i18n-context";
+import type { ZookeeperConnection, ZookeeperConnectionInput } from "./services/types";
 
 export default function App() {
   const [lang, setLang] = useState<Lang>(() => detectInitialLang());
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
+  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper">("home");
+  const [zkConnections, setZkConnections] = useState<ZookeeperConnection[]>([]);
+  const [selectedZkId, setSelectedZkId] = useState<string | undefined>();
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
@@ -197,12 +193,28 @@ export default function App() {
     tr,
   });
 
+  const {
+    create: createZk,
+    update: updateZk,
+    remove: removeZk,
+    getSecret: getZkSecret,
+  } = useZookeeperActions({
+    connections: zkConnections,
+    setConnections: setZkConnections,
+    selectedId: selectedZkId,
+    setSelectedId: setSelectedZkId,
+    setStatus,
+    setError,
+    tr,
+  });
+
   return (
     <I18nProvider value={{ lang, tr }}>
       <main className="app-shell">
         {currentPage === "home" ? (
-          <HomePage
+          <AppHomeSection
             sessions={sessions}
+            zkConnections={zkConnections}
             connectingSessionId={connectingHostId}
             selectedId={selectedId}
             reachabilityMap={reachabilityMap}
@@ -213,11 +225,22 @@ export default function App() {
             status={status}
             onSelect={setSelectedId}
             onCreate={create}
+            onCreateZk={createZk}
             onUpdate={update}
             onDelete={remove}
             onTestConnect={testConnect}
+            onTestZk={async (input: ZookeeperConnectionInput, secret?: string) => {
+              await testZookeeperConnection(input.connect_string, input.session_timeout_ms, secret);
+            }}
             onGetSecret={getSecret}
+            onGetZkSecret={getZkSecret}
             onConnect={connect}
+            onConnectZk={(id: string) => {
+              setSelectedZkId(id);
+              setCurrentPage("zookeeper");
+            }}
+            onUpdateZk={updateZk}
+            onDeleteZk={removeZk}
             onOnlineUpgrade={checkOnlineUpgrade}
             auditOpen={auditOpen}
             auditLoading={auditLoading}
@@ -234,10 +257,11 @@ export default function App() {
             lang={lang}
             onSwitchLang={switchLang}
             onRefreshHostStatus={refreshReachability}
+            onOpenZookeeper={() => setCurrentPage("zookeeper")}
             tr={tr}
           />
-        ) : (
-          <TerminalPage
+        ) : currentPage === "terminal" ? (
+          <AppTerminalSection
             sessions={sessions}
             connectingSessionId={connectingHostId}
             selectedId={selectedId}
@@ -251,14 +275,14 @@ export default function App() {
             sftpEntries={sftpProps.entries}
             sftpPath={sftpProps.path}
             sftpLoading={sftpProps.loading}
-            onOpenSession={(id) => void connect(id)}
-            onDuplicateTab={(id) => void duplicateTab(id)}
+            onOpenSession={(id) => connect(id)}
+            onDuplicateTab={(id) => duplicateTab(id)}
             onSelectSession={setSelectedId}
             onSwitchTab={setActiveTabId}
-            onCloseTab={(id) => void closeTab(id)}
-            onCloseTabsToLeft={(id) => void closeTabsToLeft(id)}
-            onCloseTabsToRight={(id) => void closeTabsToRight(id)}
-            onCloseOtherTabs={(id) => void closeOtherTabs(id)}
+            onCloseTab={(id) => closeTab(id)}
+            onCloseTabsToLeft={(id) => closeTabsToLeft(id)}
+            onCloseTabsToRight={(id) => closeTabsToRight(id)}
+            onCloseOtherTabs={(id) => closeOtherTabs(id)}
             onSftpOpenDir={sftpOpenDir}
             onSftpUp={sftpUp}
             onSftpDownload={(remotePath: string) => {
@@ -274,54 +298,27 @@ export default function App() {
               await uploadSftpToRemoteDir(tab.sessionId, remoteDir, fileName, contentBase64);
               void loadSftp(activeTabId, tab.sessionId, remoteDir);
             }}
-            onSftpReadText={async (remotePath: string) => {
-              if (!activeTabId) throw new Error("no active terminal tab");
-              const tab = tabs.find((t) => t.id === activeTabId);
-              if (!tab) throw new Error("active terminal tab not found");
-              return readSftpTextFile(tab.sessionId, remotePath);
-            }}
-            onSftpSaveText={async (remotePath: string, content: string) => {
-              if (!activeTabId) throw new Error("no active terminal tab");
-              const tab = tabs.find((t) => t.id === activeTabId);
-              if (!tab) throw new Error("active terminal tab not found");
-              await saveSftpTextFile(tab.sessionId, remotePath, content);
-            }}
             onBackToHome={() => setCurrentPage("home")}
-            onDisconnect={(id) => void disconnect(id)}
+            onDisconnect={(id) => disconnect(id)}
             onUpdateHost={update}
-            onGetHostMetrics={(session) => getHostMetrics(session.id)}
-            terminals={tabs.map((tab) => ({
-              id: tab.id,
-              node: (
-                <TerminalPane
-                  isActive={activeTabId === tab.id}
-                  connected={connectedIds.includes(tab.sessionId) && activeTabId === tab.id}
-                  linkState={tab.linkState}
-                  linkError={tab.linkError}
-                  onRetryConnect={() => void retryConnect(tab.id)}
-                  onCloseFailedTab={() => void closeTab(tab.id)}
-                  registerWriter={(nextWriter) => {
-                    writerMapRef.current.set(tab.id, nextWriter);
-                  }}
-                  onInput={(text) => {
-                    if (connectedIds.includes(tab.sessionId) && activeTabId === tab.id) {
-                      void sendInput(tab.sessionId, text).catch((err) => {
-                        const message = err instanceof Error ? err.message : String(err);
-                        setError(tr("error.sendFailed", { message }));
-                      });
-                    }
-                  }}
-                  onResize={(cols, rows) => {
-                    if (connectedIds.includes(tab.sessionId) && activeTabId === tab.id) {
-                      void resizeTerminal(tab.sessionId, cols, rows).catch((err) => {
-                        const message = err instanceof Error ? err.message : String(err);
-                        setError(tr("error.resizeTerminalFailed", { message }));
-                      });
-                    }
-                  }}
-                />
-              ),
-            }))}
+            retryConnect={(tabId) => retryConnect(tabId)}
+            writerMapRef={writerMapRef}
+            setError={setError}
+          />
+        ) : (
+          <AppZookeeperSection
+            connections={zkConnections}
+            selectedId={selectedZkId}
+            status={status}
+            error={error}
+            onDismissError={() => setError(null)}
+            onSelect={setSelectedZkId}
+            onCreate={createZk}
+            onUpdate={updateZk}
+            onDelete={removeZk}
+            onGetSecret={getZkSecret}
+            onBack={() => setCurrentPage("home")}
+            tr={tr}
           />
         )}
         <DownloadToastStack

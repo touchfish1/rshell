@@ -1,0 +1,193 @@
+.workspace {
+  display: grid;
+  grid-template-rows: 56px auto 110px 1fr 40px;
+}
+
+.workspace.home-page {
+  grid-template-rows: 64px auto 1fr 30px;
+}
+
+.workspace.terminal-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.terminal-error-slot {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.terminal-top {
+  flex: 0 0 56px;
+}
+
+.terminal-workspace {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns:
+    var(--host-width, 240px)
+    8px
+    minmax(0, 1fr)
+    8px
+    var(--sftp-width, 320px);
+}
+
+.terminal-hosts,
+.terminal-sftp {
+  border-right: 1px solid rgba(43, 49, 64, 0.7);
+  background: #0d121a;
+}
+
+.terminal-hosts {
+  overflow: auto;
+}
+
+.terminal-splitter {
+  cursor: col-resize;
+  background: rgba(43, 49, 64, 0.4);
+  border-left: 1px solid rgba(43, 49, 64, 0.55);
+  border-right: 1px solid rgba(43, 49, 64, 0.55);
+}
+
+.terminal-splitter:hover {
+  background: rgba(79, 131, 255, 0.2);
+}
+
+.terminal-sftp {
+  border-right: none;
+  border-left: 1px solid rgba(43, 49, 64, 0.7);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-title {
+  position: sticky;
+  top: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #95a0b8;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+  background: rgba(9, 14, 22, 0.9);
+}
+
+.terminal-hosts ul,
+.terminal-sftp ul {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+}
+
+.terminal-sftp ul {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sftp-file-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sftp-file-list ul {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.terminal-hosts button {
+  width: 100%;
+  text-align: left;
+  background: rgba(18, 24, 35, 0.65);
+  border: 1px solid rgba(48, 56, 74, 0.85);
+  color: #d7ddea;
+  border-radius: 8px;
+  padding: 7px 9px;
+  margin-bottom: 6px;
+}
+
+.terminal-hosts button.active {
+  border-color: rgba(79, 131, 255, 0.8);
+  background: rgba(37, 53, 76, 0.72);
+}
+
+.terminal-hosts button.host-connecting {
+  opacity: 0.88;
+  cursor: wait;
+}
+
+.terminal-hosts button.has-tab {
+  box-shadow: inset 2px 0 0 rgba(86, 216, 154, 0.8);
+}
+
+.terminal-sftp li {
+  padding: 2px 0;
+}
+
+.sftp-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+}
+
+.workspace header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+  padding: 0 16px;
+  background: #0b0f17;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.terminal-pane-shell {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.terminal-pane {
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 1200px) {
+  .terminal-workspace {
+    grid-template-columns:
+      var(--host-width, 200px)
+      8px
+      minmax(0, 1fr)
+      8px
+      var(--sftp-width, 260px);
+  }
+}
+
+@media (max-width: 900px) {
+  .terminal-workspace {
+    grid-template-columns: 1fr;
+  }
+  .terminal-hosts,
+  .terminal-sftp,
+  .terminal-splitter {
+    display: none;
+  }
+}
+

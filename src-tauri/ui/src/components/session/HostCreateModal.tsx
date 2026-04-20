@@ -43,11 +43,13 @@ export function HostCreateModal({
     secret: false,
   });
   const [submitAttempted, setSubmitAttempted] = useState(false);
-  if (!open) return null;
 
   const hostError = !form.host.trim() ? tr("modal.requiredField", { field: tr("form.host") }) : "";
   const portError = !Number.isInteger(form.port) || form.port < 1 || form.port > 65535 ? tr("modal.portInvalid") : "";
-  const usernameError = !form.username.trim() ? tr("modal.requiredField", { field: tr("form.username") }) : "";
+  const usernameError =
+    form.protocol === "zookeeper" || form.username.trim()
+      ? ""
+      : tr("modal.requiredField", { field: tr("form.username") });
   const secretError = form.protocol === "ssh" && !secret.trim() ? tr("modal.sshPasswordRequired") : "";
   const canTest = !saving && !testing && !hostError && !portError;
   const canSubmit = !saving && !hostError && !portError && !usernameError && !secretError;
@@ -62,6 +64,8 @@ export function HostCreateModal({
   }, [testResult]);
 
   const shouldShowError = (fieldTouched: boolean, hasError: string) => (submitAttempted || fieldTouched) && Boolean(hasError);
+
+  if (!open) return null;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -85,8 +89,10 @@ export function HostCreateModal({
               disabled={saving}
               onChange={(e) => {
                 const protocol = e.target.value as Protocol;
-                const currentDefaultPort = form.protocol === "ssh" ? 22 : 23;
-                const nextDefaultPort = protocol === "ssh" ? 22 : 23;
+                const currentDefaultPort =
+                  form.protocol === "ssh" ? 22 : form.protocol === "telnet" ? 23 : 2181;
+                const nextDefaultPort =
+                  protocol === "ssh" ? 22 : protocol === "telnet" ? 23 : 2181;
                 const keepCustomPort = Boolean(form.port) && form.port !== currentDefaultPort;
                 onChangeForm({
                   ...form,
@@ -97,6 +103,7 @@ export function HostCreateModal({
             >
               <option value="ssh">SSH</option>
               <option value="telnet">Telnet</option>
+              <option value="zookeeper">Zookeeper</option>
             </select>
             <input
               ref={hostInputRef}
@@ -123,14 +130,20 @@ export function HostCreateModal({
               onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })}
             />
             {shouldShowError(touched.port, portError) ? <div className="modal-inline-notice modal-inline-notice-error">{portError}</div> : null}
-            <input
-              placeholder={tr("form.username")}
-              value={form.username}
-              disabled={saving}
-              onBlur={() => setTouched((prev) => ({ ...prev, username: true }))}
-              onChange={(e) => onChangeForm({ ...form, username: e.target.value })}
-            />
-            {shouldShowError(touched.username, usernameError) ? <div className="modal-inline-notice modal-inline-notice-error">{usernameError}</div> : null}
+            {form.protocol !== "zookeeper" ? (
+              <>
+                <input
+                  placeholder={tr("form.username")}
+                  value={form.username}
+                  disabled={saving}
+                  onBlur={() => setTouched((prev) => ({ ...prev, username: true }))}
+                  onChange={(e) => onChangeForm({ ...form, username: e.target.value })}
+                />
+                {shouldShowError(touched.username, usernameError) ? (
+                  <div className="modal-inline-notice modal-inline-notice-error">{usernameError}</div>
+                ) : null}
+              </>
+            ) : null}
             <input
               placeholder={form.protocol === "ssh" ? tr("form.sshPasswordSaved") : tr("form.secretOptional")}
               type="password"

@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::audit::AuditRecord;
 use crate::domain::session::Session;
+use crate::domain::zookeeper::ZookeeperConnection;
 use crate::infra::store_audit;
 use crate::infra::store_secret;
 
@@ -24,6 +25,8 @@ pub struct SessionStore {
     db_path: PathBuf,
     secret_path: PathBuf,
     audit_path: PathBuf,
+    zk_db_path: PathBuf,
+    zk_secret_path: PathBuf,
 }
 
 impl SessionStore {
@@ -36,6 +39,8 @@ impl SessionStore {
             db_path: base.join("sessions.json"),
             secret_path: base.join("secrets.json"),
             audit_path: base.join("audit.json"),
+            zk_db_path: base.join("zookeeper.json"),
+            zk_secret_path: base.join("zookeeper_secrets.json"),
         })
     }
 
@@ -52,6 +57,33 @@ impl SessionStore {
         let content = serde_json::to_string_pretty(sessions)
             .map_err(|e| StoreError::Serialize(e.to_string()))?;
         fs::write(&self.db_path, content).map_err(|e| StoreError::Io(e.to_string()))
+    }
+
+    pub fn list_zk(&self) -> Result<Vec<ZookeeperConnection>, StoreError> {
+        if !self.zk_db_path.exists() {
+            return Ok(vec![]);
+        }
+        let content =
+            fs::read_to_string(&self.zk_db_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))
+    }
+
+    pub fn save_all_zk(&self, conns: &[ZookeeperConnection]) -> Result<(), StoreError> {
+        let content = serde_json::to_string_pretty(conns)
+            .map_err(|e| StoreError::Serialize(e.to_string()))?;
+        fs::write(&self.zk_db_path, content).map_err(|e| StoreError::Io(e.to_string()))
+    }
+
+    pub fn set_zk_secret(&self, conn_id: Uuid, secret: &str) -> Result<(), StoreError> {
+        store_secret::set_secret(&self.zk_secret_path, conn_id, secret)
+    }
+
+    pub fn get_zk_secret(&self, conn_id: Uuid) -> Result<Option<String>, StoreError> {
+        store_secret::get_secret(&self.zk_secret_path, conn_id)
+    }
+
+    pub fn delete_zk_secret(&self, conn_id: Uuid) -> Result<(), StoreError> {
+        store_secret::delete_secret(&self.zk_secret_path, conn_id)
     }
 
     pub fn set_secret(&self, session_id: Uuid, secret: &str) -> Result<(), StoreError> {

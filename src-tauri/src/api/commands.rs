@@ -15,12 +15,15 @@ mod sessions;
 mod sftp;
 mod system;
 mod terminal;
+mod zookeeper;
 
 use tauri::{AppHandle, State};
 
 use crate::app::{AppState, AuditRecord, HostMetrics, SftpEntry, SftpTextReadResult};
 use crate::domain::session::{Session, SessionInput};
+use crate::domain::zookeeper::{ZookeeperConnection, ZookeeperConnectionInput};
 pub use reachability::HostReachability;
+pub use zookeeper::ZkNodeData;
 
 #[tauri::command]
 pub async fn list_sessions(state: State<'_, AppState>) -> Result<Vec<Session>, String> {
@@ -201,4 +204,99 @@ pub async fn list_audits(
     limit: Option<usize>,
 ) -> Result<Vec<AuditRecord>, String> {
     audit::list_audits(state, limit).await
+}
+
+#[tauri::command]
+pub async fn list_zookeeper_connections(
+    state: State<'_, AppState>,
+) -> Result<Vec<ZookeeperConnection>, String> {
+    zookeeper::list_zookeeper_connections(state).await
+}
+
+#[tauri::command]
+pub async fn create_zookeeper_connection(
+    state: State<'_, AppState>,
+    input: ZookeeperConnectionInput,
+    secret: Option<String>,
+) -> Result<ZookeeperConnection, String> {
+    zookeeper::create_zookeeper_connection(state, input, secret).await
+}
+
+#[tauri::command]
+pub async fn update_zookeeper_connection(
+    state: State<'_, AppState>,
+    id: String,
+    input: ZookeeperConnectionInput,
+    secret: Option<String>,
+) -> Result<ZookeeperConnection, String> {
+    zookeeper::update_zookeeper_connection(state, id, input, secret).await
+}
+
+#[tauri::command]
+pub async fn delete_zookeeper_connection(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    zookeeper::delete_zookeeper_connection(state, id).await
+}
+
+#[tauri::command]
+pub async fn has_zookeeper_secret(state: State<'_, AppState>, id: String) -> Result<bool, String> {
+    zookeeper::has_zookeeper_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn get_zookeeper_secret(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
+    zookeeper::get_zookeeper_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn connect_zookeeper(
+    state: State<'_, AppState>,
+    id: String,
+    secret: Option<String>,
+) -> Result<(), String> {
+    zookeeper::connect_zookeeper(state, id, secret).await
+}
+
+#[tauri::command]
+pub async fn test_zookeeper_connection(
+    connect_string: String,
+    session_timeout_ms: Option<u64>,
+    secret: Option<String>,
+) -> Result<(), String> {
+    zookeeper::test_zookeeper_connection(connect_string, session_timeout_ms, secret).await
+}
+
+#[tauri::command]
+pub async fn disconnect_zookeeper(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    zookeeper::disconnect_zookeeper(state, id).await
+}
+
+#[tauri::command]
+pub async fn zk_list_children(
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+) -> Result<Vec<String>, String> {
+    zookeeper::zk_list_children(state, id, path).await
+}
+
+#[tauri::command]
+pub async fn zk_get_data(
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+) -> Result<ZkNodeData, String> {
+    zookeeper::zk_get_data(state, id, path).await
+}
+
+#[tauri::command]
+pub async fn zk_set_data(
+    state: State<'_, AppState>,
+    id: String,
+    path: String,
+    data_utf8: String,
+) -> Result<(), String> {
+    zookeeper::zk_set_data(state, id, path, data_utf8).await
 }

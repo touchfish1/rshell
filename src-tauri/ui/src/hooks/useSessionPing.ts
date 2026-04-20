@@ -4,7 +4,7 @@ import type { HostReachability, Session } from "../services/types";
 
 type RunPingOpts = { cancelledRef?: { current: boolean }; manual?: boolean };
 
-export function useSessionPing(opts: { currentPage: "home" | "terminal"; sessions: Session[] }) {
+export function useSessionPing(opts: { currentPage: "home" | "terminal" | "zookeeper"; sessions: Session[] }) {
   const { currentPage, sessions } = opts;
   const [reachabilityMap, setReachabilityMap] = useState<Record<string, HostReachability>>({});
   const [refreshBusy, setRefreshBusy] = useState(false);

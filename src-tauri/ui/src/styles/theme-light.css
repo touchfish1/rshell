@@ -510,3 +510,82 @@ html[data-theme="light"] .sftp-editor-error {
   background: rgba(254, 242, 242, 0.98);
   border-color: rgba(180, 70, 85, 0.45);
 }
+
+/* —— Zookeeper 页 —— */
+html[data-theme="light"] .zk-page .session-list {
+  border-right-color: #d5dce8;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .zk-conn-line {
+  border-bottom-color: #e2e8f0;
+}
+
+html[data-theme="light"] .zk-conn-main {
+  color: #1e293b;
+}
+
+html[data-theme="light"] .zk-conn-name {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .zk-conn-host {
+  color: #475569;
+}
+
+html[data-theme="light"] .zk-conn-line:hover .zk-conn-main {
+  background: #f1f5f9;
+}
+
+html[data-theme="light"] .zk-conn-line.active .zk-conn-main {
+  background: rgba(219, 234, 254, 0.8);
+}
+
+html[data-theme="light"] .zk-browser-header {
+  border-bottom-color: #d5dce8;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .zk-tree,
+html[data-theme="light"] .zk-data {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .zk-node-selected {
+  background: rgba(219, 234, 254, 0.8);
+}
+
+html[data-theme="light"] .zk-node-name {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .zk-node-name:hover {
+  background: #f1f5f9;
+}
+
+html[data-theme="light"] .zk-node-children {
+  border-left-color: #d5dce8;
+}
+
+html[data-theme="light"] .zk-pane-splitter {
+  border-left-color: #d5dce8;
+  border-right-color: #d5dce8;
+  background: #e2e8f0;
+}
+
+html[data-theme="light"] .zk-pane-splitter:hover {
+  background: rgba(59, 130, 246, 0.16);
+}
+
+html[data-theme="light"] .zk-data-textarea {
+  border-color: #c5cedd;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .zk-save-result {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+}

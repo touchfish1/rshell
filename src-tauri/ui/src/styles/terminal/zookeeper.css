@@ -1,0 +1,251 @@
+.workspace.zk-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.terminal-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--host-width, 320px) minmax(0, 1fr);
+  gap: 8px;
+}
+
+.zk-page .session-list {
+  border-right: 1px solid rgba(43, 49, 64, 0.7);
+  background: #0d121a;
+  overflow: hidden;
+}
+
+.zk-connection-list {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.zk-conn-table {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  min-height: 0;
+}
+
+.zk-conn-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px;
+  align-items: stretch;
+  border-bottom: 1px solid rgba(48, 56, 74, 0.45);
+}
+
+.zk-conn-line:last-child {
+  border-bottom: none;
+}
+
+.zk-conn-main {
+  width: 100%;
+  border: none;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  color: #d7ddea;
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.zk-conn-name {
+  font-weight: 700;
+  color: #f1f5ff;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zk-conn-host {
+  font-size: 12px;
+  color: #9facc4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zk-conn-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.zk-conn-line:hover .zk-conn-main {
+  background: rgba(31, 42, 58, 0.45);
+}
+
+.zk-conn-line.active .zk-conn-main {
+  background: rgba(38, 53, 75, 0.55);
+}
+
+.zk-browser {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.zk-browser-header {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
+  background: #0b1018;
+}
+
+.zk-browser-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 8px minmax(320px, var(--zk-data-width, 460px));
+  gap: 0;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.zk-pane-splitter {
+  cursor: col-resize;
+  border-left: 1px solid rgba(43, 49, 64, 0.55);
+  border-right: 1px solid rgba(43, 49, 64, 0.55);
+  background: rgba(43, 49, 64, 0.35);
+  border-radius: 4px;
+  margin: 0 2px;
+}
+
+.zk-pane-splitter:hover {
+  background: rgba(79, 131, 255, 0.22);
+}
+
+.zk-browser-body.resizing {
+  user-select: none;
+  cursor: col-resize;
+}
+
+.zk-tree {
+  border: 1px solid rgba(48, 56, 74, 0.72);
+  border-radius: 10px;
+  background: #0b1018;
+  padding: 10px;
+  overflow: auto;
+}
+
+.zk-data {
+  border: 1px solid rgba(48, 56, 74, 0.72);
+  border-radius: 10px;
+  background: #0b1018;
+  padding: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.zk-data-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.zk-save-result {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(74, 179, 126, 0.45);
+  background: rgba(74, 179, 126, 0.12);
+  color: #8be8b5;
+  font-size: 12px;
+}
+
+.zk-data-textarea {
+  margin-top: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  border: 1px solid rgba(48, 56, 74, 0.85);
+  border-radius: 8px;
+  background: rgba(18, 24, 35, 0.75);
+  color: #d7ddea;
+  font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: none;
+  outline: none;
+  padding: 10px;
+}
+
+.zk-data-textarea:read-only {
+  opacity: 0.92;
+}
+
+.zk-node {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 6px;
+}
+
+.zk-node-selected {
+  background: rgba(79, 131, 255, 0.14);
+}
+
+.zk-node-toggle {
+  width: 26px;
+  padding: 2px 4px;
+}
+
+.zk-node-name {
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #d7ddea;
+  padding: 3px 6px;
+  border-radius: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.zk-node-name:hover {
+  background: rgba(30, 45, 67, 0.55);
+}
+
+.zk-node-children {
+  grid-column: 2 / 3;
+  width: 100%;
+  margin-left: 6px;
+  border-left: 1px dashed rgba(48, 56, 74, 0.75);
+  padding-left: 10px;
+}
+
+@media (max-width: 1100px) {
+  .zk-browser-body {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .zk-pane-splitter {
+    display: none;
+  }
+}
+

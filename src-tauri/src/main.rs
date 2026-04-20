@@ -58,6 +58,18 @@ fn main() {
             api::commands::open_external_url,
             api::commands::get_host_metrics,
             api::commands::list_audits,
+            api::commands::list_zookeeper_connections,
+            api::commands::create_zookeeper_connection,
+            api::commands::update_zookeeper_connection,
+            api::commands::delete_zookeeper_connection,
+            api::commands::has_zookeeper_secret,
+            api::commands::get_zookeeper_secret,
+            api::commands::connect_zookeeper,
+            api::commands::test_zookeeper_connection,
+            api::commands::disconnect_zookeeper,
+            api::commands::zk_list_children,
+            api::commands::zk_get_data,
+            api::commands::zk_set_data,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

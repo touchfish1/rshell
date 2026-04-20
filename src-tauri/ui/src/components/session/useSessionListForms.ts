@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { HostReachability, Session, SessionInput } from "../../services/types";
+import type {
+  HostReachability,
+  Session,
+  SessionInput,
+  ZookeeperConnection,
+  ZookeeperConnectionInput,
+} from "../../services/types";
 import type { I18nKey } from "../../i18n";
 
 const defaultForm: SessionInput = {
@@ -14,10 +20,13 @@ const defaultForm: SessionInput = {
 
 interface Options {
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
+  onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
+  onTestZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onGetSecret: (id: string) => Promise<string | null>;
   onConnect?: (id: string) => void;
+  onConnectZk?: (id: string) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -57,7 +66,17 @@ function mapConnectErrorToMessage(tr: Options["tr"], err: unknown) {
   return tr("error.connectUnknown", { message });
 }
 
-export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSecret, onConnect, tr }: Options) {
+export function useSessionListForms({
+  onCreate,
+  onCreateZk,
+  onUpdate,
+  onTestConnect,
+  onTestZk,
+  onGetSecret,
+  onConnect,
+  onConnectZk,
+  tr,
+}: Options) {
   const [createForm, setCreateForm] = useState<SessionInput>(defaultForm);
   const [createSecret, setCreateSecret] = useState("");
   const [createTesting, setCreateTesting] = useState(false);
@@ -76,20 +95,39 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
 
   const hostInputRef = useRef<HTMLInputElement>(null);
 
-  const createProtocolPort = useMemo(() => (createForm.protocol === "ssh" ? 22 : 23), [createForm.protocol]);
+  const createProtocolPort = useMemo(() => {
+    if (createForm.protocol === "ssh") return 22;
+    if (createForm.protocol === "telnet") return 23;
+    return 2181;
+  }, [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
 
   const submitCreate = async (connectAfterSave = false) => {
     if (createSubmitting) return;
     if (!createForm.host.trim()) return;
-    if (!createForm.username.trim()) return;
+    if (createForm.protocol !== "zookeeper" && !createForm.username.trim()) return;
     if (createForm.protocol === "ssh" && !createSecret.trim()) return;
     setCreateSubmitting(true);
     try {
-      const created = await onCreate(createForm, createSecret || undefined);
-      if (!created) return;
-      if (connectAfterSave) {
-        onConnect?.(created.id);
+      if (createForm.protocol === "zookeeper") {
+        const created = await onCreateZk(
+          {
+            name: createForm.name,
+            connect_string: `${createForm.host}:${createForm.port}`,
+            session_timeout_ms: (createForm.keepalive_secs ?? 30) * 1000,
+          },
+          createSecret || undefined
+        );
+        if (!created) return;
+        if (connectAfterSave) {
+          onConnectZk?.(created.id);
+        }
+      } else {
+        const created = await onCreate(createForm, createSecret || undefined);
+        if (!created) return;
+        if (connectAfterSave) {
+          onConnect?.(created.id);
+        }
       }
       setCreateForm(defaultForm);
       setCreateSecret("");
@@ -159,8 +197,22 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
     setCreateTesting(true);
     setCreateTestResult(null);
     try {
-      const r = await onTestConnect(createForm);
-      setCreateTestResult(r.online ? tr("modal.testSuccess") : tr("modal.testFailed"));
+      if (createForm.protocol === "zookeeper") {
+        await onTestZk(
+          {
+            name: createForm.name || createForm.host,
+            connect_string: `${createForm.host}:${createForm.port}`,
+            session_timeout_ms: (createForm.keepalive_secs ?? 30) * 1000,
+          },
+          createSecret || undefined
+        );
+        setCreateTestResult(tr("modal.testSuccess"));
+      } else {
+        const r = await onTestConnect(createForm);
+        setCreateTestResult(
+          r.online ? tr("modal.testSuccess") : tr("modal.testFailed", { message: tr("session.statusOffline") })
+        );
+      }
     } catch (err) {
       setCreateTestResult(mapConnectErrorToMessage(tr, err));
     } finally {

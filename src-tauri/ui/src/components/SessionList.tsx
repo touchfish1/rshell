@@ -1,17 +1,26 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import type { HostReachability, Session, SessionInput } from "../services/types";
+import type {
+  HostReachability,
+  Session,
+  SessionInput,
+  ZookeeperConnection,
+  ZookeeperConnectionInput,
+} from "../services/types";
 import { HostCreateModal } from "./session/HostCreateModal";
 import { HostEditModal } from "./session/HostEditModal";
 import { SessionRow } from "./session/SessionRow";
 import { SessionTableHead } from "./session/SessionTableHead";
 import { SessionListToolbar } from "./session/SessionListToolbar";
 import { useSessionListForms } from "./session/useSessionListForms";
+import { useZkSessionEditor } from "./session/useZkSessionEditor";
 import { useI18n } from "../i18n-context";
 import { getRecentSessionIds } from "../lib/recentSessions";
 import { orderSessionsByRecent } from "../lib/orderSessionsByRecent";
 import { sessionInputFromSession } from "../lib/sessionInput";
 import { useSessionListColumns } from "../hooks/useSessionListColumns";
 import { ConfirmDialog } from "./ConfirmDialog";
+import { ZkConnectionEditModal } from "./zookeeper/ZkConnectionEditModal";
+import { ZkConnectionRow } from "./session/ZkConnectionRow";
 
 interface Props {
   sessions: Session[];
@@ -20,11 +29,18 @@ interface Props {
   reachabilityMap: Record<string, HostReachability>;
   onSelect: (id: string) => void;
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
+  onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
+  onTestZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onGetSecret: (id: string) => Promise<string | null>;
+  onGetZkSecret: (id: string) => Promise<string | null>;
   onConnect?: (id: string) => void;
+  zkConnections: ZookeeperConnection[];
+  onConnectZk?: (id: string) => void;
+  onUpdateZk: (id: string, input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
+  onDeleteZk: (id: string) => Promise<void>;
 }
 
 export default function SessionList({
@@ -34,11 +50,18 @@ export default function SessionList({
   reachabilityMap,
   onSelect,
   onCreate,
+  onCreateZk,
   onUpdate,
   onDelete,
   onTestConnect,
+  onTestZk,
   onGetSecret,
+  onGetZkSecret,
   onConnect,
+  zkConnections,
+  onConnectZk,
+  onUpdateZk,
+  onDeleteZk,
 }: Props) {
   const { tr } = useI18n();
   const [hostQuery, setHostQuery] = useState("");
@@ -69,6 +92,18 @@ export default function SessionList({
     return orderSessionsByRecent(filtered, recentIds);
   }, [sessions, recentIds, hostQuery]);
 
+  const displayedZkConnections = useMemo(() => {
+    const q = hostQuery.trim().toLowerCase();
+    if (!q) return zkConnections;
+    return zkConnections.filter((conn) => {
+      return (
+        conn.name.toLowerCase().includes(q) ||
+        conn.connect_string.toLowerCase().includes(q) ||
+        "zookeeper".includes(q)
+      );
+    });
+  }, [hostQuery, zkConnections]);
+
   const duplicateHost = async (session: Session) => {
     const copyName = `${session.name}-${tr("session.copySuffix")}`;
     const input = sessionInputFromSession(session, copyName);
@@ -80,6 +115,35 @@ export default function SessionList({
     await onDelete(session.id);
     setPendingDelete(null);
   };
+  const runDeleteZk = async (conn: ZookeeperConnection) => {
+    await onDeleteZk(conn.id);
+    setPendingDeleteZk(null);
+  };
+
+  const {
+    pendingDeleteZk,
+    setPendingDeleteZk,
+    zkEditConnection,
+    zkEditForm,
+    setZkEditForm,
+    zkEditSecret,
+    setZkEditSecret,
+    zkEditSecretVisible,
+    setZkEditSecretVisible,
+    zkEditSecretLoading,
+    zkEditTesting,
+    zkEditSaving,
+    zkEditTestResult,
+    openEditZk,
+    closeEditZk,
+    submitEditZk,
+    testEditZk,
+  } = useZkSessionEditor({
+    onGetZkSecret,
+    onUpdateZk,
+    onTestZk,
+    tr,
+  });
 
   const {
     createForm,
@@ -113,10 +177,13 @@ export default function SessionList({
     markEditSecretDirty,
   } = useSessionListForms({
     onCreate,
+    onCreateZk,
     onUpdate,
     onTestConnect,
+    onTestZk,
     onGetSecret,
     onConnect,
+    onConnectZk,
     tr,
   });
 
@@ -225,6 +292,16 @@ export default function SessionList({
             {tr("home.searchNoResults")}
           </li>
         ) : null}
+        {displayedZkConnections.map((conn) => (
+          <ZkConnectionRow
+            key={`zk-${conn.id}`}
+            conn={conn}
+            tr={tr}
+            onConnect={onConnectZk}
+            onEdit={openEditZk}
+            onDelete={setPendingDeleteZk}
+          />
+        ))}
       </ul>
       <HostCreateModal
         open={showCreateModal}
@@ -256,6 +333,18 @@ export default function SessionList({
           if (pendingDelete) void runDelete(pendingDelete);
         }}
       />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteZk)}
+        title={tr("session.delete")}
+        message={pendingDeleteZk ? tr("zk.page.deleteConfirm", { name: pendingDeleteZk.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={() => setPendingDeleteZk(null)}
+        onConfirm={() => {
+          if (pendingDeleteZk) void runDeleteZk(pendingDeleteZk);
+        }}
+      />
       <HostEditModal
         session={editSession}
         form={editForm}
@@ -272,6 +361,22 @@ export default function SessionList({
         onTest={() => void testEditConnect()}
         onSubmit={() => void submitEdit()}
         onMarkSecretDirty={markEditSecretDirty}
+      />
+      <ZkConnectionEditModal
+        connection={zkEditConnection}
+        form={zkEditForm}
+        secret={zkEditSecret}
+        secretVisible={zkEditSecretVisible}
+        secretLoading={zkEditSecretLoading}
+        testing={zkEditTesting}
+        saving={zkEditSaving}
+        testResult={zkEditTestResult}
+        onClose={closeEditZk}
+        onChangeForm={setZkEditForm}
+        onChangeSecret={setZkEditSecret}
+        onToggleSecretVisible={() => setZkEditSecretVisible((prev) => !prev)}
+        onTest={() => void testEditZk()}
+        onSubmit={() => void submitEditZk()}
       />
     </aside>
   );

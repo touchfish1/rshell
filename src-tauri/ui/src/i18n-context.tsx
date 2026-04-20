@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { I18nKey, Lang } from "./i18n";
 
-type TrFn = (key: I18nKey, vars?: Record<string, string | number>) => string;
+export type TrFn = (key: I18nKey, vars?: Record<string, string | number>) => string;
 
 interface I18nContextValue {
   lang: Lang;

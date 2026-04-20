@@ -5,7 +5,7 @@ import { splitByPrefix } from "./splitByPrefix";
 type Dict = Record<I18nKey, string>;
 
 const langAndTop = splitByPrefix(source, ["lang.", "top.", "theme.", "updater.", "status.", "tray.", "app."]);
-const homeAndSession = splitByPrefix(source, ["home.", "session.", "modal.", "form.", "shortcutHelp."]);
+const homeAndSession = splitByPrefix(source, ["home.", "session.", "modal.", "form.", "shortcutHelp.", "zk."]);
 const terminalAndSftp = splitByPrefix(source, ["terminal.", "sftp."]);
 const errorsAndToasts = splitByPrefix(source, ["error.", "toast.", "prompt."]);
 
