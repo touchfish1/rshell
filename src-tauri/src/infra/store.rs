@@ -8,11 +8,8 @@ use uuid::Uuid;
 
 use crate::domain::audit::AuditRecord;
 use crate::domain::session::Session;
-
-#[derive(Default, serde::Serialize, serde::Deserialize)]
-struct SecretsFile {
-    secrets: std::collections::HashMap<String, String>,
-}
+use crate::infra::store_audit;
+use crate::infra::store_secret;
 
 #[derive(Debug, Error)]
 pub enum StoreError {
@@ -57,66 +54,23 @@ impl SessionStore {
         fs::write(&self.db_path, content).map_err(|e| StoreError::Io(e.to_string()))
     }
 
-    fn read_secrets(&self) -> Result<SecretsFile, StoreError> {
-        if !self.secret_path.exists() {
-            return Ok(SecretsFile::default());
-        }
-        let content =
-            fs::read_to_string(&self.secret_path).map_err(|e| StoreError::Io(e.to_string()))?;
-        serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))
-    }
-
-    fn write_secrets(&self, data: &SecretsFile) -> Result<(), StoreError> {
-        let content =
-            serde_json::to_string_pretty(data).map_err(|e| StoreError::Serialize(e.to_string()))?;
-        fs::write(&self.secret_path, content).map_err(|e| StoreError::Io(e.to_string()))
-    }
-
     pub fn set_secret(&self, session_id: Uuid, secret: &str) -> Result<(), StoreError> {
-        let mut data = self.read_secrets()?;
-        data.secrets
-            .insert(session_id.to_string(), secret.to_string());
-        self.write_secrets(&data)
+        store_secret::set_secret(&self.secret_path, session_id, secret)
     }
 
     pub fn get_secret(&self, session_id: Uuid) -> Result<Option<String>, StoreError> {
-        let data = self.read_secrets()?;
-        Ok(data.secrets.get(&session_id.to_string()).cloned())
+        store_secret::get_secret(&self.secret_path, session_id)
     }
 
     pub fn delete_secret(&self, session_id: Uuid) -> Result<(), StoreError> {
-        let mut data = self.read_secrets()?;
-        data.secrets.remove(&session_id.to_string());
-        self.write_secrets(&data)
+        store_secret::delete_secret(&self.secret_path, session_id)
     }
 
     pub fn list_audits(&self, limit: Option<usize>) -> Result<Vec<AuditRecord>, StoreError> {
-        if !self.audit_path.exists() {
-            return Ok(vec![]);
-        }
-        let content =
-            fs::read_to_string(&self.audit_path).map_err(|e| StoreError::Io(e.to_string()))?;
-        let mut records: Vec<AuditRecord> =
-            serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))?;
-        records.sort_by(|a, b| b.timestamp_ms.cmp(&a.timestamp_ms));
-        if let Some(limit) = limit {
-            if records.len() > limit {
-                records.truncate(limit);
-            }
-        }
-        Ok(records)
+        store_audit::list_audits(&self.audit_path, limit)
     }
 
     pub fn append_audit(&self, record: AuditRecord, max_keep: usize) -> Result<(), StoreError> {
-        let mut records = self.list_audits(None)?;
-        records.push(record);
-        records.sort_by(|a, b| a.timestamp_ms.cmp(&b.timestamp_ms));
-        if records.len() > max_keep {
-            let to_drop = records.len() - max_keep;
-            records.drain(0..to_drop);
-        }
-        let content = serde_json::to_string_pretty(&records)
-            .map_err(|e| StoreError::Serialize(e.to_string()))?;
-        fs::write(&self.audit_path, content).map_err(|e| StoreError::Io(e.to_string()))
+        store_audit::append_audit(&self.audit_path, record, max_keep)
     }
 }

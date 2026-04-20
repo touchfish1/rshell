@@ -19,7 +19,7 @@ interface Props {
   onDismissError: () => void;
   status: string;
   onSelect: (id: string) => void;
-  onCreate: (input: SessionInput, secret?: string) => Promise<void>;
+  onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;

@@ -19,7 +19,7 @@ interface Props {
   selectedId?: string;
   reachabilityMap: Record<string, HostReachability>;
   onSelect: (id: string) => void;
-  onCreate: (input: SessionInput, secret?: string) => Promise<void>;
+  onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -87,6 +87,7 @@ export default function SessionList({
     createSecret,
     setCreateSecret,
     createTesting,
+    createSubmitting,
     createTestResult,
     showCreateModal,
     setShowCreateModal,
@@ -115,6 +116,7 @@ export default function SessionList({
     onUpdate,
     onTestConnect,
     onGetSecret,
+    onConnect,
     tr,
   });
 
@@ -229,6 +231,7 @@ export default function SessionList({
         form={createForm}
         secret={createSecret}
         testing={createTesting}
+        saving={createSubmitting}
         testResult={createTestResult}
         hostInputRef={hostInputRef}
         protocolPort={createProtocolPort}
@@ -237,6 +240,7 @@ export default function SessionList({
         onChangeSecret={setCreateSecret}
         onTest={() => void testCreateConnect()}
         onSubmit={() => void submitCreate()}
+        onSubmitAndConnect={() => void submitCreate(true)}
       />
       <ConfirmDialog
         open={Boolean(pendingDelete)}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextReadResult, WorkspaceTab } from "../services/types";
 import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
@@ -10,6 +10,8 @@ import { SftpPanel } from "../components/terminal/SftpPanel";
 import { useSplitPanels } from "../hooks/useSplitPanels";
 import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { useTerminalMetrics } from "./terminal/useTerminalMetrics";
+import { useTerminalShortcuts } from "./terminal/useTerminalShortcuts";
 
 interface Props {
   sessions: Session[];
@@ -94,16 +96,11 @@ export default function TerminalPage({
     keepalive_secs: 30,
   });
   const [editSecret, setEditSecret] = useState("");
-  const [monitorMetrics, setMonitorMetrics] = useState<HostMetrics | null>(null);
-  const [monitorError, setMonitorError] = useState<string | null>(null);
-  const [monitorChecking, setMonitorChecking] = useState(false);
-  const [monitorCheckedAt, setMonitorCheckedAt] = useState<string>("");
   const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
-  const shortcutHelpOpenRef = useRef(false);
-  shortcutHelpOpenRef.current = shortcutHelpOpen;
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
-  const monitorSupported = activeSession?.protocol === "ssh";
+  const { monitorSupported, monitorMetrics, monitorError, monitorChecking, monitorCheckedAt, refreshMetrics } =
+    useTerminalMetrics({ activeSession, onGetHostMetrics, tr });
 
   useEffect(() => {
     const closeTabMenu = () => setTabMenu(null);
@@ -116,102 +113,15 @@ export default function TerminalPage({
     };
   }, []);
 
-  const refreshMetrics = async (session: Session) => {
-    setMonitorChecking(true);
-    try {
-      const metrics = await onGetHostMetrics(session);
-      setMonitorMetrics(metrics);
-      setMonitorError(null);
-      setMonitorCheckedAt(new Date().toLocaleTimeString());
-    } catch (err) {
-      setMonitorError(err instanceof Error ? err.message : String(err));
-      setMonitorMetrics(null);
-    } finally {
-      setMonitorChecking(false);
-    }
-  };
-
-  useEffect(() => {
-    if (!activeSession || !monitorSupported) {
-      setMonitorMetrics(null);
-      setMonitorError(activeSession && activeSession.protocol !== "ssh" ? tr("terminal.onlySshMonitor") : null);
-      setMonitorCheckedAt("");
-      return;
-    }
-    let cancelled = false;
-    const run = async () => {
-      setMonitorChecking(true);
-      try {
-        const metrics = await onGetHostMetrics(activeSession);
-        if (cancelled) return;
-        setMonitorMetrics(metrics);
-        setMonitorError(null);
-        setMonitorCheckedAt(new Date().toLocaleTimeString());
-      } catch (err) {
-        if (cancelled) return;
-        setMonitorError(err instanceof Error ? err.message : String(err));
-        setMonitorMetrics(null);
-      } finally {
-        if (!cancelled) setMonitorChecking(false);
-      }
-    };
-    void run();
-    const timer = window.setInterval(() => void run(), 10000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-    };
-  }, [activeSession, monitorSupported, onGetHostMetrics, tr]);
-
-  const tabsRef = useRef(tabs);
-  const activeTabIdRef = useRef(activeTabId);
-  tabsRef.current = tabs;
-  activeTabIdRef.current = activeTabId;
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      const isCtrlSlash = e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "/" || e.code === "Slash");
-      if (isCtrlSlash && shortcutHelpOpenRef.current) {
-        e.preventDefault();
-        setShortcutHelpOpen(false);
-        return;
-      }
-
-      if (editHost) return;
-      if (isBlockingOverlayFocused()) return;
-
-      if (isCtrlSlash) {
-        if (isTerminalInputFocused()) return;
-        e.preventDefault();
-        setShortcutHelpOpen(true);
-        return;
-      }
-
-      const list = tabsRef.current;
-      if (list.length === 0) return;
-
-      if (e.ctrlKey && !e.metaKey && !e.altKey && e.key === "Tab") {
-        e.preventDefault();
-        const delta = e.shiftKey ? -1 : 1;
-        let idx = activeTabIdRef.current ? list.findIndex((t) => t.id === activeTabIdRef.current) : 0;
-        if (idx < 0) idx = 0;
-        const next = (idx + delta + list.length) % list.length;
-        onSwitchTab(list[next].id);
-        return;
-      }
-
-      if (e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "w" || e.key === "W")) {
-        const id = activeTabIdRef.current;
-        if (!id) return;
-        const closeViaShortcut = e.shiftKey || !isTerminalInputFocused();
-        if (!closeViaShortcut) return;
-        e.preventDefault();
-        onCloseTab(id);
-      }
-    };
-    window.addEventListener("keydown", onKeyDown, true);
-    return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [editHost, onSwitchTab, onCloseTab]);
+  useTerminalShortcuts({
+    tabs,
+    activeTabId,
+    editHostOpen: Boolean(editHost),
+    shortcutHelpOpen,
+    onSetShortcutHelpOpen: setShortcutHelpOpen,
+    onSwitchTab,
+    onCloseTab,
+  });
 
   return (
     <section
@@ -340,16 +250,4 @@ export default function TerminalPage({
       <footer>{status}</footer>
     </section>
   );
-}
-
-function isBlockingOverlayFocused(): boolean {
-  const el = document.activeElement;
-  if (!el || !(el instanceof HTMLElement)) return false;
-  return Boolean(el.closest(".modal-backdrop, .sftp-editor-mask"));
-}
-
-function isTerminalInputFocused(): boolean {
-  const el = document.activeElement;
-  if (!el || !(el instanceof HTMLElement)) return false;
-  return Boolean(el.closest(".xterm"));
 }

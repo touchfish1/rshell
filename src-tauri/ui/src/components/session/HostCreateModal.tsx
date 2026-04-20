@@ -1,3 +1,4 @@
+import { useMemo, useState } from "react";
 import type { Protocol, SessionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 
@@ -6,6 +7,7 @@ interface Props {
   form: SessionInput;
   secret: string;
   testing: boolean;
+  saving: boolean;
   testResult: string | null;
   hostInputRef: React.RefObject<HTMLInputElement>;
   protocolPort: number;
@@ -14,6 +16,7 @@ interface Props {
   onChangeSecret: (next: string) => void;
   onTest: () => void;
   onSubmit: () => void;
+  onSubmitAndConnect: () => void;
 }
 
 export function HostCreateModal({
@@ -21,6 +24,7 @@ export function HostCreateModal({
   form,
   secret,
   testing,
+  saving,
   testResult,
   hostInputRef,
   protocolPort,
@@ -29,9 +33,35 @@ export function HostCreateModal({
   onChangeSecret,
   onTest,
   onSubmit,
+  onSubmitAndConnect,
 }: Props) {
   const { tr } = useI18n();
+  const [touched, setTouched] = useState({
+    host: false,
+    port: false,
+    username: false,
+    secret: false,
+  });
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   if (!open) return null;
+
+  const hostError = !form.host.trim() ? tr("modal.requiredField", { field: tr("form.host") }) : "";
+  const portError = !Number.isInteger(form.port) || form.port < 1 || form.port > 65535 ? tr("modal.portInvalid") : "";
+  const usernameError = !form.username.trim() ? tr("modal.requiredField", { field: tr("form.username") }) : "";
+  const secretError = form.protocol === "ssh" && !secret.trim() ? tr("modal.sshPasswordRequired") : "";
+  const canTest = !saving && !testing && !hostError && !portError;
+  const canSubmit = !saving && !hostError && !portError && !usernameError && !secretError;
+  const shouldWarnUntested = submitAttempted && !testing && !testResult;
+
+  const testNoticeTone = useMemo(() => {
+    if (!testResult) return null;
+    const lower = testResult.toLowerCase();
+    if (lower.includes("success") || lower.includes("online") || lower.includes("成功")) return "success";
+    if (lower.includes("timeout") || lower.includes("timed out") || lower.includes("超时")) return "warning";
+    return "error";
+  }, [testResult]);
+
+  const shouldShowError = (fieldTouched: boolean, hasError: string) => (submitAttempted || fieldTouched) && Boolean(hasError);
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -47,13 +77,22 @@ export function HostCreateModal({
             <input
               placeholder={tr("form.name")}
               value={form.name}
+              disabled={saving}
               onChange={(e) => onChangeForm({ ...form, name: e.target.value })}
             />
             <select
               value={form.protocol}
+              disabled={saving}
               onChange={(e) => {
                 const protocol = e.target.value as Protocol;
-                onChangeForm({ ...form, protocol, port: protocol === "ssh" ? 22 : 23 });
+                const currentDefaultPort = form.protocol === "ssh" ? 22 : 23;
+                const nextDefaultPort = protocol === "ssh" ? 22 : 23;
+                const keepCustomPort = Boolean(form.port) && form.port !== currentDefaultPort;
+                onChangeForm({
+                  ...form,
+                  protocol,
+                  port: keepCustomPort ? form.port : nextDefaultPort,
+                });
               }}
             >
               <option value="ssh">SSH</option>
@@ -63,6 +102,8 @@ export function HostCreateModal({
               ref={hostInputRef}
               placeholder={tr("form.host")}
               value={form.host}
+              disabled={saving}
+              onBlur={() => setTouched((prev) => ({ ...prev, host: true }))}
               onChange={(e) => {
                 const host = e.target.value;
                 onChangeForm({
@@ -72,45 +113,74 @@ export function HostCreateModal({
                 });
               }}
             />
+            {shouldShowError(touched.host, hostError) ? <div className="modal-inline-notice modal-inline-notice-error">{hostError}</div> : null}
             <input
               placeholder={tr("form.port")}
               type="number"
               value={form.port || protocolPort}
+              disabled={saving}
+              onBlur={() => setTouched((prev) => ({ ...prev, port: true }))}
               onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })}
             />
+            {shouldShowError(touched.port, portError) ? <div className="modal-inline-notice modal-inline-notice-error">{portError}</div> : null}
             <input
               placeholder={tr("form.username")}
               value={form.username}
+              disabled={saving}
+              onBlur={() => setTouched((prev) => ({ ...prev, username: true }))}
               onChange={(e) => onChangeForm({ ...form, username: e.target.value })}
             />
+            {shouldShowError(touched.username, usernameError) ? <div className="modal-inline-notice modal-inline-notice-error">{usernameError}</div> : null}
             <input
               placeholder={form.protocol === "ssh" ? tr("form.sshPasswordSaved") : tr("form.secretOptional")}
               type="password"
               value={secret}
+              disabled={saving}
+              onBlur={() => setTouched((prev) => ({ ...prev, secret: true }))}
               onChange={(e) => onChangeSecret(e.target.value)}
             />
-            {testResult ? <div className="modal-inline-notice">{testResult}</div> : null}
+            {shouldShowError(touched.secret, secretError) ? <div className="modal-inline-notice modal-inline-notice-error">{secretError}</div> : null}
+            {shouldWarnUntested ? (
+              <div className="modal-inline-notice modal-inline-notice-warning">{tr("modal.saveWithoutTestHint")}</div>
+            ) : null}
+            {testResult ? <div className={`modal-inline-notice modal-inline-notice-${testNoticeTone ?? "info"}`}>{testResult}</div> : null}
           </div>
         </div>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
+          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
             {tr("modal.cancel")}
           </button>
           <button
             type="button"
             className="btn btn-ghost"
             onClick={onTest}
-            disabled={testing || !form.host.trim() || !form.port}
+            disabled={!canTest}
           >
             {testing ? tr("modal.testing") : tr("modal.testConnection")}
           </button>
           <button
             type="button"
             className="btn btn-primary"
-            onClick={onSubmit}
-            disabled={!form.host.trim() || !form.username.trim() || (form.protocol === "ssh" && !secret.trim())}
+            onClick={() => {
+              setSubmitAttempted(true);
+              if (!canSubmit) return;
+              onSubmit();
+            }}
+            disabled={!canSubmit}
           >
-            {tr("modal.add")}
+            {saving ? tr("modal.saving") : tr("modal.add")}
+          </button>
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={() => {
+              setSubmitAttempted(true);
+              if (!canSubmit) return;
+              onSubmitAndConnect();
+            }}
+            disabled={!canSubmit}
+          >
+            {saving ? tr("modal.saving") : tr("modal.addAndConnect")}
           </button>
         </div>
       </div>

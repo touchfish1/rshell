@@ -8,6 +8,7 @@ import type { I18nKey } from "../i18n";
 import { touchRecentSession } from "../lib/recentSessions";
 import { tryConnectSessionWithPasswordPrompt } from "../lib/tryConnectSessionWithPasswordPrompt";
 import { buildWorkspaceTabId, formatTabTitle, nextTabIndexForSession } from "../lib/workspaceTabIds";
+import { useWorkspaceBatchClose } from "./workspaceTabs/useWorkspaceBatchClose";
 
 export function useWorkspaceTabs(opts: {
   sessions: Session[];
@@ -251,45 +252,10 @@ export function useWorkspaceTabs(opts: {
     [connect]
   );
 
-  const closeTabsBatch = useCallback(
-    async (tabIds: string[]) => {
-      for (const tabId of tabIds) {
-        await disconnect(tabId);
-      }
-    },
-    [disconnect]
-  );
-
-  const closeTabsToLeft = useCallback(
-    async (id: string) => {
-      const current = tabsRef.current;
-      const index = current.findIndex((tab) => tab.id === id);
-      if (index <= 0) return;
-      const targets = current.slice(0, index).map((tab) => tab.id);
-      await closeTabsBatch(targets);
-    },
-    [closeTabsBatch]
-  );
-
-  const closeTabsToRight = useCallback(
-    async (id: string) => {
-      const current = tabsRef.current;
-      const index = current.findIndex((tab) => tab.id === id);
-      if (index < 0 || index === current.length - 1) return;
-      const targets = current.slice(index + 1).map((tab) => tab.id);
-      await closeTabsBatch(targets);
-    },
-    [closeTabsBatch]
-  );
-
-  const closeOtherTabs = useCallback(
-    async (id: string) => {
-      const current = tabsRef.current;
-      const targets = current.filter((tab) => tab.id !== id).map((tab) => tab.id);
-      await closeTabsBatch(targets);
-    },
-    [closeTabsBatch]
-  );
+  const { closeTabsToLeft, closeTabsToRight, closeOtherTabs } = useWorkspaceBatchClose({
+    tabsRef,
+    disconnectTab: disconnect,
+  });
 
   const closeTab = useCallback(async (id: string) => disconnect(id), [disconnect]);
 

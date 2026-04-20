@@ -13,17 +13,55 @@ const defaultForm: SessionInput = {
 };
 
 interface Options {
-  onCreate: (input: SessionInput, secret?: string) => Promise<void>;
+  onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onGetSecret: (id: string) => Promise<string | null>;
+  onConnect?: (id: string) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
-export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSecret, tr }: Options) {
+function mapConnectErrorToMessage(tr: Options["tr"], err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  const lower = message.toLowerCase();
+
+  const isAuthError =
+    lower.includes("auth") ||
+    lower.includes("authentication") ||
+    lower.includes("permission denied") ||
+    lower.includes("invalid credentials") ||
+    lower.includes("password");
+  if (isAuthError) {
+    return tr("error.connectAuthFailed", { message });
+  }
+
+  const isTimeoutError =
+    lower.includes("timeout") ||
+    lower.includes("timed out") ||
+    lower.includes("deadline exceeded");
+  if (isTimeoutError) {
+    return tr("error.connectTimeout", { message });
+  }
+
+  const isUnreachableError =
+    lower.includes("unreachable") ||
+    lower.includes("refused") ||
+    lower.includes("no route") ||
+    lower.includes("could not resolve") ||
+    lower.includes("name or service not known") ||
+    lower.includes("network is unreachable");
+  if (isUnreachableError) {
+    return tr("error.connectHostUnreachable", { message });
+  }
+
+  return tr("error.connectUnknown", { message });
+}
+
+export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSecret, onConnect, tr }: Options) {
   const [createForm, setCreateForm] = useState<SessionInput>(defaultForm);
   const [createSecret, setCreateSecret] = useState("");
   const [createTesting, setCreateTesting] = useState(false);
+  const [createSubmitting, setCreateSubmitting] = useState(false);
   const [createTestResult, setCreateTestResult] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editSession, setEditSession] = useState<Session | null>(null);
@@ -41,15 +79,25 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
   const createProtocolPort = useMemo(() => (createForm.protocol === "ssh" ? 22 : 23), [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
 
-  const submitCreate = async () => {
+  const submitCreate = async (connectAfterSave = false) => {
+    if (createSubmitting) return;
     if (!createForm.host.trim()) return;
     if (!createForm.username.trim()) return;
     if (createForm.protocol === "ssh" && !createSecret.trim()) return;
-    await onCreate(createForm, createSecret || undefined);
-    setCreateForm(defaultForm);
-    setCreateSecret("");
-    setCreateTestResult(null);
-    setShowCreateModal(false);
+    setCreateSubmitting(true);
+    try {
+      const created = await onCreate(createForm, createSecret || undefined);
+      if (!created) return;
+      if (connectAfterSave) {
+        onConnect?.(created.id);
+      }
+      setCreateForm(defaultForm);
+      setCreateSecret("");
+      setCreateTestResult(null);
+      setShowCreateModal(false);
+    } finally {
+      setCreateSubmitting(false);
+    }
   };
 
   const openEdit = (session: Session) => {
@@ -99,8 +147,7 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
         setEditSecretLoaded(true);
         setEditSecretDirty(false);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setEditTestResult(tr("error.connectFailed", { message }));
+        setEditTestResult(mapConnectErrorToMessage(tr, err));
       } finally {
         setEditSecretLoading(false);
       }
@@ -115,8 +162,7 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
       const r = await onTestConnect(createForm);
       setCreateTestResult(r.online ? tr("modal.testSuccess") : tr("modal.testFailed"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setCreateTestResult(tr("error.connectFailed", { message }));
+      setCreateTestResult(mapConnectErrorToMessage(tr, err));
     } finally {
       setCreateTesting(false);
     }
@@ -129,8 +175,7 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
       const r = await onTestConnect(editForm);
       setEditTestResult(r.online ? tr("modal.testSuccess") : tr("modal.testFailed"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setEditTestResult(tr("error.connectFailed", { message }));
+      setEditTestResult(mapConnectErrorToMessage(tr, err));
     } finally {
       setEditTesting(false);
     }
@@ -148,6 +193,7 @@ export function useSessionListForms({ onCreate, onUpdate, onTestConnect, onGetSe
     createSecret,
     setCreateSecret,
     createTesting,
+    createSubmitting,
     createTestResult,
     showCreateModal,
     setShowCreateModal,

@@ -128,6 +128,24 @@
   line-height: 1.5;
 }
 
+.modal-inline-notice-success {
+  border-color: rgba(74, 179, 126, 0.4);
+  background: rgba(74, 179, 126, 0.12);
+  color: #79d6a2;
+}
+
+.modal-inline-notice-warning {
+  border-color: rgba(224, 172, 87, 0.42);
+  background: rgba(224, 172, 87, 0.13);
+  color: #f4c97b;
+}
+
+.modal-inline-notice-error {
+  border-color: rgba(214, 92, 110, 0.45);
+  background: rgba(214, 92, 110, 0.14);
+  color: #f2a0ac;
+}
+
 .session-form {
   display: grid;
   gap: 10px;

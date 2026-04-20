@@ -54,7 +54,7 @@ export function useSessionActions({
       });
   }, [setError, setSelectedId, setSessions, tr]);
 
-  const create = async (input: SessionInput, secret?: string) => {
+  const create = async (input: SessionInput, secret?: string): Promise<Session | null> => {
     try {
       const session = await createSession(input, secret);
       const next = [...sessions, session];
@@ -62,9 +62,11 @@ export function useSessionActions({
       setSelectedId(session.id);
       setStatus(tr("status.createdSession", { name: session.name }));
       setError(null);
+      return session;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(tr("error.createSessionFailed", { message }));
+      return null;
     }
   };
 

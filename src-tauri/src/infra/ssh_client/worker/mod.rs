@@ -3,9 +3,9 @@
 //! `WorkerCommand` 写终端、改 PTY 尺寸、断开；输出经 `tokio::mpsc` 送回主循环。
 
 mod shell;
+mod io;
 
 use ssh2::Session as Ssh2Session;
-use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream};
 use std::sync::mpsc as std_mpsc;
 use std::thread;
@@ -13,6 +13,7 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::domain::terminal::TerminalError;
+use io::{drain_worker_commands, read_channel_output};
 
 use shell::open_shell_channel;
 
@@ -93,82 +94,12 @@ pub(super) fn start_worker(
 
         let mut buf = [0_u8; 8192];
         loop {
-            while let Ok(cmd) = cmd_rx.try_recv() {
-                match cmd {
-                    WorkerCommand::Write(data) => {
-                        let normalized = data
-                            .into_iter()
-                            .map(|b| if b == b'\r' { b'\n' } else { b })
-                            .collect::<Vec<u8>>();
-                        if let Err(e) = channel.write_all(&normalized) {
-                            let text = e.to_string();
-                            if text.contains("closed channel") || text.contains("channel is closed")
-                            {
-                                if let Some(new_channel) = open_shell_channel(&ssh, &output_tx) {
-                                    channel = new_channel;
-                                    let _ =
-                                        output_tx.send(b"\r\n[ssh] channel reopened\r\n".to_vec());
-                                    let _ = channel.write_all(&normalized);
-                                } else {
-                                    let _ = output_tx.send(b"\r\n[ssh] reopen failed\r\n".to_vec());
-                                    return;
-                                }
-                            }
-                            let _ = output_tx
-                                .send(format!("\r\n[ssh] write failed: {e}\r\n").into_bytes());
-                        }
-                        let _ = channel.flush();
-                    }
-                    WorkerCommand::Resize(cols, rows) => {
-                        let _ = channel.request_pty_size(cols as u32, rows as u32, None, None);
-                    }
-                    WorkerCommand::Disconnect => {
-                        let _ = channel.close();
-                        let _ = channel.wait_close();
-                        return;
-                    }
-                }
+            if !drain_worker_commands(&cmd_rx, &mut channel, &ssh, &output_tx) {
+                return;
             }
 
-            match channel.read(&mut buf) {
-                Ok(n) if n > 0 => {
-                    let _ = output_tx.send(buf[..n].to_vec());
-                }
-                Ok(_) => {
-                    if channel.eof() {
-                        let _ = output_tx.send(b"\r\n[ssh] remote closed, reopen\r\n".to_vec());
-                        let _ = channel.close();
-                        let _ = channel.wait_close();
-                        if let Some(new_channel) = open_shell_channel(&ssh, &output_tx) {
-                            channel = new_channel;
-                            let _ = output_tx.send(b"\r\n[ssh] channel reopened\r\n".to_vec());
-                        } else {
-                            return;
-                        }
-                    }
-                }
-                Err(e) => {
-                    if e.kind() != std::io::ErrorKind::WouldBlock
-                        && e.kind() != std::io::ErrorKind::TimedOut
-                        && e.kind() != std::io::ErrorKind::Interrupted
-                    {
-                        let _ =
-                            output_tx.send(format!("\r\n[ssh] read failed: {e}\r\n").into_bytes());
-                        let text = e.to_string();
-                        if text.contains("transport read") {
-                            thread::sleep(Duration::from_millis(50));
-                            continue;
-                        }
-                        if text.contains("closed channel") || text.contains("channel is closed") {
-                            if let Some(new_channel) = open_shell_channel(&ssh, &output_tx) {
-                                channel = new_channel;
-                                let _ = output_tx.send(b"\r\n[ssh] channel reopened\r\n".to_vec());
-                                continue;
-                            }
-                        }
-                        return;
-                    }
-                }
+            if !read_channel_output(&mut channel, &ssh, &output_tx, &mut buf) {
+                return;
             }
 
             thread::sleep(Duration::from_millis(1));

@@ -1,12 +1,12 @@
 import type { I18nKey, Lang } from "./keys";
-import { enUS } from "./enUS";
-import { zhCN } from "./zhCN";
+import { enUSMessages } from "./messages/enUS";
+import { zhCNMessages } from "./messages/zhCN";
 
 type Dict = Record<I18nKey, string>;
 
 const dictionaries: Record<Lang, Dict> = {
-  "zh-CN": zhCN,
-  "en-US": enUS,
+  "zh-CN": zhCNMessages,
+  "en-US": enUSMessages,
 };
 
 export function detectInitialLang(): Lang {

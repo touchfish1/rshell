@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 import HomePage from "./pages/HomePage";
 import TerminalPage from "./pages/TerminalPage";
 import TerminalPane from "./components/TerminalPane";
@@ -7,17 +6,15 @@ import { DownloadToastStack } from "./components/download/DownloadToastStack";
 import { UpgradeConfirmModal } from "./components/UpgradeConfirmModal";
 import { CloseConfirmModal } from "./components/CloseConfirmModal";
 import {
-  disconnectSession,
   downloadSftpFile,
   getHostMetrics,
-  listAudits,
   readSftpTextFile,
   resizeTerminal,
   saveSftpTextFile,
   sendInput,
   uploadSftpFile,
 } from "./services/bridge";
-import type { AuditRecord, Session, SessionInput } from "./services/types";
+import type { Session, SessionInput } from "./services/types";
 import type { DownloadTask } from "./hooks/useDownloadTasks";
 import { useDownloadTasks } from "./hooks/useDownloadTasks";
 import { useSessionPing } from "./hooks/useSessionPing";
@@ -27,6 +24,8 @@ import { useTerminalOutput } from "./hooks/useTerminalOutput";
 import { useUpdater } from "./hooks/useUpdater";
 import { useSystemTray } from "./hooks/useSystemTray";
 import { useWorkspaceTabs } from "./hooks/useWorkspaceTabs";
+import { useAuditLogs } from "./hooks/useAuditLogs";
+import { useQuitConfirm } from "./hooks/useQuitConfirm";
 import { detectInitialLang, setLangStorage, t, type I18nKey, type Lang } from "./i18n";
 import { I18nProvider } from "./i18n-context";
 
@@ -37,12 +36,9 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState<"home" | "terminal">("home");
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
-  const [auditOpen, setAuditOpen] = useState(false);
-  const [auditLoading, setAuditLoading] = useState(false);
-  const [audits, setAudits] = useState<AuditRecord[]>([]);
-  const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
   const { downloadTasks, createDownloadTask, finishDownloadTask, dismissDownloadTask } = useDownloadTasks();
+  const { auditOpen, setAuditOpen, auditLoading, audits, loadAudits } = useAuditLogs(setError);
   const tr = useMemo(
     () => (key: I18nKey, vars?: Record<string, string | number>) => t(lang, key, vars),
     [lang]
@@ -102,8 +98,8 @@ export default function App() {
     tr,
   });
 
-  const connectedIdsRef = useRef<string[]>([]);
-  connectedIdsRef.current = connectedIds;
+  const { closeConfirmOpen, setCloseConfirmOpen, requestQuitOrDestroy, confirmQuitApp } =
+    useQuitConfirm(connectedIds);
 
   const runSftpDownload = useCallback(
     (sessionId: string, remotePath: string) => {
@@ -139,31 +135,12 @@ export default function App() {
     [dismissDownloadTask, runSftpDownload]
   );
 
-  const requestQuitOrDestroy = useCallback(() => {
-    if (connectedIdsRef.current.length === 0) {
-      void getCurrentWindow()
-        .destroy()
-        .catch(() => {});
-      return;
-    }
-    setCloseConfirmOpen(true);
-  }, []);
-
   useSystemTray({
     tooltip: tr("tray.tooltip"),
     showLabel: tr("tray.show"),
     quitLabel: tr("tray.quit"),
     onRequestQuit: requestQuitOrDestroy,
   });
-
-  const confirmQuitApp = useCallback(async () => {
-    setCloseConfirmOpen(false);
-    const ids = [...connectedIdsRef.current];
-    await Promise.all(ids.map((id) => disconnectSession(id).catch(() => {})));
-    await getCurrentWindow()
-      .destroy()
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     setTabsForSftp(terminals);
@@ -219,19 +196,6 @@ export default function App() {
     setError,
     tr,
   });
-
-  const loadAudits = async () => {
-    setAuditLoading(true);
-    try {
-      const data = await listAudits(300);
-      setAudits(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
-    } finally {
-      setAuditLoading(false);
-    }
-  };
 
   return (
     <I18nProvider value={{ lang, tr }}>
