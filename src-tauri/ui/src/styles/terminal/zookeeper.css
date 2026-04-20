@@ -477,7 +477,7 @@
 }
 
 .workspace.zk-page.redis-page .redis-conn-line {
-  grid-template-columns: minmax(0, 1fr) 96px;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .workspace.zk-page.redis-page .redis-conn-main {
@@ -503,14 +503,18 @@
 }
 
 .workspace.zk-page.redis-page .redis-conn-actions {
-  justify-content: center;
-  padding: 6px;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px 8px;
 }
 
 .workspace.zk-page.redis-page .redis-conn-actions .btn {
-  width: 84px;
-  min-width: 84px;
-  padding: 6px 0;
+  width: auto;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .redis-db-options {

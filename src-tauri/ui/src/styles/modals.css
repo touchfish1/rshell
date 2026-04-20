@@ -152,8 +152,7 @@
 }
 
 .session-form input,
-.session-form select,
-.actions button {
+.session-form select {
   background: var(--modal-surface-muted);
   border: 1px solid var(--modal-border);
   color: var(--modal-text);

@@ -4,6 +4,7 @@ import { connectZookeeper, disconnectZookeeper, zkGetData, zkListChildren, zkSet
 import { ZkConnectionList } from "../components/zookeeper/ZkConnectionList";
 import { ErrorBanner } from "../components/ErrorBanner";
 import type { I18nKey } from "../i18n";
+import { ZkBrowserPane } from "./zookeeper/ZkBrowserPane";
 
 interface Props {
   connections: ZookeeperConnection[];
@@ -154,45 +155,11 @@ export default function ZookeeperPage({
     };
   }, [resizingDataPane]);
 
-  const renderNode = (path: string, name: string) => {
-    const isSelected = path === selectedPath;
-    const isExpanded = expanded[path] === true;
-    const state = treeState[path] ?? "idle";
-    const children = childrenMap[path] ?? [];
-    const canExpand = true;
-
-    return (
-      <div key={path} className={`zk-node ${isSelected ? "zk-node-selected" : ""}`}>
-        <button
-          type="button"
-          className="btn btn-ghost zk-node-toggle"
-          disabled={!canExpand}
-          title={isExpanded ? tr("zk.tree.collapse") : tr("zk.tree.expand")}
-          onClick={() => {
-            setExpanded((prev) => ({ ...prev, [path]: !isExpanded }));
-            if (!isExpanded && state === "idle") {
-              void loadChildren(path).catch(() => undefined);
-            }
-          }}
-        >
-          {isExpanded ? "▾" : "▸"}
-        </button>
-        <button
-          type="button"
-          className="btn btn-ghost zk-node-name"
-          onClick={() => void onPickPath(path)}
-          title={path}
-        >
-          {name}
-        </button>
-        {state === "loading" ? <span className="pill pill-muted">{tr("sftp.loading")}</span> : null}
-        {isExpanded ? (
-          <div className="zk-node-children">
-            {children.map((child) => renderNode(joinPath(path, child), child))}
-          </div>
-        ) : null}
-      </div>
-    );
+  const onToggleExpand = (path: string, isExpanded: boolean, state: LoadState) => {
+    setExpanded((prev) => ({ ...prev, [path]: !isExpanded }));
+    if (!isExpanded && state === "idle") {
+      void loadChildren(path).catch(() => undefined);
+    }
   };
 
   return (
@@ -236,75 +203,28 @@ export default function ZookeeperPage({
           onTest={onTest}
           onGetSecret={onGetSecret}
         />
-        <div className="terminal-main">
-          {!selected ? (
-            <div className="empty-state">
-              <div className="empty-title">{tr("zk.page.noSelection")}</div>
-              <div className="empty-subtitle">{tr("zk.page.hint")}</div>
-            </div>
-          ) : (
-            <div className="zk-browser">
-              <div className="zk-browser-header">
-                <div className="pill pill-muted">{tr("zk.page.currentPath", { path: selectedPath })}</div>
-                <button
-                  type="button"
-                  className="btn btn-ghost"
-                  onClick={() => {
-                    void loadChildren("/").catch(() => undefined);
-                  }}
-                >
-                  {tr("zk.page.refreshRoot")}
-                </button>
-              </div>
-              <div
-                className={`zk-browser-body ${resizingDataPane ? "resizing" : ""}`}
-                ref={browserBodyRef}
-                style={{ ["--zk-data-width" as string]: `${zkDataWidth}px` }}
-              >
-                <div className="zk-tree">{renderNode("/", "/")}</div>
-                <div
-                  className="zk-pane-splitter"
-                  onMouseDown={() => setResizingDataPane(true)}
-                  title={tr("zk.page.resizeDataPaneHint")}
-                />
-                <div className="zk-data">
-                  <div className="zk-data-head">
-                    <div className="card-title">{tr("zk.page.nodeData")}</div>
-                    <button
-                      type="button"
-                      className="btn btn-primary"
-                      disabled={!nodeData || nodeData.data_utf8 == null || savingNode}
-                      onClick={() => void saveNodeData()}
-                    >
-                      {savingNode ? tr("zk.page.saving") : tr("zk.page.save")}
-                    </button>
-                  </div>
-                  {nodeData ? (
-                    <>
-                      <div className="card-subtitle">
-                        {tr("zk.page.nodeBytes", { bytes: nodeData.total_bytes })}
-                      </div>
-                      {saveResult ? <div className="zk-save-result">{saveResult}</div> : null}
-                      <textarea
-                        className="zk-data-textarea"
-                        readOnly={nodeData.data_utf8 == null || savingNode}
-                        value={nodeData.data_utf8 != null ? editorText : nodeData.data_base64}
-                        onChange={(e) => setEditorText(e.target.value)}
-                      />
-                      {nodeData.data_utf8 ? (
-                        <div className="hint">{tr("zk.page.utf8Hint")}</div>
-                      ) : (
-                        <div className="hint">{tr("zk.page.base64Hint")}</div>
-                      )}
-                    </>
-                  ) : (
-                    <div className="card-subtitle">{tr("zk.page.selectNodeHint")}</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <ZkBrowserPane
+          tr={tr}
+          selected={Boolean(selected)}
+          selectedPath={selectedPath}
+          expanded={expanded}
+          treeState={treeState}
+          childrenMap={childrenMap}
+          resizingDataPane={resizingDataPane}
+          zkDataWidth={zkDataWidth}
+          browserBodyRef={browserBodyRef}
+          nodeData={nodeData}
+          editorText={editorText}
+          savingNode={savingNode}
+          saveResult={saveResult}
+          onToggleExpand={onToggleExpand}
+          onPickPath={(path) => void onPickPath(path)}
+          onRefreshRoot={() => void loadChildren("/").catch(() => undefined)}
+          onResizeDataPaneStart={() => setResizingDataPane(true)}
+          onSaveNode={() => void saveNodeData()}
+          onChangeEditorText={setEditorText}
+          joinPath={joinPath}
+        />
       </div>
     </section>
   );

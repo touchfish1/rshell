@@ -1,0 +1,245 @@
+import type { RefObject } from "react";
+import type { RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
+import type { TrFn } from "../../i18n-context";
+import { ConfirmDialog } from "../ConfirmDialog";
+import { HostCreateModal } from "./HostCreateModal";
+import { HostEditModal } from "./HostEditModal";
+import { RedisConnectionEditModal } from "../redis/RedisConnectionEditModal";
+import { ZkConnectionEditModal } from "../zookeeper/ZkConnectionEditModal";
+
+interface Props {
+  tr: TrFn;
+  pendingDelete: Session | null;
+  pendingDeleteRedis: RedisConnection | null;
+  pendingDeleteZk: ZookeeperConnection | null;
+  onCancelDeleteSession: () => void;
+  onCancelDeleteRedis: () => void;
+  onCancelDeleteZk: () => void;
+  onConfirmDeleteSession: () => void;
+  onConfirmDeleteRedis: () => void;
+  onConfirmDeleteZk: () => void;
+
+  showCreateModal: boolean;
+  createForm: SessionInput;
+  createSecret: string;
+  createTesting: boolean;
+  createSubmitting: boolean;
+  createTestResult: string | null;
+  hostInputRef: RefObject<HTMLInputElement>;
+  createProtocolPort: number;
+  onCloseCreate: () => void;
+  onChangeCreateForm: (v: SessionInput) => void;
+  onChangeCreateSecret: (v: string) => void;
+  onTestCreate: () => void;
+  onSubmitCreate: (connect?: boolean) => void;
+
+  editSession: Session | null;
+  editForm: SessionInput;
+  editSecret: string;
+  editSecretVisible: boolean;
+  editSecretLoading: boolean;
+  editTesting: boolean;
+  editTestResult: string | null;
+  editProtocolPort: number;
+  onCloseEdit: () => void;
+  onChangeEditForm: (v: SessionInput) => void;
+  onChangeEditSecret: (v: string) => void;
+  onToggleEditSecretVisible: () => void;
+  onTestEdit: () => void;
+  onSubmitEdit: () => void;
+  onMarkEditSecretDirty: () => void;
+
+  zkEditConnection: ZookeeperConnection | null;
+  zkEditForm: ZookeeperConnectionInput;
+  zkEditSecret: string;
+  zkEditSecretVisible: boolean;
+  zkEditSecretLoading: boolean;
+  zkEditTesting: boolean;
+  zkEditSaving: boolean;
+  zkEditTestResult: string | null;
+  onCloseEditZk: () => void;
+  onChangeZkEditForm: (v: ZookeeperConnectionInput) => void;
+  onChangeZkEditSecret: (v: string) => void;
+  onToggleZkEditSecretVisible: () => void;
+  onTestEditZk: () => void;
+  onSubmitEditZk: () => void;
+
+  redisEditConnection: RedisConnection | null;
+  redisEditForm: RedisConnectionInput;
+  redisEditSecret: string;
+  redisEditTesting: boolean;
+  redisEditSaving: boolean;
+  redisEditResult: string | null;
+  onCloseEditRedis: () => void;
+  onChangeRedisEditForm: (v: RedisConnectionInput) => void;
+  onChangeRedisEditSecret: (v: string) => void;
+  onTestEditRedis: () => void;
+  onSubmitEditRedis: () => void;
+}
+
+export function SessionListModals(props: Props) {
+  const {
+    tr,
+    pendingDelete,
+    pendingDeleteRedis,
+    pendingDeleteZk,
+    onCancelDeleteSession,
+    onCancelDeleteRedis,
+    onCancelDeleteZk,
+    onConfirmDeleteSession,
+    onConfirmDeleteRedis,
+    onConfirmDeleteZk,
+    showCreateModal,
+    createForm,
+    createSecret,
+    createTesting,
+    createSubmitting,
+    createTestResult,
+    hostInputRef,
+    createProtocolPort,
+    onCloseCreate,
+    onChangeCreateForm,
+    onChangeCreateSecret,
+    onTestCreate,
+    onSubmitCreate,
+    editSession,
+    editForm,
+    editSecret,
+    editSecretVisible,
+    editSecretLoading,
+    editTesting,
+    editTestResult,
+    editProtocolPort,
+    onCloseEdit,
+    onChangeEditForm,
+    onChangeEditSecret,
+    onToggleEditSecretVisible,
+    onTestEdit,
+    onSubmitEdit,
+    onMarkEditSecretDirty,
+    zkEditConnection,
+    zkEditForm,
+    zkEditSecret,
+    zkEditSecretVisible,
+    zkEditSecretLoading,
+    zkEditTesting,
+    zkEditSaving,
+    zkEditTestResult,
+    onCloseEditZk,
+    onChangeZkEditForm,
+    onChangeZkEditSecret,
+    onToggleZkEditSecretVisible,
+    onTestEditZk,
+    onSubmitEditZk,
+    redisEditConnection,
+    redisEditForm,
+    redisEditSecret,
+    redisEditTesting,
+    redisEditSaving,
+    redisEditResult,
+    onCloseEditRedis,
+    onChangeRedisEditForm,
+    onChangeRedisEditSecret,
+    onTestEditRedis,
+    onSubmitEditRedis,
+  } = props;
+
+  return (
+    <>
+      <HostCreateModal
+        open={showCreateModal}
+        form={createForm}
+        secret={createSecret}
+        testing={createTesting}
+        saving={createSubmitting}
+        testResult={createTestResult}
+        hostInputRef={hostInputRef}
+        protocolPort={createProtocolPort}
+        onClose={onCloseCreate}
+        onChangeForm={onChangeCreateForm}
+        onChangeSecret={onChangeCreateSecret}
+        onTest={onTestCreate}
+        onSubmit={() => onSubmitCreate()}
+        onSubmitAndConnect={() => onSubmitCreate(true)}
+      />
+
+      <ConfirmDialog
+        open={Boolean(pendingDelete)}
+        title={tr("session.delete")}
+        message={pendingDelete ? tr("session.deleteConfirm", { name: pendingDelete.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={onCancelDeleteSession}
+        onConfirm={onConfirmDeleteSession}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteRedis)}
+        title={tr("session.delete")}
+        message={pendingDeleteRedis ? tr("redis.page.deleteConfirm", { name: pendingDeleteRedis.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={onCancelDeleteRedis}
+        onConfirm={onConfirmDeleteRedis}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteZk)}
+        title={tr("session.delete")}
+        message={pendingDeleteZk ? tr("zk.page.deleteConfirm", { name: pendingDeleteZk.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={onCancelDeleteZk}
+        onConfirm={onConfirmDeleteZk}
+      />
+
+      <HostEditModal
+        session={editSession}
+        form={editForm}
+        secret={editSecret}
+        secretVisible={editSecretVisible}
+        secretLoading={editSecretLoading}
+        testResult={editTestResult}
+        testing={editTesting}
+        protocolPort={editProtocolPort}
+        onClose={onCloseEdit}
+        onChangeForm={onChangeEditForm}
+        onChangeSecret={onChangeEditSecret}
+        onChangeSecretVisible={onToggleEditSecretVisible}
+        onTest={onTestEdit}
+        onSubmit={onSubmitEdit}
+        onMarkSecretDirty={onMarkEditSecretDirty}
+      />
+      <ZkConnectionEditModal
+        connection={zkEditConnection}
+        form={zkEditForm}
+        secret={zkEditSecret}
+        secretVisible={zkEditSecretVisible}
+        secretLoading={zkEditSecretLoading}
+        testing={zkEditTesting}
+        saving={zkEditSaving}
+        testResult={zkEditTestResult}
+        onClose={onCloseEditZk}
+        onChangeForm={onChangeZkEditForm}
+        onChangeSecret={onChangeZkEditSecret}
+        onToggleSecretVisible={onToggleZkEditSecretVisible}
+        onTest={onTestEditZk}
+        onSubmit={onSubmitEditZk}
+      />
+      <RedisConnectionEditModal
+        connection={redisEditConnection}
+        form={redisEditForm}
+        secret={redisEditSecret}
+        testing={redisEditTesting}
+        saving={redisEditSaving}
+        testResult={redisEditResult}
+        onClose={onCloseEditRedis}
+        onChangeForm={onChangeRedisEditForm}
+        onChangeSecret={onChangeRedisEditSecret}
+        onTest={onTestEditRedis}
+        onSubmit={onSubmitEditRedis}
+      />
+    </>
+  );
+}

@@ -133,13 +133,18 @@ export default function TerminalPage({
         <div className="actions">
           <ColorThemeToggle tr={tr} />
           <TerminalFontControls tr={tr} />
-          <button type="button" title={tr("shortcutHelp.openHint")} onClick={() => setShortcutHelpOpen(true)}>
+          <button
+            type="button"
+            className="btn btn-ghost"
+            title={tr("shortcutHelp.openHint")}
+            onClick={() => setShortcutHelpOpen(true)}
+          >
             {tr("shortcutHelp.openButton")}
           </button>
-          <button type="button" onClick={onBackToHome}>
+          <button type="button" className="btn btn-ghost" onClick={onBackToHome}>
             {tr("terminal.back")}
           </button>
-          <button type="button" disabled={!activeTabId} onClick={() => onDisconnect(activeTabId)}>
+          <button type="button" className="btn btn-ghost" disabled={!activeTabId} onClick={() => onDisconnect(activeTabId)}>
             {tr("terminal.disconnect")}
           </button>
         </div>
