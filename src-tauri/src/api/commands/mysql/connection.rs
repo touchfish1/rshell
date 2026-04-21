@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::app::AppState;
 use crate::domain::mysql::{MySqlConnection, MySqlConnectionInput};
+use super::audit::audit_mysql_event;
 
 pub async fn list_mysql_connections(state: State<'_, AppState>) -> Result<Vec<MySqlConnection>, String> {
     Ok(state.list_mysql_connections().await)
@@ -42,7 +43,30 @@ pub async fn connect_mysql(
     secret: Option<String>,
 ) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.connect_mysql(id, secret).await
+    match state.connect_mysql(id, secret).await {
+        Ok(_) => {
+            audit_mysql_event(
+                &state,
+                id,
+                "mysql_connect",
+                "mysql connected".to_string(),
+                Some("CONNECT".to_string()),
+            )
+            .await;
+            Ok(())
+        }
+        Err(err) => {
+            audit_mysql_event(
+                &state,
+                id,
+                "mysql_connect_failed",
+                format!("mysql connect failed: {err}"),
+                Some("CONNECT".to_string()),
+            )
+            .await;
+            Err(err)
+        }
+    }
 }
 
 pub async fn test_mysql_connection(
@@ -84,5 +108,28 @@ pub async fn test_mysql_connection(
 
 pub async fn disconnect_mysql(state: State<'_, AppState>, id: String) -> Result<(), String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.disconnect_mysql(id).await
+    match state.disconnect_mysql(id).await {
+        Ok(_) => {
+            audit_mysql_event(
+                &state,
+                id,
+                "mysql_disconnect",
+                "mysql disconnected".to_string(),
+                Some("DISCONNECT".to_string()),
+            )
+            .await;
+            Ok(())
+        }
+        Err(err) => {
+            audit_mysql_event(
+                &state,
+                id,
+                "mysql_disconnect_failed",
+                format!("mysql disconnect failed: {err}"),
+                Some("DISCONNECT".to_string()),
+            )
+            .await;
+            Err(err)
+        }
+    }
 }

@@ -11,12 +11,13 @@ interface Props {
   onRefresh: () => void;
 }
 
-type FilterType = "all" | "connect" | "command" | "disconnect" | "control" | "zookeeper" | "redis" | "failed";
+type FilterType = "all" | "connect" | "command" | "disconnect" | "control" | "zookeeper" | "redis" | "mysql" | "failed";
 type ViewType = "list" | "report";
 
 function mapEventType(eventType: string) {
   if (eventType.startsWith("zk_")) return "zookeeper";
   if (eventType.startsWith("redis_")) return "redis";
+  if (eventType.startsWith("mysql_")) return "mysql";
   if (eventType.includes("failed")) return "failed";
   if (eventType.includes("disconnect")) return "disconnect";
   if (eventType.includes("connect")) return "connect";
@@ -107,6 +108,7 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
     const failed = rows.filter((row) => row.event_type.includes("failed")).length;
     const zk = rows.filter((row) => row.event_type.startsWith("zk_")).length;
     const redis = rows.filter((row) => row.event_type.startsWith("redis_")).length;
+    const mysql = rows.filter((row) => row.event_type.startsWith("mysql_")).length;
     const topEvents = Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
@@ -114,7 +116,7 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
       .sort((a, b) => b[1] - a[1])
       .slice(0, 8);
     const dailyTrend = Object.entries(dailyCounts).sort((a, b) => a[0].localeCompare(b[0]));
-    return { total, failed, zk, redis, topEvents, topHosts, dailyTrend };
+    return { total, failed, zk, redis, mysql, topEvents, topHosts, dailyTrend };
   }, [rows]);
 
   const makeTimestamp = () => {
@@ -202,6 +204,7 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
               <option value="control">{tr("home.auditFilterControl" as I18nKey)}</option>
               <option value="zookeeper">{tr("home.auditFilterZookeeper")}</option>
               <option value="redis">{tr("home.auditFilterRedis")}</option>
+              <option value="mysql">{tr("home.auditFilterMysql")}</option>
               <option value="failed">{tr("home.auditFilterFailed")}</option>
             </select>
             <input
@@ -303,6 +306,10 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
                 <div className="audit-report-card">
                   <div className="audit-report-label">{tr("home.auditReportRedis")}</div>
                   <div className="audit-report-value">{report.redis}</div>
+                </div>
+                <div className="audit-report-card">
+                  <div className="audit-report-label">{tr("home.auditReportMysql")}</div>
+                  <div className="audit-report-value">{report.mysql}</div>
                 </div>
               </div>
               <div className="audit-report-grid">
