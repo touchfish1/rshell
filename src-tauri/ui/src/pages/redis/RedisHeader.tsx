@@ -1,4 +1,5 @@
-import type { I18nKey } from "../../i18n";
+import { ColorThemeToggle } from "../../components/ColorThemeToggle";
+import type { I18nKey, Lang } from "../../i18n";
 import type { RedisConnection } from "../../services/types";
 
 interface Props {
@@ -6,12 +7,24 @@ interface Props {
   selected: RedisConnection | null;
   connected: boolean;
   status: string;
+  lang: Lang;
+  onSwitchLang: (lang: Lang) => void;
   onBack: () => void;
   onOpenCreate: () => void;
   onDisconnect: () => void;
 }
 
-export function RedisHeader({ tr, selected, connected, status, onBack, onOpenCreate, onDisconnect }: Props) {
+export function RedisHeader({
+  tr,
+  selected,
+  connected,
+  status,
+  lang,
+  onSwitchLang,
+  onBack,
+  onOpenCreate,
+  onDisconnect,
+}: Props) {
   return (
     <header className="topbar">
       <div className="topbar-title">
@@ -21,6 +34,23 @@ export function RedisHeader({ tr, selected, connected, status, onBack, onOpenCre
         </div>
       </div>
       <div className="actions">
+        <ColorThemeToggle tr={tr} />
+        <div className="lang-switch" role="group" aria-label={tr("top.ariaLanguageSwitch")}>
+          <button
+            className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
+            onClick={() => onSwitchLang("zh-CN")}
+            title={tr("lang.switchToZh")}
+          >
+            {tr("lang.zh")}
+          </button>
+          <button
+            className={`btn btn-ghost ${lang === "en-US" ? "lang-active" : ""}`}
+            onClick={() => onSwitchLang("en-US")}
+            title={tr("lang.switchToEn")}
+          >
+            {tr("lang.en")}
+          </button>
+        </div>
         <button className="btn btn-ghost" onClick={onBack}>
           {tr("terminal.back")}
         </button>

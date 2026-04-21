@@ -265,7 +265,27 @@ impl AppState {
                 .into_iter()
                 .map(|row| {
                     (0..columns.len())
-                        .map(|idx| row.try_get::<Option<String>, _>(idx).ok().flatten())
+                        .map(|idx| {
+                            if let Ok(v) = row.try_get::<Option<String>, _>(idx) {
+                                return v;
+                            }
+                            if let Ok(v) = row.try_get::<Option<i64>, _>(idx) {
+                                return v.map(|x| x.to_string());
+                            }
+                            if let Ok(v) = row.try_get::<Option<u64>, _>(idx) {
+                                return v.map(|x| x.to_string());
+                            }
+                            if let Ok(v) = row.try_get::<Option<f64>, _>(idx) {
+                                return v.map(|x| x.to_string());
+                            }
+                            if let Ok(v) = row.try_get::<Option<bool>, _>(idx) {
+                                return v.map(|x| if x { "1".to_string() } else { "0".to_string() });
+                            }
+                            if let Ok(v) = row.try_get::<Option<Vec<u8>>, _>(idx) {
+                                return v.map(|bytes| String::from_utf8_lossy(&bytes).to_string());
+                            }
+                            None
+                        })
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>();

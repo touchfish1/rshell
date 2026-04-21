@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import type { RedisConnection, RedisConnectionInput } from "../../services/types";
+import type { MySqlConnection, MySqlConnectionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 import { PasswordVisibilityToggle } from "../session/PasswordVisibilityToggle";
 
 interface Props {
-  connection: RedisConnection | null;
-  form: RedisConnectionInput;
+  connection: MySqlConnection | null;
+  form: MySqlConnectionInput;
   secret: string;
   secretVisible: boolean;
   secretLoading: boolean;
@@ -13,14 +13,14 @@ interface Props {
   saving: boolean;
   testResult: string | null;
   onClose: () => void;
-  onChangeForm: (next: RedisConnectionInput) => void;
+  onChangeForm: (next: MySqlConnectionInput) => void;
   onChangeSecret: (next: string) => void;
   onToggleSecretVisible: () => void;
   onTest: () => void;
   onSubmit: () => void;
 }
 
-export function RedisConnectionEditModal({
+export function MySqlConnectionEditModal({
   connection,
   form,
   secret,
@@ -43,13 +43,12 @@ export function RedisConnectionEditModal({
     setSubmitAttempted(false);
   }, [connection?.id]);
 
-  const addressError = !form.address.trim()
-    ? tr("modal.requiredField", { field: tr("redis.form.address") })
-    : "";
-  const dbError =
-    form.db != null && (!Number.isInteger(form.db) || form.db < 0) ? tr("redis.form.dbInvalid") : "";
-  const canTest = !saving && !testing && !addressError && !dbError;
-  const canSubmit = !saving && !addressError && !dbError;
+  const hostError = !form.host.trim() ? tr("modal.requiredField", { field: tr("form.host") }) : "";
+  const usernameError = !form.username.trim() ? tr("modal.requiredField", { field: tr("form.username") }) : "";
+  const port = form.port ?? 3306;
+  const portError = !Number.isInteger(port) || port < 1 || port > 65535 ? tr("modal.portInvalid") : "";
+  const canTest = !saving && !testing && !hostError && !usernameError && !portError;
+  const canSubmit = !saving && !hostError && !usernameError && !portError;
 
   const noticeTone = useMemo(() => {
     if (!testResult) return null;
@@ -72,30 +71,14 @@ export function RedisConnectionEditModal({
         </div>
         <div className="modal-form">
           <div className="session-form">
-            <input
-              placeholder={tr("form.name")}
-              value={form.name}
-              disabled={saving}
-              onChange={(e) => onChangeForm({ ...form, name: e.target.value })}
-            />
-            <input
-              placeholder={tr("redis.form.address")}
-              value={form.address}
-              disabled={saving}
-              onChange={(e) => onChangeForm({ ...form, address: e.target.value })}
-            />
-            {submitAttempted && addressError ? (
-              <div className="modal-inline-notice modal-inline-notice-error">{addressError}</div>
-            ) : null}
-            <input
-              placeholder={tr("redis.form.db")}
-              type="number"
-              min={0}
-              value={form.db ?? 0}
-              disabled={saving}
-              onChange={(e) => onChangeForm({ ...form, db: Number(e.target.value) })}
-            />
-            {dbError ? <div className="modal-inline-notice modal-inline-notice-error">{dbError}</div> : null}
+            <input placeholder={tr("form.name")} value={form.name} disabled={saving} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
+            <input placeholder={tr("form.host")} value={form.host} disabled={saving} onChange={(e) => onChangeForm({ ...form, host: e.target.value })} />
+            {submitAttempted && hostError ? <div className="modal-inline-notice modal-inline-notice-error">{hostError}</div> : null}
+            <input placeholder={tr("form.port")} type="number" value={port} disabled={saving} onChange={(e) => onChangeForm({ ...form, port: Number(e.target.value) })} />
+            {portError ? <div className="modal-inline-notice modal-inline-notice-error">{portError}</div> : null}
+            <input placeholder={tr("form.username")} value={form.username} disabled={saving} onChange={(e) => onChangeForm({ ...form, username: e.target.value })} />
+            {submitAttempted && usernameError ? <div className="modal-inline-notice modal-inline-notice-error">{usernameError}</div> : null}
+            <input placeholder={tr("mysql.form.database")} value={form.database ?? ""} disabled={saving} onChange={(e) => onChangeForm({ ...form, database: e.target.value })} />
             <div className="password-input-wrap">
               <input
                 placeholder={tr("form.secretOptional")}
@@ -113,9 +96,7 @@ export function RedisConnectionEditModal({
                 onClick={onToggleSecretVisible}
               />
             </div>
-            {testResult ? (
-              <div className={`modal-inline-notice modal-inline-notice-${noticeTone ?? "info"}`}>{testResult}</div>
-            ) : null}
+            {testResult ? <div className={`modal-inline-notice modal-inline-notice-${noticeTone ?? "info"}`}>{testResult}</div> : null}
           </div>
         </div>
         <div className="modal-actions">

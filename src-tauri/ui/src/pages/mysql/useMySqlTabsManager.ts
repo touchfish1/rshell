@@ -82,6 +82,18 @@ export function useMySqlTabsManager({
     }));
   };
 
+  const addTableEditTab = (schema: string, table: string) => {
+    const tab: MySqlBrowseTab = {
+      id: `table-edit:${schema}.${table}:${Date.now()}`,
+      kind: "table-edit",
+      schema,
+      table,
+      title: `编辑 ${schema}.${table}`,
+    };
+    setBrowseTabs((prev) => [...prev, tab]);
+    setActiveBrowseTabId(tab.id);
+  };
+
   const openTopQueryTab = () => {
     const schema = activeSchema || selectedDatabase || databases[0] || "default";
     addQueryTab(schema);
@@ -94,7 +106,7 @@ export function useMySqlTabsManager({
       void loadTablesForSchema(tab.schema);
       return;
     }
-    if (tab.kind === "query") return;
+    if (tab.kind === "query" || tab.kind === "table-edit") return;
     if (tab.table) {
       setActiveTable(tab.table);
       if (!tableDataMap[tab.id] || tableDataMap[tab.id].rows.length === 0) {
@@ -126,6 +138,7 @@ export function useMySqlTabsManager({
     activeBrowseTab,
     addDatabaseTab,
     addTableTab,
+    addTableEditTab,
     addQueryTab,
     openTopQueryTab,
     selectBrowseTab,

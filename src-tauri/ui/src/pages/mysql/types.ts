@@ -1,6 +1,6 @@
 export type MySqlBrowseTab = {
   id: string;
-  kind: "database" | "table" | "query";
+  kind: "database" | "table" | "query" | "table-edit";
   schema: string;
   table?: string;
   title: string;
@@ -23,6 +23,7 @@ export type MySqlTableDataState = {
   page: number;
   pageSize: number;
   totalRows: number;
+  lastSql?: string;
   error?: string;
 };
 

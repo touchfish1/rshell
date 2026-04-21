@@ -1,6 +1,8 @@
 import HomePage from "../pages/HomePage";
 import type {
   HostReachability,
+  MySqlConnection,
+  MySqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -17,6 +19,7 @@ interface AppHomeSectionProps {
   sessions: Session[];
   zkConnections: ZookeeperConnection[];
   redisConnections: RedisConnection[];
+  mysqlConnections: MySqlConnection[];
   connectingSessionId?: string | null;
   selectedId?: string;
   reachabilityMap: Record<string, HostReachability>;
@@ -29,6 +32,7 @@ interface AppHomeSectionProps {
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
+  onCreateMysql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -41,9 +45,13 @@ interface AppHomeSectionProps {
   onDeleteZk: (id: string) => Promise<void>;
   redisConnections: RedisConnection[];
   onConnectRedis: (id: string) => void;
+  onConnectMysql: (id: string) => void;
   onGetRedisSecret: (id: string) => Promise<string | null>;
   onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
   onDeleteRedis: (id: string) => Promise<void>;
+  onDeleteMysql: (id: string) => Promise<void>;
+  onGetMysqlSecret: (id: string) => Promise<string | null>;
+  onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
   auditLoading: boolean;
@@ -55,9 +63,6 @@ interface AppHomeSectionProps {
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
   onRefreshHostStatus: () => void;
-  onOpenZookeeper: () => void;
-  onOpenRedis: () => void;
-  onOpenMysql: () => void;
   tr: TranslateFn;
 }
 

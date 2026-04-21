@@ -1,5 +1,6 @@
 import type { KeyboardEvent } from "react";
-import type { HostReachability, RedisConnection, Session, ZookeeperConnection } from "../../services/types";
+import type { HostReachability, MySqlConnection, RedisConnection, Session, ZookeeperConnection } from "../../services/types";
+import { MySqlConnectionRow } from "./MySqlConnectionRow";
 import type { TrFn } from "../../i18n-context";
 import { RedisConnectionRow } from "./RedisConnectionRow";
 import { SessionRow } from "./SessionRow";
@@ -11,6 +12,7 @@ interface Props {
   displayedSessions: Session[];
   displayedZkConnections: ZookeeperConnection[];
   displayedRedisConnections: RedisConnection[];
+  displayedMySqlConnections: MySqlConnection[];
   selectedId?: string;
   connectingSessionId?: string | null;
   hostQuery: string;
@@ -20,6 +22,7 @@ interface Props {
   onConnect?: (id: string) => void;
   onConnectZk?: (id: string) => void;
   onConnectRedis?: (id: string) => void;
+  onConnectMySql?: (id: string) => void;
   onOpenEditSession: (session: Session) => void;
   onDuplicateHost: (session: Session) => void;
   onAskDeleteSession: (id: string) => void;
@@ -27,6 +30,8 @@ interface Props {
   onAskDeleteZk: (conn: ZookeeperConnection) => void;
   onOpenEditRedis: (conn: RedisConnection) => void;
   onAskDeleteRedis: (conn: RedisConnection) => void;
+  onOpenEditMySql: (conn: MySqlConnection) => void;
+  onAskDeleteMySql: (conn: MySqlConnection) => void;
 }
 
 export function SessionListBody({
@@ -35,6 +40,7 @@ export function SessionListBody({
   displayedSessions,
   displayedZkConnections,
   displayedRedisConnections,
+  displayedMySqlConnections,
   selectedId,
   connectingSessionId,
   hostQuery,
@@ -44,6 +50,7 @@ export function SessionListBody({
   onConnect,
   onConnectZk,
   onConnectRedis,
+  onConnectMySql,
   onOpenEditSession,
   onDuplicateHost,
   onAskDeleteSession,
@@ -51,6 +58,8 @@ export function SessionListBody({
   onAskDeleteZk,
   onOpenEditRedis,
   onAskDeleteRedis,
+  onOpenEditMySql,
+  onAskDeleteMySql,
 }: Props) {
   return (
     <ul className="session-table-body" tabIndex={0} aria-label={tr("session.listKeyboardHint")} onKeyDown={onListKeyDown}>
@@ -97,6 +106,16 @@ export function SessionListBody({
           onConnect={onConnectRedis}
           onEdit={onOpenEditRedis}
           onDelete={onAskDeleteRedis}
+        />
+      ))}
+      {displayedMySqlConnections.map((conn) => (
+        <MySqlConnectionRow
+          key={`mysql-${conn.id}`}
+          conn={conn}
+          tr={tr}
+          onConnect={onConnectMySql}
+          onEdit={onOpenEditMySql}
+          onDelete={onAskDeleteMySql}
         />
       ))}
     </ul>

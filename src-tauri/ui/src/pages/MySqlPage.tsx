@@ -102,6 +102,7 @@ export default function MySqlPage({
     activeBrowseTab,
     addDatabaseTab,
     addTableTab,
+    addTableEditTab,
     addQueryTab,
     openTopQueryTab,
     selectBrowseTab,
@@ -229,10 +230,10 @@ export default function MySqlPage({
           onOpenConnection={(id) => {
             onSelect(id);
             void loadSchema(id).catch((err) => {
-              const message = err instanceof Error ? err.message : String(err);
-              setLocalError(message);
-            });
-          }}
+                      const message = err instanceof Error ? err.message : String(err);
+                      setLocalError(message);
+                    });
+                  }}
           onOpenContext={(x, y, connId) => setContextMenu({ x, y, connId })}
           onSelectSchema={(schema) => {
             setActiveSchema(schema);
@@ -252,6 +253,7 @@ export default function MySqlPage({
           activeBrowseTab={activeBrowseTab}
           activeSchema={activeSchema}
           activeTable={activeTable}
+          selectedConnectionId={selected?.id}
           tables={tables}
           tablesLoading={tablesLoading}
           tableDataMap={tableDataMap}
@@ -277,16 +279,20 @@ export default function MySqlPage({
             if (!schema) return;
             addTableTab(schema, table);
           }}
+          onOpenTableEdit={(schema, table) => {
+            if (!schema || !table) return;
+            addTableEditTab(schema, table);
+          }}
           onChangeCondition={patchCondition}
           onDeleteCondition={removeCondition}
           onAddCondition={addCondition}
           onQueryTable={queryCurrentTable}
           onChangeTablePage={(page) => {
             if (!activeBrowseTab?.table) return;
-            const nextConditions = activeTableData?.conditions ?? [];
-            setTableDataMap((prev) => ({
-              ...prev,
-              [activeBrowseTab.id]: {
+                              const nextConditions = activeTableData?.conditions ?? [];
+                          setTableDataMap((prev) => ({
+                            ...prev,
+                            [activeBrowseTab.id]: {
                 ...(prev[activeBrowseTab.id] ?? {
                   loading: false,
                   conditions: [createEmptyCondition()],
@@ -298,8 +304,8 @@ export default function MySqlPage({
                 }),
                 loading: true,
                 error: undefined,
-              },
-            }));
+                            },
+                          }));
             void loadTableData(
               activeBrowseTab.id,
               activeBrowseTab.schema,
@@ -310,11 +316,11 @@ export default function MySqlPage({
             );
           }}
           onChangePageSize={(pageSize) => {
-            if (!activeBrowseTab?.table) return;
-            const nextConditions = activeTableData?.conditions ?? [];
-            setTableDataMap((prev) => ({
-              ...prev,
-              [activeBrowseTab.id]: {
+                          if (!activeBrowseTab?.table) return;
+                          const nextConditions = activeTableData?.conditions ?? [];
+                          setTableDataMap((prev) => ({
+                            ...prev,
+                            [activeBrowseTab.id]: {
                 ...(prev[activeBrowseTab.id] ?? {
                   loading: false,
                   conditions: [createEmptyCondition()],
@@ -324,12 +330,12 @@ export default function MySqlPage({
                   pageSize: 100,
                   totalRows: 0,
                 }),
-                loading: true,
+                              loading: true,
                 page: 0,
                 pageSize,
-                error: undefined,
-              },
-            }));
+                              error: undefined,
+                            },
+                          }));
             void loadTableData(
               activeBrowseTab.id,
               activeBrowseTab.schema,
@@ -341,15 +347,15 @@ export default function MySqlPage({
           }}
           onFormatSql={() => {
             if (!activeBrowseTab) return;
-            const sql = activeQueryEditor?.sql ?? "";
-            setQueryEditorMap((prev) => ({
-              ...prev,
-              [activeBrowseTab.id]: {
-                ...(prev[activeBrowseTab.id] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null }),
-                sql: formatSqlText(sql),
-              },
-            }));
-          }}
+                          const sql = activeQueryEditor?.sql ?? "";
+                          setQueryEditorMap((prev) => ({
+                            ...prev,
+                            [activeBrowseTab.id]: {
+                                  ...(prev[activeBrowseTab.id] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null }),
+                              sql: formatSqlText(sql),
+                            },
+                          }));
+                        }}
           onExplainSql={() => {
             if (activeBrowseTab) void explainQueryEditor(activeBrowseTab.id, activeBrowseTab.schema);
           }}
@@ -365,16 +371,16 @@ export default function MySqlPage({
             });
           }}
           onSqlEditorBlur={() => {
-            window.setTimeout(() => {
-              setQuerySuggestions(null);
-              setSuggestionActiveIndex(0);
-            }, 120);
-          }}
+                        window.setTimeout(() => {
+                          setQuerySuggestions(null);
+                          setSuggestionActiveIndex(0);
+                        }, 120);
+                      }}
           onApplySuggestion={(item) => {
             if (activeBrowseTab) applySuggestionItem(querySuggestions, activeBrowseTab.id, item);
           }}
         />
-      </div>
+                      </div>
       <MySqlConnectionModal
         open={formOpen}
         editMode={editMode}

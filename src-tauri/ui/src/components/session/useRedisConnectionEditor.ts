@@ -13,6 +13,8 @@ export function useRedisConnectionEditor({ onGetRedisSecret, onUpdateRedis, tr }
   const [redisEditConnection, setRedisEditConnection] = useState<RedisConnection | null>(null);
   const [redisEditForm, setRedisEditForm] = useState<RedisConnectionInput>({ name: "", address: "", db: 0 });
   const [redisEditSecret, setRedisEditSecret] = useState("");
+  const [redisEditSecretVisible, setRedisEditSecretVisible] = useState(false);
+  const [redisEditSecretLoading, setRedisEditSecretLoading] = useState(false);
   const [redisEditTesting, setRedisEditTesting] = useState(false);
   const [redisEditSaving, setRedisEditSaving] = useState(false);
   const [redisEditResult, setRedisEditResult] = useState<string | null>(null);
@@ -21,11 +23,15 @@ export function useRedisConnectionEditor({ onGetRedisSecret, onUpdateRedis, tr }
     setRedisEditConnection(conn);
     setRedisEditForm({ name: conn.name, address: conn.address, db: conn.db });
     setRedisEditResult(null);
+    setRedisEditSecretVisible(false);
+    setRedisEditSecretLoading(true);
     try {
       const secret = await onGetRedisSecret(conn.id);
       setRedisEditSecret(secret ?? "");
     } catch {
       setRedisEditSecret("");
+    } finally {
+      setRedisEditSecretLoading(false);
     }
   };
 
@@ -34,6 +40,8 @@ export function useRedisConnectionEditor({ onGetRedisSecret, onUpdateRedis, tr }
     setRedisEditResult(null);
     setRedisEditTesting(false);
     setRedisEditSaving(false);
+    setRedisEditSecretVisible(false);
+    setRedisEditSecretLoading(false);
   };
 
   const testEditRedis = async () => {
@@ -68,6 +76,9 @@ export function useRedisConnectionEditor({ onGetRedisSecret, onUpdateRedis, tr }
     setRedisEditForm,
     redisEditSecret,
     setRedisEditSecret,
+    redisEditSecretVisible,
+    redisEditSecretLoading,
+    setRedisEditSecretVisible,
     redisEditTesting,
     redisEditSaving,
     redisEditResult,

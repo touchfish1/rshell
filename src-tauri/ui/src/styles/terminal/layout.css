@@ -157,6 +157,25 @@
   align-items: center;
 }
 
+/* 终端页顶栏操作区统一为紧凑尺寸（与颜色主题按钮一致） */
+.workspace.terminal-page .terminal-top .actions .btn {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.workspace.terminal-page .terminal-top .actions .theme-controls {
+  gap: 6px 8px;
+}
+
+.workspace.terminal-page .terminal-top .actions .theme-control select {
+  height: 28px;
+  min-width: 92px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
 .terminal-pane-shell {
   position: relative;
   width: 100%;

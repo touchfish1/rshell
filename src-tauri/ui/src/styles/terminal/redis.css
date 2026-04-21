@@ -6,6 +6,38 @@
   overflow: hidden;
 }
 
+.workspace.redis-page .topbar .actions .btn,
+.workspace.redis-page .topbar .actions .pill {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.workspace.redis-page .topbar .actions .lang-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid rgba(66, 77, 102, 0.95);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.workspace.redis-page .topbar .actions .lang-switch .btn {
+  border-radius: 0;
+  border: none;
+  min-width: 46px;
+}
+
+.workspace.redis-page .topbar .actions .lang-switch .btn + .btn {
+  border-left: 1px solid rgba(66, 77, 102, 0.95);
+}
+
+.workspace.redis-page .topbar .actions .lang-switch .lang-active {
+  background: rgba(79, 131, 255, 0.3);
+  color: #dbe7ff;
+}
+
 .workspace.redis-page .terminal-layout {
   flex: 1 1 auto;
   min-height: 0;

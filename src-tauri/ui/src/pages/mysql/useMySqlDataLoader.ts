@@ -137,6 +137,7 @@ export function useMySqlDataLoader({
           page,
           pageSize: resolvedPageSize,
           totalRows,
+          lastSql: query,
           error: undefined,
         },
       }));

@@ -6,6 +6,15 @@
   overflow: hidden;
 }
 
+/* Zookeeper 顶栏按钮与模式切换统一紧凑尺寸 */
+.workspace.zk-page .topbar .actions .btn,
+.workspace.zk-page .topbar .actions .pill {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
+}
+
 .terminal-layout {
   flex: 1 1 auto;
   min-height: 0;

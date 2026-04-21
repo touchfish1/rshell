@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   HostReachability,
+  MySqlConnection,
+  MySqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -9,6 +11,7 @@ import type {
   ZookeeperConnectionInput,
 } from "../../services/types";
 import { testRedisConnection } from "../../services/bridge";
+import { testMySqlConnection } from "../../services/bridge";
 import type { I18nKey } from "../../i18n";
 
 const defaultForm: SessionInput = {
@@ -25,6 +28,7 @@ interface Options {
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
+  onCreateMySql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onTestZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
@@ -32,6 +36,7 @@ interface Options {
   onConnect?: (id: string) => void;
   onConnectZk?: (id: string) => void;
   onConnectRedis?: (id: string) => void;
+  onConnectMySql?: (id: string) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -75,6 +80,7 @@ export function useSessionListForms({
   onCreate,
   onCreateZk,
   onCreateRedis,
+  onCreateMySql,
   onUpdate,
   onTestConnect,
   onTestZk,
@@ -82,6 +88,7 @@ export function useSessionListForms({
   onConnect,
   onConnectZk,
   onConnectRedis,
+  onConnectMySql,
   tr,
 }: Options) {
   const [createForm, setCreateForm] = useState<SessionInput>(defaultForm);
@@ -106,6 +113,7 @@ export function useSessionListForms({
     if (createForm.protocol === "ssh") return 22;
     if (createForm.protocol === "telnet") return 23;
     if (createForm.protocol === "redis") return 6379;
+    if (createForm.protocol === "mysql") return 3306;
     return 2181;
   }, [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
@@ -142,6 +150,20 @@ export function useSessionListForms({
         if (!created) return;
         if (connectAfterSave) {
           onConnectRedis?.(created.id);
+        }
+      } else if (createForm.protocol === "mysql") {
+        const created = await onCreateMySql(
+          {
+            name: createForm.name,
+            host: createForm.host,
+            port: createForm.port,
+            username: createForm.username,
+          },
+          createSecret || undefined
+        );
+        if (!created) return;
+        if (connectAfterSave) {
+          onConnectMySql?.(created.id);
         }
       } else {
         const created = await onCreate(createForm, createSecret || undefined);
@@ -230,6 +252,9 @@ export function useSessionListForms({
         setCreateTestResult(tr("modal.testSuccess"));
       } else if (createForm.protocol === "redis") {
         await testRedisConnection(`${createForm.host}:${createForm.port}`, 0, createSecret || undefined);
+        setCreateTestResult(tr("modal.testSuccess"));
+      } else if (createForm.protocol === "mysql") {
+        await testMySqlConnection(createForm.host, createForm.port || 3306, createForm.username, undefined, createSecret || undefined);
         setCreateTestResult(tr("modal.testSuccess"));
       } else {
         const r = await onTestConnect(createForm);

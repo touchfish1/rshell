@@ -1,22 +1,26 @@
 import type { RefObject } from "react";
-import type { RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
+import type { MySqlConnection, MySqlConnectionInput, RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
 import type { TrFn } from "../../i18n-context";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { HostCreateModal } from "./HostCreateModal";
 import { HostEditModal } from "./HostEditModal";
 import { RedisConnectionEditModal } from "../redis/RedisConnectionEditModal";
 import { ZkConnectionEditModal } from "../zookeeper/ZkConnectionEditModal";
+import { MySqlConnectionEditModal } from "../mysql/MySqlConnectionEditModal";
 
 interface Props {
   tr: TrFn;
   pendingDelete: Session | null;
   pendingDeleteRedis: RedisConnection | null;
+  pendingDeleteMySql: MySqlConnection | null;
   pendingDeleteZk: ZookeeperConnection | null;
   onCancelDeleteSession: () => void;
   onCancelDeleteRedis: () => void;
+  onCancelDeleteMySql: () => void;
   onCancelDeleteZk: () => void;
   onConfirmDeleteSession: () => void;
   onConfirmDeleteRedis: () => void;
+  onConfirmDeleteMySql: () => void;
   onConfirmDeleteZk: () => void;
 
   showCreateModal: boolean;
@@ -67,14 +71,32 @@ interface Props {
   redisEditConnection: RedisConnection | null;
   redisEditForm: RedisConnectionInput;
   redisEditSecret: string;
+  redisEditSecretVisible: boolean;
+  redisEditSecretLoading: boolean;
   redisEditTesting: boolean;
   redisEditSaving: boolean;
   redisEditResult: string | null;
   onCloseEditRedis: () => void;
   onChangeRedisEditForm: (v: RedisConnectionInput) => void;
   onChangeRedisEditSecret: (v: string) => void;
+  onToggleRedisEditSecretVisible: () => void;
   onTestEditRedis: () => void;
   onSubmitEditRedis: () => void;
+
+  mysqlEditConnection: MySqlConnection | null;
+  mysqlEditForm: MySqlConnectionInput;
+  mysqlEditSecret: string;
+  mysqlEditSecretVisible: boolean;
+  mysqlEditSecretLoading: boolean;
+  mysqlEditTesting: boolean;
+  mysqlEditSaving: boolean;
+  mysqlEditResult: string | null;
+  onCloseEditMySql: () => void;
+  onChangeMySqlEditForm: (v: MySqlConnectionInput) => void;
+  onChangeMySqlEditSecret: (v: string) => void;
+  onToggleMySqlEditSecretVisible: () => void;
+  onTestEditMySql: () => void;
+  onSubmitEditMySql: () => void;
 }
 
 export function SessionListModals(props: Props) {
@@ -82,12 +104,15 @@ export function SessionListModals(props: Props) {
     tr,
     pendingDelete,
     pendingDeleteRedis,
+    pendingDeleteMySql,
     pendingDeleteZk,
     onCancelDeleteSession,
     onCancelDeleteRedis,
+    onCancelDeleteMySql,
     onCancelDeleteZk,
     onConfirmDeleteSession,
     onConfirmDeleteRedis,
+    onConfirmDeleteMySql,
     onConfirmDeleteZk,
     showCreateModal,
     createForm,
@@ -134,14 +159,31 @@ export function SessionListModals(props: Props) {
     redisEditConnection,
     redisEditForm,
     redisEditSecret,
+    redisEditSecretVisible,
+    redisEditSecretLoading,
     redisEditTesting,
     redisEditSaving,
     redisEditResult,
     onCloseEditRedis,
     onChangeRedisEditForm,
     onChangeRedisEditSecret,
+    onToggleRedisEditSecretVisible,
     onTestEditRedis,
     onSubmitEditRedis,
+    mysqlEditConnection,
+    mysqlEditForm,
+    mysqlEditSecret,
+    mysqlEditSecretVisible,
+    mysqlEditSecretLoading,
+    mysqlEditTesting,
+    mysqlEditSaving,
+    mysqlEditResult,
+    onCloseEditMySql,
+    onChangeMySqlEditForm,
+    onChangeMySqlEditSecret,
+    onToggleMySqlEditSecretVisible,
+    onTestEditMySql,
+    onSubmitEditMySql,
   } = props;
 
   return (
@@ -182,6 +224,16 @@ export function SessionListModals(props: Props) {
         danger
         onCancel={onCancelDeleteRedis}
         onConfirm={onConfirmDeleteRedis}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteMySql)}
+        title={tr("session.delete")}
+        message={pendingDeleteMySql ? tr("session.deleteConfirm", { name: pendingDeleteMySql.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={onCancelDeleteMySql}
+        onConfirm={onConfirmDeleteMySql}
       />
       <ConfirmDialog
         open={Boolean(pendingDeleteZk)}
@@ -231,14 +283,33 @@ export function SessionListModals(props: Props) {
         connection={redisEditConnection}
         form={redisEditForm}
         secret={redisEditSecret}
+        secretVisible={redisEditSecretVisible}
+        secretLoading={redisEditSecretLoading}
         testing={redisEditTesting}
         saving={redisEditSaving}
         testResult={redisEditResult}
         onClose={onCloseEditRedis}
         onChangeForm={onChangeRedisEditForm}
         onChangeSecret={onChangeRedisEditSecret}
+        onToggleSecretVisible={onToggleRedisEditSecretVisible}
         onTest={onTestEditRedis}
         onSubmit={onSubmitEditRedis}
+      />
+      <MySqlConnectionEditModal
+        connection={mysqlEditConnection}
+        form={mysqlEditForm}
+        secret={mysqlEditSecret}
+        secretVisible={mysqlEditSecretVisible}
+        secretLoading={mysqlEditSecretLoading}
+        testing={mysqlEditTesting}
+        saving={mysqlEditSaving}
+        testResult={mysqlEditResult}
+        onClose={onCloseEditMySql}
+        onChangeForm={onChangeMySqlEditForm}
+        onChangeSecret={onChangeMySqlEditSecret}
+        onToggleSecretVisible={onToggleMySqlEditSecretVisible}
+        onTest={onTestEditMySql}
+        onSubmit={onSubmitEditMySql}
       />
     </>
   );

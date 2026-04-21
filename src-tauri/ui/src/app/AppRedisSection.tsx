@@ -1,6 +1,6 @@
 import RedisPage from "../pages/RedisPage";
 import type { RedisConnection, RedisConnectionInput } from "../services/types";
-import type { I18nKey } from "../i18n";
+import type { I18nKey, Lang } from "../i18n";
 
 type TranslateFn = (key: I18nKey, vars?: Record<string, string | number>) => string;
 
@@ -15,6 +15,8 @@ interface AppRedisSectionProps {
   onUpdate: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onGetSecret: (id: string) => Promise<string | null>;
+  lang: Lang;
+  onSwitchLang: (lang: Lang) => void;
   onBack: () => void;
   tr: TranslateFn;
 }

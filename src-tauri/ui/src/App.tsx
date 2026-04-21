@@ -255,6 +255,7 @@ export default function App() {
             sessions={sessions}
             zkConnections={zkConnections}
             redisConnections={redisConnections}
+            mysqlConnections={mysqlConnections}
             connectingSessionId={connectingHostId}
             selectedId={selectedId}
             reachabilityMap={reachabilityMap}
@@ -267,6 +268,7 @@ export default function App() {
             onCreate={create}
             onCreateZk={createZk}
             onCreateRedis={createRedis}
+            onCreateMysql={createMysql}
             onUpdate={update}
             onDelete={remove}
             onTestConnect={testConnect}
@@ -284,9 +286,16 @@ export default function App() {
               setSelectedRedisId(id);
               setCurrentPage("redis");
             }}
+            onConnectMysql={(id: string) => {
+              setSelectedMysqlId(id);
+              setCurrentPage("mysql");
+            }}
             onGetRedisSecret={getRedisSecret}
             onUpdateRedis={updateRedis}
             onDeleteRedis={removeRedis}
+            onDeleteMysql={removeMysql}
+            onGetMysqlSecret={getMysqlSecret}
+            onUpdateMysql={updateMysql}
             onOnlineUpgrade={checkOnlineUpgrade}
             auditOpen={auditOpen}
             auditLoading={auditLoading}
@@ -303,9 +312,6 @@ export default function App() {
             lang={lang}
             onSwitchLang={switchLang}
             onRefreshHostStatus={refreshReachability}
-            onOpenZookeeper={() => setCurrentPage("zookeeper")}
-            onOpenRedis={() => setCurrentPage("redis")}
-            onOpenMysql={() => setCurrentPage("mysql")}
             tr={tr}
           />
         ) : currentPage === "terminal" ? (
@@ -380,6 +386,8 @@ export default function App() {
             onUpdate={updateRedis}
             onDelete={removeRedis}
             onGetSecret={getRedisSecret}
+            lang={lang}
+            onSwitchLang={switchLang}
             onBack={() => setCurrentPage("home")}
             tr={tr}
           />

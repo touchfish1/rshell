@@ -44,8 +44,8 @@ export function HostEditModal({
     if (!session) return;
     setInitialSecret(secret);
   }, [session?.id, secret, session]);
-  if (!session) return null;
   const hasDirty = useMemo(() => {
+    if (!session) return false;
     return (
       form.name !== session.name ||
       form.protocol !== session.protocol ||
@@ -57,6 +57,7 @@ export function HostEditModal({
       secret !== initialSecret
     );
   }, [form, session, secret, initialSecret]);
+  if (!session) return null;
   const requestClose = () => {
     if (!hasDirty || testing) {
       onClose();

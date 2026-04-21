@@ -3,6 +3,7 @@ import type { ZkNodeData, ZookeeperConnection, ZookeeperConnectionInput } from "
 import { connectZookeeper, disconnectZookeeper, zkGetData, zkListChildren, zkSetData } from "../services/bridge";
 import { ZkConnectionList } from "../components/zookeeper/ZkConnectionList";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import type { I18nKey } from "../i18n";
 import { ZkBrowserPane } from "./zookeeper/ZkBrowserPane";
 
@@ -176,6 +177,7 @@ export default function ZookeeperPage({
           </div>
         </div>
         <div className="actions">
+          <ColorThemeToggle tr={tr} />
           <button className="btn btn-ghost" onClick={onBack}>
             {tr("terminal.back")}
           </button>

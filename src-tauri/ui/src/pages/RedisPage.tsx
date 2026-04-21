@@ -1,4 +1,4 @@
-import type { I18nKey } from "../i18n";
+import type { I18nKey, Lang } from "../i18n";
 import type { RedisConnection, RedisConnectionInput } from "../services/types";
 import { ErrorBanner } from "../components/ErrorBanner";
 import { RedisBrowserPane } from "./redis/RedisBrowserPane";
@@ -22,6 +22,8 @@ interface Props {
   onUpdate: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onGetSecret: (id: string) => Promise<string | null>;
+  lang: Lang;
+  onSwitchLang: (lang: Lang) => void;
   onBack: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
@@ -37,6 +39,8 @@ export default function RedisPage({
   onUpdate,
   onDelete,
   onGetSecret,
+  lang,
+  onSwitchLang,
   onBack,
   tr,
 }: Props) {
@@ -159,6 +163,8 @@ export default function RedisPage({
         selected={selected}
         connected={connected}
         status={status}
+        lang={lang}
+        onSwitchLang={onSwitchLang}
         onBack={onBack}
         onOpenCreate={() => setCreateOpen(true)}
         onDisconnect={() => void disconnectActive()}

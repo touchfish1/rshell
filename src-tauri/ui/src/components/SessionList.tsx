@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import type {
   HostReachability,
+  MySqlConnection,
+  MySqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -17,6 +19,7 @@ import { SessionListToolbar } from "./session/SessionListToolbar";
 import { useSessionListForms } from "./session/useSessionListForms";
 import { useZkSessionEditor } from "./session/useZkSessionEditor";
 import { useRedisConnectionEditor } from "./session/useRedisConnectionEditor";
+import { useMySqlConnectionEditor } from "./session/useMySqlConnectionEditor";
 import { useI18n } from "../i18n-context";
 import { getRecentSessionIds } from "../lib/recentSessions";
 import { orderSessionsByRecent } from "../lib/orderSessionsByRecent";
@@ -33,6 +36,7 @@ interface Props {
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
+  onCreateMySql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -49,6 +53,11 @@ interface Props {
   onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
   onDeleteRedis: (id: string) => Promise<void>;
   onGetRedisSecret: (id: string) => Promise<string | null>;
+  mysqlConnections: MySqlConnection[];
+  onConnectMySql?: (id: string) => void;
+  onDeleteMySql: (id: string) => Promise<void>;
+  onGetMysqlSecret: (id: string) => Promise<string | null>;
+  onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
 }
 
 export default function SessionList({
@@ -60,6 +69,7 @@ export default function SessionList({
   onCreate,
   onCreateZk,
   onCreateRedis,
+  onCreateMySql,
   onUpdate,
   onDelete,
   onTestConnect,
@@ -76,12 +86,18 @@ export default function SessionList({
   onUpdateRedis,
   onDeleteRedis,
   onGetRedisSecret,
+  mysqlConnections,
+  onConnectMySql,
+  onDeleteMySql,
+  onGetMysqlSecret,
+  onUpdateMysql,
 }: Props) {
   const { tr } = useI18n();
   const [hostQuery, setHostQuery] = useState("");
   const [recentIds, setRecentIds] = useState(() => getRecentSessionIds());
   const [pendingDelete, setPendingDelete] = useState<Session | null>(null);
   const [pendingDeleteRedis, setPendingDeleteRedis] = useState<RedisConnection | null>(null);
+  const [pendingDeleteMySql, setPendingDeleteMySql] = useState<MySqlConnection | null>(null);
 
   const { gridStyle, onResizeNameStart, onResizeHostStart } = useSessionListColumns();
 
@@ -130,6 +146,20 @@ export default function SessionList({
       );
     });
   }, [hostQuery, redisConnections]);
+  const displayedMySqlConnections = useMemo(() => {
+    const q = hostQuery.trim().toLowerCase();
+    if (!q) return mysqlConnections;
+    return mysqlConnections.filter((conn) => {
+      return (
+        conn.name.toLowerCase().includes(q) ||
+        conn.host.toLowerCase().includes(q) ||
+        conn.username.toLowerCase().includes(q) ||
+        String(conn.port).includes(q) ||
+        (conn.database ?? "").toLowerCase().includes(q) ||
+        "mysql".includes(q)
+      );
+    });
+  }, [hostQuery, mysqlConnections]);
 
   const duplicateHost = async (session: Session) => {
     const copyName = `${session.name}-${tr("session.copySuffix")}`;
@@ -150,12 +180,41 @@ export default function SessionList({
     await onDeleteRedis(conn.id);
     setPendingDeleteRedis(null);
   };
+  const runDeleteMySql = async (conn: MySqlConnection) => {
+    await onDeleteMySql(conn.id);
+    setPendingDeleteMySql(null);
+  };
+  const {
+    mysqlEditConnection,
+    mysqlEditForm,
+    setMysqlEditForm,
+    mysqlEditSecret,
+    setMysqlEditSecret,
+    mysqlEditSecretVisible,
+    mysqlEditSecretLoading,
+    setMysqlEditSecretVisible,
+    mysqlEditTesting,
+    mysqlEditSaving,
+    mysqlEditResult,
+    openEditMysql,
+    closeEditMysql,
+    testEditMysql,
+    submitEditMysql,
+  } = useMySqlConnectionEditor({
+    onGetMysqlSecret,
+    onUpdateMysql,
+    tr,
+  });
+
   const {
     redisEditConnection,
     redisEditForm,
     setRedisEditForm,
     redisEditSecret,
     setRedisEditSecret,
+    redisEditSecretVisible,
+    redisEditSecretLoading,
+    setRedisEditSecretVisible,
     redisEditTesting,
     redisEditSaving,
     redisEditResult,
@@ -228,6 +287,7 @@ export default function SessionList({
     onCreate,
     onCreateZk,
     onCreateRedis,
+    onCreateMySql,
     onUpdate,
     onTestConnect,
     onTestZk,
@@ -235,6 +295,7 @@ export default function SessionList({
     onConnect,
     onConnectZk,
     onConnectRedis,
+    onConnectMySql,
     tr,
   });
 
@@ -312,6 +373,7 @@ export default function SessionList({
         displayedSessions={displayedSessions}
         displayedZkConnections={displayedZkConnections}
         displayedRedisConnections={displayedRedisConnections}
+        displayedMySqlConnections={displayedMySqlConnections}
         selectedId={selectedId}
         connectingSessionId={connectingSessionId}
         hostQuery={hostQuery}
@@ -321,6 +383,7 @@ export default function SessionList({
         onConnect={onConnect}
         onConnectZk={onConnectZk}
         onConnectRedis={onConnectRedis}
+        onConnectMySql={onConnectMySql}
         onOpenEditSession={openEdit}
         onDuplicateHost={(item) => void duplicateHost(item)}
         onAskDeleteSession={(id) => {
@@ -332,20 +395,27 @@ export default function SessionList({
         onAskDeleteZk={setPendingDeleteZk}
         onOpenEditRedis={openEditRedis}
         onAskDeleteRedis={setPendingDeleteRedis}
+        onOpenEditMySql={openEditMysql}
+        onAskDeleteMySql={setPendingDeleteMySql}
       />
       <SessionListModals
         tr={tr}
         pendingDelete={pendingDelete}
         pendingDeleteRedis={pendingDeleteRedis}
+        pendingDeleteMySql={pendingDeleteMySql}
         pendingDeleteZk={pendingDeleteZk}
         onCancelDeleteSession={() => setPendingDelete(null)}
         onCancelDeleteRedis={() => setPendingDeleteRedis(null)}
+        onCancelDeleteMySql={() => setPendingDeleteMySql(null)}
         onCancelDeleteZk={() => setPendingDeleteZk(null)}
         onConfirmDeleteSession={() => {
           if (pendingDelete) void runDelete(pendingDelete);
         }}
         onConfirmDeleteRedis={() => {
           if (pendingDeleteRedis) void runDeleteRedis(pendingDeleteRedis);
+        }}
+        onConfirmDeleteMySql={() => {
+          if (pendingDeleteMySql) void runDeleteMySql(pendingDeleteMySql);
         }}
         onConfirmDeleteZk={() => {
           if (pendingDeleteZk) void runDeleteZk(pendingDeleteZk);
@@ -395,14 +465,31 @@ export default function SessionList({
         redisEditConnection={redisEditConnection}
         redisEditForm={redisEditForm}
         redisEditSecret={redisEditSecret}
+        redisEditSecretVisible={redisEditSecretVisible}
+        redisEditSecretLoading={redisEditSecretLoading}
         redisEditTesting={redisEditTesting}
         redisEditSaving={redisEditSaving}
         redisEditResult={redisEditResult}
         onCloseEditRedis={closeEditRedis}
         onChangeRedisEditForm={setRedisEditForm}
         onChangeRedisEditSecret={setRedisEditSecret}
+        onToggleRedisEditSecretVisible={() => setRedisEditSecretVisible((prev) => !prev)}
         onTestEditRedis={() => void testEditRedis()}
         onSubmitEditRedis={() => void submitEditRedis()}
+        mysqlEditConnection={mysqlEditConnection}
+        mysqlEditForm={mysqlEditForm}
+        mysqlEditSecret={mysqlEditSecret}
+        mysqlEditSecretVisible={mysqlEditSecretVisible}
+        mysqlEditSecretLoading={mysqlEditSecretLoading}
+        mysqlEditTesting={mysqlEditTesting}
+        mysqlEditSaving={mysqlEditSaving}
+        mysqlEditResult={mysqlEditResult}
+        onCloseEditMySql={closeEditMysql}
+        onChangeMySqlEditForm={setMysqlEditForm}
+        onChangeMySqlEditSecret={setMysqlEditSecret}
+        onToggleMySqlEditSecretVisible={() => setMysqlEditSecretVisible((prev) => !prev)}
+        onTestEditMySql={() => void testEditMysql()}
+        onSubmitEditMySql={() => void submitEditMysql()}
       />
     </aside>
   );

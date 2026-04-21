@@ -6,6 +6,8 @@ import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
 import type {
   HostReachability,
+  MySqlConnection,
+  MySqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -30,6 +32,7 @@ interface Props {
   onCreate: (input: SessionInput, secret?: string) => Promise<Session | null>;
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
+  onCreateMysql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -41,10 +44,15 @@ interface Props {
   onUpdateZk: (id: string, input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
   onDeleteZk: (id: string) => Promise<void>;
   redisConnections: RedisConnection[];
+  mysqlConnections: MySqlConnection[];
   onConnectRedis: (id: string) => void;
+  onConnectMysql: (id: string) => void;
   onGetRedisSecret: (id: string) => Promise<string | null>;
   onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
   onDeleteRedis: (id: string) => Promise<void>;
+  onDeleteMysql: (id: string) => Promise<void>;
+  onGetMysqlSecret: (id: string) => Promise<string | null>;
+  onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
@@ -57,9 +65,6 @@ interface Props {
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
   onRefreshHostStatus: () => void;
-  onOpenZookeeper: () => void;
-  onOpenRedis: () => void;
-  onOpenMysql: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -77,6 +82,7 @@ export default function HomePage({
   onCreate,
   onCreateZk,
   onCreateRedis,
+  onCreateMysql,
   onUpdate,
   onDelete,
   onTestConnect,
@@ -88,10 +94,15 @@ export default function HomePage({
   onUpdateZk,
   onDeleteZk,
   redisConnections,
+  mysqlConnections,
   onConnectRedis,
+  onConnectMysql,
   onGetRedisSecret,
   onUpdateRedis,
   onDeleteRedis,
+  onDeleteMysql,
+  onGetMysqlSecret,
+  onUpdateMysql,
   onConnect,
   onOnlineUpgrade,
   auditOpen,
@@ -104,14 +115,11 @@ export default function HomePage({
   lang,
   onSwitchLang,
   onRefreshHostStatus,
-  onOpenZookeeper,
-  onOpenRedis,
-  onOpenMysql,
   tr,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
-  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0;
+  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0;
   const [appVersion, setAppVersion] = useState("");
 
   useEffect(() => {
@@ -160,15 +168,6 @@ export default function HomePage({
           <button className="btn btn-ghost" onClick={onOpenAudit}>
             {tr("home.audit")}
           </button>
-          <button className="btn btn-ghost" onClick={onOpenZookeeper}>
-            {tr("home.zookeeper")}
-          </button>
-          <button className="btn btn-ghost" onClick={onOpenRedis}>
-            {tr("home.redis")}
-          </button>
-          <button className="btn btn-ghost" onClick={onOpenMysql}>
-            {tr("home.mysql")}
-          </button>
           <span className={connected ? "pill pill-ok" : "pill"}>
             {connected ? tr("top.online") : tr("top.offline")}
           </span>
@@ -211,6 +210,7 @@ export default function HomePage({
                 onCreate={onCreate}
                 onCreateZk={onCreateZk}
                 onCreateRedis={onCreateRedis}
+                onCreateMySql={onCreateMysql}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onTestConnect={onTestConnect}
@@ -223,10 +223,15 @@ export default function HomePage({
                 onUpdateZk={onUpdateZk}
                 onDeleteZk={onDeleteZk}
                 redisConnections={redisConnections}
+                mysqlConnections={mysqlConnections}
                 onConnectRedis={onConnectRedis}
+                onConnectMySql={onConnectMysql}
                 onGetRedisSecret={onGetRedisSecret}
                 onUpdateRedis={onUpdateRedis}
                 onDeleteRedis={onDeleteRedis}
+                onDeleteMySql={onDeleteMysql}
+                onGetMysqlSecret={onGetMysqlSecret}
+                onUpdateMysql={onUpdateMysql}
               />
               {!hasAnyConnections ? (
                 <div className="empty-state" role="note" aria-label={tr("home.ariaNoSession")}>
