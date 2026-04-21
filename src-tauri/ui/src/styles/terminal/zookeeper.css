@@ -109,33 +109,37 @@
   background: #0b1018;
 }
 
-.workspace.zk-page.redis-page .zk-browser-header input {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid rgba(66, 77, 102, 0.95);
+
+.mysql-context-menu {
+  position: fixed;
+  z-index: 80;
+  border: 1px solid rgba(70, 82, 108, 0.85);
   border-radius: 8px;
-  background: rgba(17, 24, 36, 0.9);
-  color: #dbe4f5;
+  background: rgba(11, 17, 27, 0.97);
+  padding: 6px;
+  min-width: 120px;
+  display: grid;
+  gap: 4px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+}
+
+.mysql-context-item {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #d9e4fb;
+  text-align: left;
   font-size: 12px;
-  line-height: 1;
-  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  border-radius: 6px;
+  padding: 6px 8px;
 }
 
-.workspace.zk-page.redis-page .zk-browser-header input::placeholder {
-  color: #7f8ea8;
+.mysql-context-item:hover {
+  border-color: rgba(79, 131, 255, 0.45);
+  background: rgba(40, 57, 87, 0.45);
 }
 
-.workspace.zk-page.redis-page .zk-browser-header input:hover {
-  border-color: rgba(98, 116, 149, 0.95);
-  background: rgba(21, 30, 44, 0.92);
-}
-
-.workspace.zk-page.redis-page .zk-browser-header input:focus {
-  outline: none;
-  border-color: rgba(79, 131, 255, 0.78);
-  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+.mysql-context-item.danger {
+  color: #ffb3bf;
 }
 
 .zk-browser-body {
@@ -456,66 +460,6 @@
   color: #d3ddf3;
 }
 
-.workspace.zk-page.redis-page .terminal-layout {
-  flex: 1 1 auto;
-  min-height: 0;
-  height: 0;
-}
-
-.workspace.zk-page.redis-page .redis-layout-splitter {
-  margin: 0;
-}
-
-.workspace.zk-page.redis-page .redis-resizable-modal {
-  width: min(560px, calc(100vw - 32px));
-  min-width: 360px;
-  min-height: 240px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100vh - 32px);
-  resize: both;
-  overflow: auto;
-}
-
-.workspace.zk-page.redis-page .redis-conn-line {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.workspace.zk-page.redis-page .redis-conn-main {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
-  gap: 8px;
-}
-
-.workspace.zk-page.redis-page .redis-conn-host {
-  min-width: 0;
-}
-
-.workspace.zk-page.redis-page .redis-db-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  padding: 0 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(79, 131, 255, 0.5);
-  color: #a9c3ff;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.workspace.zk-page.redis-page .redis-conn-actions {
-  justify-content: flex-start;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding: 0 10px 8px;
-}
-
-.workspace.zk-page.redis-page .redis-conn-actions .btn {
-  width: auto;
-  min-width: 0;
-  padding: 4px 8px;
-  font-size: 11px;
-  white-space: nowrap;
-}
 
 .redis-db-options {
   display: grid;

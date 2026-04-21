@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { downloadSftpFile, testZookeeperConnection, uploadSftpFile } from "../services/bridge";
 import type {
+  MySqlConnection,
   RedisConnection,
   Session,
   ZookeeperConnection,
@@ -12,6 +13,7 @@ import { useSessionPing } from "./useSessionPing";
 import { useRedisActions } from "./useRedisActions";
 import { useSessionActions } from "./useSessionActions";
 import { useZookeeperActions } from "./useZookeeperActions";
+import { useMysqlActions } from "./useMysqlActions";
 import { useSftpState } from "./useSftpState";
 import { useTerminalOutput } from "./useTerminalOutput";
 import { useUpdater } from "./useUpdater";
@@ -25,11 +27,13 @@ export function useAppShell() {
   const [lang, setLang] = useState<Lang>(() => detectInitialLang());
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper" | "redis">("home");
+  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper" | "redis" | "mysql" | "mysqlData">("home");
   const [zkConnections, setZkConnections] = useState<ZookeeperConnection[]>([]);
   const [redisConnections, setRedisConnections] = useState<RedisConnection[]>([]);
   const [selectedZkId, setSelectedZkId] = useState<string | undefined>();
   const [selectedRedisId, setSelectedRedisId] = useState<string | undefined>();
+  const [mysqlConnections, setMysqlConnections] = useState<MySqlConnection[]>([]);
+  const [selectedMysqlId, setSelectedMysqlId] = useState<string | undefined>();
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
@@ -226,6 +230,21 @@ export function useAppShell() {
     tr,
   });
 
+  const {
+    create: createMysql,
+    update: updateMysql,
+    remove: removeMysql,
+    getSecret: getMysqlSecret,
+  } = useMysqlActions({
+    connections: mysqlConnections,
+    setConnections: setMysqlConnections,
+    selectedId: selectedMysqlId,
+    setSelectedId: setSelectedMysqlId,
+    setStatus,
+    setError,
+    tr,
+  });
+
   const testZkConnection = useCallback(async (input: ZookeeperConnectionInput, secret?: string) => {
     await testZookeeperConnection(input.connect_string, input.session_timeout_ms, secret);
   }, []);
@@ -254,6 +273,9 @@ export function useAppShell() {
     redisConnections,
     selectedRedisId,
     setSelectedRedisId,
+    mysqlConnections,
+    selectedMysqlId,
+    setSelectedMysqlId,
     status,
     error,
     setError,
@@ -292,6 +314,10 @@ export function useAppShell() {
     updateRedis,
     removeRedis,
     getRedisSecret,
+    createMysql,
+    updateMysql,
+    removeMysql,
+    getMysqlSecret,
     reachabilityMap,
     refreshBusy,
     refreshReachability,

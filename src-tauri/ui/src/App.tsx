@@ -6,6 +6,7 @@ import { UpgradeConfirmModal } from "./components/UpgradeConfirmModal";
 import { CloseConfirmModal } from "./components/CloseConfirmModal";
 import { I18nProvider } from "./i18n-context";
 import { AppRedisSection } from "./app/AppRedisSection";
+import { AppMySqlSection } from "./app/AppMySqlSection";
 import { useAppShell } from "./hooks/useAppShell";
 import { CommandPaletteModal, type CommandPaletteItem } from "./components/CommandPaletteModal";
 import { useEffect, useMemo, useState } from "react";
@@ -26,6 +27,9 @@ export default function App() {
     redisConnections,
     selectedRedisId,
     setSelectedRedisId,
+    mysqlConnections,
+    selectedMysqlId,
+    setSelectedMysqlId,
     status,
     error,
     setError,
@@ -63,6 +67,10 @@ export default function App() {
     updateRedis,
     removeRedis,
     getRedisSecret,
+    createMysql,
+    updateMysql,
+    removeMysql,
+    getMysqlSecret,
     reachabilityMap,
     refreshBusy,
     refreshReachability,
@@ -123,6 +131,12 @@ export default function App() {
       label: "打开 Redis",
       keywords: ["redis", "cache", "kv", "redis页"],
       run: () => setCurrentPage("redis"),
+    });
+    items.push({
+      id: "nav:mysql",
+      label: "打开 MySQL",
+      keywords: ["mysql", "sql", "database", "mysql页"],
+      run: () => setCurrentPage("mysql"),
     });
 
     if (currentPage === "home") {
@@ -291,6 +305,7 @@ export default function App() {
             onRefreshHostStatus={refreshReachability}
             onOpenZookeeper={() => setCurrentPage("zookeeper")}
             onOpenRedis={() => setCurrentPage("redis")}
+            onOpenMysql={() => setCurrentPage("mysql")}
             tr={tr}
           />
         ) : currentPage === "terminal" ? (
@@ -353,7 +368,7 @@ export default function App() {
             onBack={() => setCurrentPage("home")}
             tr={tr}
           />
-        ) : (
+        ) : currentPage === "redis" ? (
           <AppRedisSection
             connections={redisConnections}
             selectedId={selectedRedisId}
@@ -365,6 +380,21 @@ export default function App() {
             onUpdate={updateRedis}
             onDelete={removeRedis}
             onGetSecret={getRedisSecret}
+            onBack={() => setCurrentPage("home")}
+            tr={tr}
+          />
+        ) : (
+          <AppMySqlSection
+            connections={mysqlConnections}
+            selectedId={selectedMysqlId}
+            status={status}
+            error={error}
+            onDismissError={() => setError(null)}
+            onSelect={setSelectedMysqlId}
+            onCreate={createMysql}
+            onUpdate={updateMysql}
+            onDelete={removeMysql}
+            onGetSecret={getMysqlSecret}
             onBack={() => setCurrentPage("home")}
             tr={tr}
           />

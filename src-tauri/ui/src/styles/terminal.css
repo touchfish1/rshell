@@ -6,3 +6,6 @@
 @import "./terminal/overlays.css";
 @import "./terminal/feedback.css";
 @import "./terminal/zookeeper.css";
+@import "./terminal/redis.css";
+@import "./terminal/mysql.css";
+@import "./terminal/mysql-data.css";

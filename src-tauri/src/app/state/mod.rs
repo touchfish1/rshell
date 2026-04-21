@@ -12,7 +12,9 @@ mod ssh_helpers;
 mod terminal_io;
 mod redis;
 mod zookeeper;
+mod mysql;
 pub use self::sftp::SftpTextReadResult;
+pub use self::mysql::{MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo};
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -21,6 +23,7 @@ use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::domain::session::Session;
+use crate::domain::mysql::MySqlConnection;
 use crate::domain::terminal::TerminalClient;
 use crate::domain::redis::RedisConnection;
 use crate::domain::zookeeper::ZookeeperConnection;
@@ -47,6 +50,10 @@ pub struct ActiveZookeeper {
 /// 已连接的 Redis 客户端（复用配置，按需获取连接）。
 pub struct ActiveRedis {
     pub client: ::redis::Client,
+}
+
+pub struct ActiveMySql {
+    pub pool: sqlx::MySqlPool,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -85,6 +92,10 @@ pub struct AppState {
     active_zookeeper: Arc<Mutex<HashMap<Uuid, Arc<ActiveZookeeper>>>>,
     /// 已建立 Redis 连接：`conn_id ->` 活跃客户端
     active_redis: Arc<Mutex<HashMap<Uuid, Arc<ActiveRedis>>>>,
+    /// MySQL 连接列表（与磁盘同步）
+    mysql_connections: Arc<Mutex<Vec<MySqlConnection>>>,
+    /// 已建立 MySQL 连接：`conn_id ->` 活跃连接池
+    active_mysql: Arc<Mutex<HashMap<Uuid, Arc<ActiveMySql>>>>,
     /// 审计：每个会话的输入解析状态
     audit_input_buffers: Arc<Mutex<HashMap<Uuid, AuditInputState>>>,
 }
@@ -95,14 +106,17 @@ impl Default for AppState {
         let sessions = store.list().unwrap_or_default();
         let zookeeper_connections = store.list_zk().unwrap_or_default();
         let redis_connections = store.list_redis().unwrap_or_default();
+        let mysql_connections = store.list_mysql().unwrap_or_default();
         Self {
             store,
             sessions: Arc::new(Mutex::new(sessions)),
             zookeeper_connections: Arc::new(Mutex::new(zookeeper_connections)),
             redis_connections: Arc::new(Mutex::new(redis_connections)),
+            mysql_connections: Arc::new(Mutex::new(mysql_connections)),
             active: Arc::new(Mutex::new(HashMap::new())),
             active_zookeeper: Arc::new(Mutex::new(HashMap::new())),
             active_redis: Arc::new(Mutex::new(HashMap::new())),
+            active_mysql: Arc::new(Mutex::new(HashMap::new())),
             audit_input_buffers: Arc::new(Mutex::new(HashMap::new())),
         }
     }

@@ -1,6 +1,6 @@
 [package]
 name = "rshell"
-version = "0.1.28"
+version = "0.1.29"
 edition = "2021"
 
 [dependencies]
@@ -23,6 +23,8 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time"
 uuid = { version = "1", features = ["v4", "serde"] }
 zookeeper-client = { version = "0.11.1", features = ["tokio"] }
 java-serialization = "0.1.0"
+sqlx = { version = "0.8", features = ["runtime-tokio-rustls", "mysql"] }
+urlencoding = "2"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

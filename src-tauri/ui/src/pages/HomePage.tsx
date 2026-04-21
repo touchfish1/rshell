@@ -59,6 +59,7 @@ interface Props {
   onRefreshHostStatus: () => void;
   onOpenZookeeper: () => void;
   onOpenRedis: () => void;
+  onOpenMysql: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -105,6 +106,7 @@ export default function HomePage({
   onRefreshHostStatus,
   onOpenZookeeper,
   onOpenRedis,
+  onOpenMysql,
   tr,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
@@ -163,6 +165,9 @@ export default function HomePage({
           </button>
           <button className="btn btn-ghost" onClick={onOpenRedis}>
             {tr("home.redis")}
+          </button>
+          <button className="btn btn-ghost" onClick={onOpenMysql}>
+            {tr("home.mysql")}
           </button>
           <span className={connected ? "pill pill-ok" : "pill"}>
             {connected ? tr("top.online") : tr("top.offline")}

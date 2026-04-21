@@ -57,6 +57,7 @@ interface AppHomeSectionProps {
   onRefreshHostStatus: () => void;
   onOpenZookeeper: () => void;
   onOpenRedis: () => void;
+  onOpenMysql: () => void;
   tr: TranslateFn;
 }
 

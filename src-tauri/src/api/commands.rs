@@ -10,6 +10,7 @@ mod command_sanitize;
 mod audit;
 mod common;
 mod metrics;
+mod mysql;
 mod reachability;
 mod redis;
 mod sessions;
@@ -20,7 +21,8 @@ mod zookeeper;
 
 use tauri::{AppHandle, State};
 
-use crate::app::{AppState, AuditRecord, HostMetrics, SftpEntry, SftpTextReadResult};
+use crate::app::{AppState, AuditRecord, HostMetrics, MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo, SftpEntry, SftpTextReadResult};
+use crate::domain::mysql::{MySqlConnection, MySqlConnectionInput};
 use crate::domain::session::{Session, SessionInput};
 use crate::domain::redis::{RedisConnection, RedisConnectionInput};
 use crate::domain::zookeeper::{ZookeeperConnection, ZookeeperConnectionInput};
@@ -435,4 +437,119 @@ pub async fn redis_set_ttl(
     ttl_seconds: Option<i64>,
 ) -> Result<(), String> {
     redis::redis_set_ttl(state, id, key_base64, ttl_seconds).await
+}
+
+#[tauri::command]
+pub async fn list_mysql_connections(state: State<'_, AppState>) -> Result<Vec<MySqlConnection>, String> {
+    mysql::list_mysql_connections(state).await
+}
+
+#[tauri::command]
+pub async fn create_mysql_connection(
+    state: State<'_, AppState>,
+    input: MySqlConnectionInput,
+    secret: Option<String>,
+) -> Result<MySqlConnection, String> {
+    mysql::create_mysql_connection(state, input, secret).await
+}
+
+#[tauri::command]
+pub async fn update_mysql_connection(
+    state: State<'_, AppState>,
+    id: String,
+    input: MySqlConnectionInput,
+    secret: Option<String>,
+) -> Result<MySqlConnection, String> {
+    mysql::update_mysql_connection(state, id, input, secret).await
+}
+
+#[tauri::command]
+pub async fn delete_mysql_connection(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    mysql::delete_mysql_connection(state, id).await
+}
+
+#[tauri::command]
+pub async fn get_mysql_secret(state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+    mysql::get_mysql_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn connect_mysql(
+    state: State<'_, AppState>,
+    id: String,
+    secret: Option<String>,
+) -> Result<(), String> {
+    mysql::connect_mysql(state, id, secret).await
+}
+
+#[tauri::command]
+pub async fn test_mysql_connection(
+    host: String,
+    port: Option<u16>,
+    username: String,
+    database: Option<String>,
+    secret: Option<String>,
+) -> Result<(), String> {
+    mysql::test_mysql_connection(host, port, username, database, secret).await
+}
+
+#[tauri::command]
+pub async fn disconnect_mysql(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    mysql::disconnect_mysql(state, id).await
+}
+
+#[tauri::command]
+pub async fn mysql_list_databases(state: State<'_, AppState>, id: String) -> Result<Vec<String>, String> {
+    mysql::mysql_list_databases(state, id).await
+}
+
+#[tauri::command]
+pub async fn mysql_list_tables(
+    state: State<'_, AppState>,
+    id: String,
+    schema: String,
+) -> Result<Vec<MySqlTableInfo>, String> {
+    mysql::mysql_list_tables(state, id, schema).await
+}
+
+#[tauri::command]
+pub async fn mysql_list_columns(
+    state: State<'_, AppState>,
+    id: String,
+    schema: String,
+    table: String,
+) -> Result<Vec<MySqlColumnInfo>, String> {
+    mysql::mysql_list_columns(state, id, schema, table).await
+}
+
+#[tauri::command]
+pub async fn mysql_execute_query(
+    state: State<'_, AppState>,
+    id: String,
+    sql: String,
+    limit: Option<u64>,
+    offset: Option<u64>,
+) -> Result<MySqlQueryResult, String> {
+    mysql::mysql_execute_query(state, id, sql, limit, offset).await
+}
+
+#[tauri::command]
+pub async fn mysql_explain_query(
+    state: State<'_, AppState>,
+    id: String,
+    sql: String,
+) -> Result<MySqlQueryResult, String> {
+    mysql::mysql_explain_query(state, id, sql).await
+}
+
+#[tauri::command]
+pub async fn mysql_alter_table_add_column(
+    state: State<'_, AppState>,
+    id: String,
+    schema: String,
+    table: String,
+    column_name: String,
+    column_type: String,
+) -> Result<(), String> {
+    mysql::mysql_alter_table_add_column(state, id, schema, table, column_name, column_type).await
 }

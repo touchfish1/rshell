@@ -564,24 +564,183 @@ html[data-theme="light"] .zk-browser-header {
   background: #ffffff;
 }
 
-html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input {
+html[data-theme="light"] .workspace.redis-page .zk-browser-header input {
   border-color: #c5cedd;
   background: #ffffff;
   color: #0f172a;
 }
 
-html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input::placeholder {
+html[data-theme="light"] .workspace.redis-page .zk-browser-header input::placeholder {
   color: #64748b;
 }
 
-html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input:hover {
+html[data-theme="light"] .workspace.redis-page .zk-browser-header input:hover {
   border-color: #aebad0;
   background: #f8fafc;
 }
 
-html[data-theme="light"] .workspace.zk-page.redis-page .zk-browser-header input:focus {
+html[data-theme="light"] .workspace.redis-page .zk-browser-header input:focus {
   border-color: rgba(37, 99, 235, 0.6);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-field {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-field::placeholder {
+  color: #64748b;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-field:hover {
+  border-color: #aebad0;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-field:focus {
+  border-color: rgba(37, 99, 235, 0.6);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-select {
+  background-image: linear-gradient(45deg, transparent 50%, #6880ad 50%), linear-gradient(135deg, #6880ad 50%, transparent 50%);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-connections-header {
+  color: #667a9d;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-connection-card {
+  border-color: #ccd6e8;
+  background: #f8fbff;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-connection-card:hover {
+  border-color: #a7bbdd;
+  background: #f1f6ff;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-connection-card.is-selected {
+  border-color: rgba(37, 99, 235, 0.62);
+  background: rgba(219, 234, 254, 0.75);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-connection-name {
+  color: #16233a;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-connection-meta {
+  color: #5f7396;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-db-tree {
+  border-left-color: #b8c6df;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-db-node {
+  border-color: #cad5e9;
+  background: #f7faff;
+  color: #486289;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-db-node.is-selected {
+  border-color: rgba(37, 99, 235, 0.62);
+  background: rgba(219, 234, 254, 0.78);
+  color: #163060;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-toolbar-label {
+  border-color: #c9d4e8;
+  background: #f7faff;
+  color: #274166;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-table-item {
+  border-color: #cad5e9;
+  background: #f8fbff;
+  color: #1d2f4d;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-table-item:hover {
+  border-color: #abc0e0;
+  background: #f0f6ff;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-table-item.is-selected {
+  border-color: rgba(37, 99, 235, 0.62);
+  background: rgba(219, 234, 254, 0.78);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-table-empty {
+  color: #6f85ab;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-panel {
+  border-color: #cad5e9;
+  background: #f8fbff;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-tabs {
+  border-bottom-color: #cad5e9;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-tab {
+  border-color: #cad5e9;
+  background: #ffffff;
+  color: #1e3254;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-tab.is-selected {
+  border-color: rgba(37, 99, 235, 0.62);
+  background: rgba(219, 234, 254, 0.78);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-tab-close {
+  color: #6f85ab;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-grid th,
+html[data-theme="light"] .workspace.mysql-page .mysql-data-grid td {
+  border-color: #cad5e9;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-grid th {
+  background: #eef4ff;
+  color: #1a3156;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-grid td {
+  color: #243a5f;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-h-scroll {
+  border-top-color: #cad5e9;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-summary {
+  color: #5f789f;
+}
+
+html[data-theme="light"] .mysql-context-menu {
+  border-color: #c8d4e8;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 8px 24px rgba(18, 34, 63, 0.18);
+}
+
+html[data-theme="light"] .mysql-context-item {
+  color: #1c3254;
+}
+
+html[data-theme="light"] .mysql-context-item:hover {
+  border-color: rgba(37, 99, 235, 0.42);
+  background: rgba(219, 234, 254, 0.72);
+}
+
+html[data-theme="light"] .mysql-context-item.danger {
+  color: #b4233f;
 }
 
 html[data-theme="light"] .zk-tree,

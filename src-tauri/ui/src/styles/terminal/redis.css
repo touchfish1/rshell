@@ -1,0 +1,100 @@
+.workspace.redis-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+}
+
+.workspace.redis-page .terminal-layout {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 0;
+}
+
+.workspace.redis-page .redis-layout-splitter {
+  margin: 0;
+}
+
+.workspace.redis-page .redis-resizable-modal {
+  width: min(560px, calc(100vw - 32px));
+  min-width: 360px;
+  min-height: 240px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  resize: both;
+  overflow: auto;
+}
+
+/* Redis 顶部搜索输入（复用原暗色输入风格） */
+.workspace.redis-page .zk-browser-header input {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(66, 77, 102, 0.95);
+  border-radius: 8px;
+  background: rgba(17, 24, 36, 0.9);
+  color: #dbe4f5;
+  font-size: 12px;
+  line-height: 1;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+}
+
+.workspace.redis-page .zk-browser-header input::placeholder {
+  color: #7f8ea8;
+}
+
+.workspace.redis-page .zk-browser-header input:hover {
+  border-color: rgba(98, 116, 149, 0.95);
+  background: rgba(21, 30, 44, 0.92);
+}
+
+.workspace.redis-page .zk-browser-header input:focus {
+  outline: none;
+  border-color: rgba(79, 131, 255, 0.78);
+  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+}
+
+/* 连接列表压缩版布局优化（原来在混合 css 里） */
+.workspace.redis-page .redis-conn-line {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workspace.redis-page .redis-conn-main {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.workspace.redis-page .redis-conn-host {
+  min-width: 0;
+}
+
+.workspace.redis-page .redis-db-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(79, 131, 255, 0.5);
+  color: #a9c3ff;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.workspace.redis-page .redis-conn-actions {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px 8px;
+}
+
+.workspace.redis-page .redis-conn-actions .btn {
+  width: auto;
+  min-width: 0;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+

@@ -86,6 +86,20 @@ fn main() {
             api::commands::redis_get_key_data,
             api::commands::redis_set_key_data,
             api::commands::redis_set_ttl,
+            api::commands::list_mysql_connections,
+            api::commands::create_mysql_connection,
+            api::commands::update_mysql_connection,
+            api::commands::delete_mysql_connection,
+            api::commands::get_mysql_secret,
+            api::commands::connect_mysql,
+            api::commands::test_mysql_connection,
+            api::commands::disconnect_mysql,
+            api::commands::mysql_list_databases,
+            api::commands::mysql_list_tables,
+            api::commands::mysql_list_columns,
+            api::commands::mysql_execute_query,
+            api::commands::mysql_explain_query,
+            api::commands::mysql_alter_table_add_column,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

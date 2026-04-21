@@ -153,7 +153,7 @@ export default function RedisPage({
   );
 
   return (
-    <section className="workspace zk-page redis-page" ref={redisPageRef}>
+    <section className="workspace redis-page" ref={redisPageRef}>
       <RedisHeader
         tr={tr}
         selected={selected}

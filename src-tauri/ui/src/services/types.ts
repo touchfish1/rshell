@@ -1,4 +1,4 @@
-export type Protocol = "ssh" | "telnet" | "zookeeper" | "redis";
+export type Protocol = "ssh" | "telnet" | "zookeeper" | "redis" | "mysql";
 
 /** 终端标签与后端的链路状态（用于加载态、失败重试、断开提示） */
 export type TabLinkState = "connecting" | "ready" | "failed";
@@ -159,3 +159,41 @@ export type RedisValueUpdate =
   | { kind: "list"; items: string[] }
   | { kind: "set"; members: string[] }
   | { kind: "zset"; entries: RedisZsetEntry[] };
+
+export interface MySqlConnection {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  database?: string | null;
+}
+
+export interface MySqlConnectionInput {
+  name: string;
+  host: string;
+  port?: number;
+  username: string;
+  database?: string | null;
+}
+
+export interface MySqlTableInfo {
+  schema: string;
+  name: string;
+  table_type: string;
+}
+
+export interface MySqlColumnInfo {
+  name: string;
+  column_type: string;
+  is_nullable: boolean;
+  column_key: string;
+  extra: string;
+  default_value?: string | null;
+}
+
+export interface MySqlQueryResult {
+  columns: string[];
+  rows: Array<Array<string | null>>;
+  affected_rows: number;
+}
