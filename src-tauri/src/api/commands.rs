@@ -529,8 +529,9 @@ pub async fn mysql_execute_query(
     sql: String,
     limit: Option<u64>,
     offset: Option<u64>,
+    schema: Option<String>,
 ) -> Result<MySqlQueryResult, String> {
-    mysql::mysql_execute_query(state, id, sql, limit, offset).await
+    mysql::mysql_execute_query(state, id, sql, limit, offset, schema).await
 }
 
 #[tauri::command]

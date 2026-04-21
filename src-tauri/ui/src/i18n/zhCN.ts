@@ -337,6 +337,7 @@ export const zhCN: Dict = {
   "redis.error.noConnectionSelected": "未选择 Redis 连接",
   "mysql.page.title": "MySQL",
   "mysql.page.addConnection": "新增连接",
+  "mysql.page.newQuery": "新增查询",
   "mysql.page.disconnect": "断开",
   "mysql.page.noSelection": "未选择 MySQL 连接",
   "mysql.page.refreshSchema": "刷新结构",

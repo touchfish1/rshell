@@ -338,6 +338,7 @@ export const enUS: Dict = {
   "redis.error.noConnectionSelected": "No Redis connection selected",
   "mysql.page.title": "MySQL",
   "mysql.page.addConnection": "Add connection",
+  "mysql.page.newQuery": "New Query",
   "mysql.page.disconnect": "Disconnect",
   "mysql.page.noSelection": "No MySQL connection selected",
   "mysql.page.refreshSchema": "Refresh schema",

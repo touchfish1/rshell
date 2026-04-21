@@ -10,6 +10,9 @@ type DataTab = {
   table: string;
   columns: string[];
   rows: Array<Array<string | null>>;
+  page: number;
+  pageSize: number;
+  totalRows: number;
   filterText: string;
   loading: boolean;
   error?: string;
@@ -26,6 +29,7 @@ interface Props {
 }
 
 export default function MySqlDataPage({ connection, schema, table, error, onDismissError, onBack }: Props) {
+  const PAGE_SIZE = 100;
   const [tabs, setTabs] = useState<DataTab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
@@ -40,20 +44,60 @@ export default function MySqlDataPage({ connection, schema, table, error, onDism
     );
   }, [activeTab]);
 
-  const quote = (value: string) => `\`${value.replaceAll("`", "``")}\``;
+  const quote = (value: string) => `\`${value.replace(/`/g, "``")}\``;
+
+  const loadTabPage = async (id: string, schemaName: string, tableName: string, page: number) => {
+    if (!connection) return;
+    const offset = page * PAGE_SIZE;
+    setTabs((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, loading: true, error: undefined } : item))
+    );
+    try {
+      await connectMySql(connection.id);
+      const query = `SELECT * FROM ${quote(schemaName)}.${quote(tableName)} LIMIT ${PAGE_SIZE} OFFSET ${offset}`;
+      const data = await mySqlExecuteQuery(connection.id, query, PAGE_SIZE, offset);
+      setTabs((prev) =>
+        prev.map((item) =>
+          item.id === id
+            ? { ...item, columns: data.columns, rows: data.rows, page, loading: false, error: undefined }
+            : item
+        )
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setTabs((prev) => prev.map((item) => (item.id === id ? { ...item, loading: false, error: message } : item)));
+      setLocalError(message);
+    }
+  };
 
   const openTab = async (schemaName: string, tableName: string) => {
     if (!connection) return;
     const id = `${schemaName}.${tableName}.${Date.now()}`;
     setActiveTabId(id);
-    setTabs((prev) => [...prev, { id, schema: schemaName, table: tableName, columns: [], rows: [], filterText: "", loading: true }]);
+    setTabs((prev) => [
+      ...prev,
+      {
+        id,
+        schema: schemaName,
+        table: tableName,
+        columns: [],
+        rows: [],
+        page: 0,
+        pageSize: PAGE_SIZE,
+        totalRows: 0,
+        filterText: "",
+        loading: true,
+      },
+    ]);
     try {
       await connectMySql(connection.id);
-      const query = `SELECT * FROM ${quote(schemaName)}.${quote(tableName)} LIMIT 100`;
-      const data = await mySqlExecuteQuery(connection.id, query, 100, 0);
+      const countQuery = `SELECT CAST(COUNT(*) AS CHAR) AS total_count FROM ${quote(schemaName)}.${quote(tableName)}`;
+      const countResult = await mySqlExecuteQuery(connection.id, countQuery, 1, 0);
+      const totalRows = Number(countResult.rows?.[0]?.[0] ?? 0) || 0;
       setTabs((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, columns: data.columns, rows: data.rows, loading: false } : item))
+        prev.map((item) => (item.id === id ? { ...item, totalRows } : item))
       );
+      await loadTabPage(id, schemaName, tableName, 0);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setTabs((prev) => prev.map((item) => (item.id === id ? { ...item, loading: false, error: message } : item)));
@@ -119,10 +163,34 @@ export default function MySqlDataPage({ connection, schema, table, error, onDism
               </div>
               <div className="mysql-data-summary">
                 {activeTab.rows.length > 0
-                  ? `已加载 ${activeTab.rows.length} 行，筛选后 ${filteredRows.length} 行`
+                  ? `第 ${activeTab.page + 1} 页，已加载 ${activeTab.rows.length} 行，筛选后 ${filteredRows.length} 行`
                   : "当前表暂无数据（0 行）"}
               </div>
             </div>
+            {activeTab.totalRows > activeTab.pageSize ? (
+              <div className="mysql-data-tools" style={{ justifyContent: "flex-end", marginBottom: 8 }}>
+                <button
+                  className="btn btn-ghost"
+                  disabled={activeTab.loading || activeTab.page <= 0}
+                  onClick={() => void loadTabPage(activeTab.id, activeTab.schema, activeTab.table, activeTab.page - 1)}
+                >
+                  上一页
+                </button>
+                <span className="mysql-data-summary" style={{ minWidth: 140, textAlign: "center" }}>
+                  {activeTab.page + 1} / {Math.max(1, Math.ceil(activeTab.totalRows / activeTab.pageSize))} 页
+                </span>
+                <button
+                  className="btn btn-ghost"
+                  disabled={
+                    activeTab.loading ||
+                    (activeTab.page + 1) * activeTab.pageSize >= activeTab.totalRows
+                  }
+                  onClick={() => void loadTabPage(activeTab.id, activeTab.schema, activeTab.table, activeTab.page + 1)}
+                >
+                  下一页
+                </button>
+              </div>
+            ) : null}
             {activeTab.loading ? <div className="mysql-table-empty">加载数据中...</div> : null}
             {activeTab.error ? <div className="mysql-table-empty">{activeTab.error}</div> : null}
             {!activeTab.loading && !activeTab.error ? (

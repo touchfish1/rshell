@@ -202,6 +202,21 @@
   min-width: 52px;
 }
 
+/* 首页顶栏按钮统一为紧凑尺寸（与颜色主题切换分段一致） */
+.workspace.home-page .topbar .actions .btn,
+.workspace.home-page .topbar .actions .pill {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 8px;
+}
+
+.workspace.home-page .topbar .actions .lang-switch .btn {
+  min-width: 46px;
+  padding: 0 10px;
+}
+
 .lang-switch .lang-active {
   border-color: rgba(79, 131, 255, 0.8);
   background: rgba(28, 47, 80, 0.7);

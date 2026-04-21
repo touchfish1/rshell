@@ -218,19 +218,38 @@ impl AppState {
         &self,
         id: Uuid,
         sql: String,
-        limit: Option<u64>,
-        offset: Option<u64>,
+        _limit: Option<u64>,
+        _offset: Option<u64>,
+        schema: Option<String>,
     ) -> Result<MySqlQueryResult, String> {
         let pool = self.ensure_mysql_pool(id).await?;
+        let mut conn = pool.acquire().await.map_err(|e| e.to_string())?;
+        if let Some(schema_name) = schema {
+            let trimmed_schema = schema_name.trim();
+            if !trimmed_schema.is_empty() {
+                let escaped = trimmed_schema.replace('`', "``");
+                let use_sql = format!("USE `{escaped}`");
+                conn.execute(use_sql.as_str())
+                    .await
+                    .map_err(|e| e.to_string())?;
+            }
+        }
         let trimmed = sql.trim().to_lowercase();
-        let query_sql = if trimmed.starts_with("select") && !trimmed.contains(" limit ") {
-            format!("{} LIMIT {} OFFSET {}", sql, limit.unwrap_or(200), offset.unwrap_or(0))
-        } else {
-            sql
-        };
+        if trimmed.starts_with("use ") {
+            // `USE db` is not supported by MySQL prepared statements.
+            // Execute it as a raw text query.
+            conn.execute(sql.as_str())
+                .await
+                .map_err(|e| e.to_string())?;
+            return Ok(MySqlQueryResult {
+                columns: vec![],
+                rows: vec![],
+                affected_rows: 0,
+            });
+        }
         if trimmed.starts_with("select") || trimmed.starts_with("show") || trimmed.starts_with("desc") {
-            let rows = sqlx::query(&query_sql)
-                .fetch_all(&pool)
+            let rows = sqlx::query(&sql)
+                .fetch_all(&mut *conn)
                 .await
                 .map_err(|e| e.to_string())?;
             let columns = rows
@@ -256,8 +275,8 @@ impl AppState {
                 affected_rows: 0,
             });
         }
-        let result = pool
-            .execute(sqlx::query(&query_sql))
+        let result = conn
+            .execute(sqlx::query(&sql))
             .await
             .map_err(|e| e.to_string())?;
         Ok(MySqlQueryResult {
@@ -268,7 +287,7 @@ impl AppState {
     }
 
     pub async fn mysql_explain_query(&self, id: Uuid, sql: String) -> Result<MySqlQueryResult, String> {
-        self.mysql_execute_query(id, format!("EXPLAIN {sql}"), Some(200), Some(0))
+        self.mysql_execute_query(id, format!("EXPLAIN {sql}"), None, None, None)
             .await
     }
 

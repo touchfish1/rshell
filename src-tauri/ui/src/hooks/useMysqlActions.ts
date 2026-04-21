@@ -25,7 +25,6 @@ export function useMysqlActions(opts: {
     void listMySqlConnections()
       .then((data) => {
         setConnections(data);
-        if (data.length > 0) setSelectedId(data[0].id);
       })
       .catch((err) => {
         const message = err instanceof Error ? err.message : String(err);
@@ -67,7 +66,7 @@ export function useMysqlActions(opts: {
       await deleteMySqlConnection(id);
       const next = connections.filter((c) => c.id !== id);
       setConnections(next);
-      if (selectedId === id) setSelectedId(next[0]?.id);
+      if (selectedId === id) setSelectedId(undefined);
       setStatus(tr("status.deletedMysql"));
       setError(null);
     } catch (err) {

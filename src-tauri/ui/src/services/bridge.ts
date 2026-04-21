@@ -360,9 +360,10 @@ export async function mySqlExecuteQuery(
   id: string,
   sql: string,
   limit = 200,
-  offset = 0
+  offset = 0,
+  schema?: string
 ): Promise<MySqlQueryResult> {
-  return invoke("mysql_execute_query", { id, sql, limit, offset });
+  return invoke("mysql_execute_query", { id, sql, limit, offset, schema: schema ?? null });
 }
 
 export async function mySqlExplainQuery(id: string, sql: string): Promise<MySqlQueryResult> {

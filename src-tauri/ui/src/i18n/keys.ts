@@ -329,6 +329,7 @@ export type I18nKey =
   | "redis.error.noConnectionSelected"
   | "mysql.page.title"
   | "mysql.page.addConnection"
+  | "mysql.page.newQuery"
   | "mysql.page.disconnect"
   | "mysql.page.noSelection"
   | "mysql.page.refreshSchema"

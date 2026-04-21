@@ -33,9 +33,10 @@ pub async fn mysql_execute_query(
     sql: String,
     limit: Option<u64>,
     offset: Option<u64>,
+    schema: Option<String>,
 ) -> Result<MySqlQueryResult, String> {
     let id = Uuid::parse_str(&id).map_err(|e| e.to_string())?;
-    state.mysql_execute_query(id, sql, limit, offset).await
+    state.mysql_execute_query(id, sql, limit, offset, schema).await
 }
 
 pub async fn mysql_explain_query(

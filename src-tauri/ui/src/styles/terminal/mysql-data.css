@@ -26,13 +26,118 @@
 
 .workspace.mysql-page .mysql-data-view .mysql-data-filter-bar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-direction: column;
   gap: 8px;
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-data-filter-select {
   flex: 0 0 180px;
   min-width: 160px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-list {
+  display: grid;
+  gap: 8px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-row {
+  display: grid;
+  grid-template-columns: 220px 110px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-row .mysql-field {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-op {
+  min-width: 90px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-row .btn {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-filter-actions .btn {
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-query-editor-wrap {
+  position: relative;
+  gap: 10px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-query-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-query-editor {
+  width: 100%;
+  min-height: 150px;
+  height: 150px;
+  padding: 10px;
+  line-height: 1.4;
+  font-family: Consolas, "Courier New", monospace;
+  resize: vertical;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-sql-suggest-list {
+  position: absolute;
+  z-index: 20;
+  min-width: 220px;
+  display: grid;
+  gap: 4px;
+  max-height: 160px;
+  overflow: auto;
+  border: none;
+  border-radius: 10px;
+  background: rgba(12, 18, 30, 0.94);
+  padding: 4px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-sql-suggest-list::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-sql-suggest-item {
+  border: none;
+  background: rgba(26, 37, 58, 0.72);
+  color: #dbe7ff;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-sql-suggest-item:hover {
+  background: rgba(49, 69, 104, 0.88);
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-sql-suggest-item.is-active {
+  background: rgba(58, 84, 128, 0.94);
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-data-table-scroll {
@@ -73,23 +178,64 @@
   line-height: 1.35;
 }
 
-.workspace.mysql-page .mysql-data-view .mysql-data-grid th {
+.workspace.mysql-page .mysql-data-view .mysql-data-grid thead {
   position: sticky;
   top: 0;
-  background: rgba(24, 34, 51, 0.98);
-  background-clip: padding-box;
+  z-index: 8;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-data-grid th {
+  position: relative;
+  top: 0;
+  background: rgb(24, 34, 51);
+  border-top-color: rgb(24, 34, 51);
   color: #e4efff;
-  z-index: 5;
+  z-index: 7;
   padding-top: 8px;
   padding-bottom: 8px;
   line-height: 1.35;
-  box-shadow: inset 0 -1px 0 rgba(58, 69, 92, 0.82);
+  box-shadow: inset 0 -1px 0 rgba(58, 69, 92, 0.9), 0 -1px 0 rgb(24, 34, 51);
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-data-summary {
   font-size: 12px;
   color: #9fb3d8;
   margin: 2px 0 8px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-table-pagination {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 0;
+  background: linear-gradient(to top, rgba(10, 16, 28, 0.95), rgba(10, 16, 28, 0.75), transparent);
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-table-pagination-summary {
+  margin: 0 auto 0 0;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-table-pagination-text {
+  min-width: 140px;
+  text-align: center;
+  margin: 0;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-table-page-size {
+  min-width: 86px;
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.workspace.mysql-page .mysql-data-view .mysql-table-page-btn {
+  height: 28px;
+  padding: 0 9px;
+  font-size: 12px;
 }
 
 /* 兜底：即使系统隐藏原生滚动条，也尽量让表格容器的滚动条可见 */
