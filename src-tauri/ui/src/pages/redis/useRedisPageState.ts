@@ -446,7 +446,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
         setDbSwitchOptions(Array.from(map.values()).sort((a, b) => a.db - b.db));
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
-        setDbSwitchResult(`加载 DB 列表失败: ${message}`);
+        setDbSwitchResult(tr("redis.form.dbLoadFailed", { message }));
       } finally {
         setDbSwitchLoading(false);
       }
@@ -458,7 +458,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     const currentDb = Number.isFinite(dbSwitchConn.db) ? dbSwitchConn.db : 0;
     const nextDb = Number(dbSwitchValue.trim());
     if (!Number.isInteger(nextDb) || nextDb < 0) {
-      setDbSwitchResult("DB 必须是非负整数。");
+      setDbSwitchResult(tr("redis.form.dbInvalid"));
       return;
     }
     if (nextDb === currentDb) {
@@ -481,11 +481,11 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
         setEditorText("");
         setTtlInput("");
       }
-      setSaveResult(`已切换到 DB ${nextDb}`);
+      setSaveResult(tr("redis.form.dbSwitched", { db: nextDb }));
       setDbSwitchOpen(false);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      setDbSwitchResult(`切换 DB 失败: ${message}`);
+      setDbSwitchResult(tr("redis.form.dbSwitchFailed", { message }));
     } finally {
       setDbSwitchSaving(false);
     }

@@ -37,10 +37,15 @@ export function ZkConnectionEditModal({
 }: Props) {
   const { tr } = useI18n();
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [initialSecret, setInitialSecret] = useState("");
 
   useEffect(() => {
     setSubmitAttempted(false);
   }, [connection?.id]);
+  useEffect(() => {
+    if (!connection) return;
+    setInitialSecret(secret);
+  }, [connection?.id, secret, connection]);
 
   const connectError = !form.connect_string.trim()
     ? tr("modal.requiredField", { field: tr("zk.form.connectString") })
@@ -61,13 +66,26 @@ export function ZkConnectionEditModal({
   }, [testResult]);
 
   if (!connection) return null;
+  const hasDirty =
+    form.name !== connection.name ||
+    form.connect_string !== connection.connect_string ||
+    Number(form.session_timeout_ms ?? 10000) !== Number(connection.session_timeout_ms ?? 10000) ||
+    secret !== initialSecret;
+  const requestClose = () => {
+    if (!hasDirty || saving || testing) {
+      onClose();
+      return;
+    }
+    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
+    if (ok) onClose();
+  };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={requestClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr("zk.modal.editConnection")}>
         <div className="modal-header">
           <h4>{tr("zk.modal.editConnection")}</h4>
-          <button type="button" className="modal-close" onClick={onClose} title={tr("modal.close")}>
+          <button type="button" className="modal-close" onClick={requestClose} title={tr("modal.close")}>
             ×
           </button>
         </div>
@@ -112,7 +130,7 @@ export function ZkConnectionEditModal({
           </div>
         </div>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
+          <button type="button" className="btn btn-ghost" onClick={requestClose} disabled={saving}>
             {tr("modal.cancel")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onTest} disabled={!canTest}>

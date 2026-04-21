@@ -62,16 +62,24 @@ function downloadTextFile(filename: string, content: string, contentType: string
   const anchor = document.createElement("a");
   anchor.href = href;
   anchor.download = filename;
+  anchor.style.display = "none";
+  anchor.rel = "noopener";
   document.body.appendChild(anchor);
   anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(href);
+  // Some WebView runtimes (including Tauri on Windows) may cancel
+  // downloads if object URLs are revoked immediately.
+  window.setTimeout(() => {
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(href);
+  }, 1200);
 }
 
 export default function AuditLogModal({ open, loading, records, tr, onClose, onRefresh }: Props) {
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [viewType, setViewType] = useState<ViewType>("list");
   const [keyword, setKeyword] = useState("");
+  const [exporting, setExporting] = useState<"csv" | "json" | null>(null);
+  const [exportResult, setExportResult] = useState<{ kind: "success" | "error"; text: string } | null>(null);
 
   const rows = useMemo(() => {
     const key = keyword.trim().toLowerCase();
@@ -109,12 +117,30 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
     return { total, failed, zk, redis, topEvents, topHosts, dailyTrend };
   }, [rows]);
 
-  const exportJson = () => {
-    const filename = `audit-${new Date().toISOString().replace(/[:.]/g, "-")}.json`;
-    downloadTextFile(filename, JSON.stringify(rows, null, 2), "application/json;charset=utf-8");
+  const makeTimestamp = () => {
+    const now = new Date();
+    const pad = (value: number) => String(value).padStart(2, "0");
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
   };
 
-  const exportCsv = () => {
+  const sanitizeFileSegment = (input: string) =>
+    input
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9_-]/g, "")
+      .slice(0, 24);
+
+  const buildFilename = (ext: "csv" | "json") => {
+    const parts = ["audit"];
+    if (filterType !== "all") parts.push(filterType);
+    const key = sanitizeFileSegment(keyword);
+    if (key) parts.push(key);
+    parts.push(makeTimestamp());
+    return `${parts.join("-")}.${ext}`;
+  };
+
+  const buildCsvContent = () => {
     const header = ["time", "event_type", "session_name", "host", "command", "detail"];
     const escapeCsv = (value: string) => `"${value.replace(/"/g, "\"\"")}"`;
     const lines = rows.map((row) =>
@@ -129,9 +155,25 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
         .map((value) => escapeCsv(value))
         .join(",")
     );
-    const content = [header.join(","), ...lines].join("\n");
-    const filename = `audit-${new Date().toISOString().replace(/[:.]/g, "-")}.csv`;
-    downloadTextFile(filename, content, "text/csv;charset=utf-8");
+    return [header.join(","), ...lines].join("\n");
+  };
+
+  const exportRows = (format: "csv" | "json") => {
+    if (!rows.length || exporting) return;
+    setExporting(format);
+    setExportResult(null);
+    try {
+      const filename = buildFilename(format);
+      const content = format === "csv" ? buildCsvContent() : JSON.stringify(rows, null, 2);
+      const contentType = format === "csv" ? "text/csv;charset=utf-8" : "application/json;charset=utf-8";
+      downloadTextFile(filename, content, contentType);
+      setExportResult({ kind: "success", text: tr("home.auditExportSuccess", { file: filename }) });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      setExportResult({ kind: "error", text: tr("home.auditExportFailed", { message }) });
+    } finally {
+      window.setTimeout(() => setExporting(null), 220);
+    }
   };
 
   if (!open) return null;
@@ -164,7 +206,10 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
             </select>
             <input
               value={keyword}
-              onChange={(event) => setKeyword(event.target.value)}
+              onChange={(event) => {
+                setKeyword(event.target.value);
+                if (exportResult) setExportResult(null);
+              }}
               placeholder={tr("home.auditSearchPlaceholder")}
             />
           </div>
@@ -185,11 +230,38 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
             </button>
           </div>
           <div className="audit-export-actions">
-            <button type="button" className="btn btn-ghost" onClick={exportCsv} disabled={rows.length === 0}>
-              {tr("home.auditExportCsv")}
+            <div className="audit-export-meta">
+              {rows.length === 0 && (filterType !== "all" || keyword.trim()) ? (
+                <span className="audit-empty">{tr("home.auditEmptyWithFilter")}</span>
+              ) : null}
+              {exportResult ? (
+                <span className={`audit-export-feedback ${exportResult.kind === "error" ? "is-error" : "is-success"}`}>
+                  {exportResult.text}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                setFilterType("all");
+                setKeyword("");
+                setExportResult(null);
+              }}
+              disabled={filterType === "all" && keyword.trim().length === 0}
+            >
+              {tr("home.auditClearFilters")}
             </button>
-            <button type="button" className="btn btn-ghost" onClick={exportJson} disabled={rows.length === 0}>
-              {tr("home.auditExportJson")}
+            <button type="button" className="btn btn-ghost" onClick={() => exportRows("csv")} disabled={rows.length === 0 || Boolean(exporting)}>
+              {exporting === "csv" ? tr("home.auditExporting") : tr("home.auditExportCsv")}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => exportRows("json")}
+              disabled={rows.length === 0 || Boolean(exporting)}
+            >
+              {exporting === "json" ? tr("home.auditExporting") : tr("home.auditExportJson")}
             </button>
           </div>
           {viewType === "list" ? (

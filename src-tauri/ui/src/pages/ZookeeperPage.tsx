@@ -88,6 +88,8 @@ export default function ZookeeperPage({
       setTreeState((prev) => ({ ...prev, [path]: "ready" }));
     } catch (e) {
       setTreeState((prev) => ({ ...prev, [path]: "error" }));
+      const message = e instanceof Error ? e.message : String(e);
+      setSaveResult(tr("zk.page.saveFailed", { message }));
       throw e;
     }
   };
@@ -109,7 +111,9 @@ export default function ZookeeperPage({
       const data = await zkGetData(selected.id, path);
       setNodeData(data);
       setEditorText(data.data_utf8 ?? "");
-    } catch {
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setSaveResult(tr("zk.page.saveFailed", { message }));
       setNodeData(null);
     }
   };

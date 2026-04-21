@@ -53,15 +53,28 @@ export function ZkConnectionCreateModal({
   }, [testResult]);
 
   const shouldShowError = (fieldTouched: boolean, hasError: string) => (submitAttempted || fieldTouched) && Boolean(hasError);
+  const hasDirty =
+    Boolean(form.name.trim()) ||
+    Boolean(form.connect_string.trim()) ||
+    Boolean(secret.trim()) ||
+    Number(form.session_timeout_ms ?? 10000) !== 10000;
+  const requestClose = () => {
+    if (!hasDirty || saving || testing) {
+      onClose();
+      return;
+    }
+    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
+    if (ok) onClose();
+  };
 
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={requestClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr("zk.modal.newConnection")}>
         <div className="modal-header">
           <h4>{tr("zk.modal.newConnection")}</h4>
-          <button type="button" className="modal-close" onClick={onClose} title={tr("modal.close")}>
+          <button type="button" className="modal-close" onClick={requestClose} title={tr("modal.close")}>
             ×
           </button>
         </div>
@@ -111,7 +124,7 @@ export function ZkConnectionCreateModal({
           </div>
         </div>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>
+          <button type="button" className="btn btn-ghost" onClick={requestClose} disabled={saving}>
             {tr("modal.cancel")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onTest} disabled={!canTest}>

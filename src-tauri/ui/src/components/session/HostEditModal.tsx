@@ -1,6 +1,7 @@
 import type { Protocol, Session, SessionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 import { PasswordVisibilityToggle } from "./PasswordVisibilityToggle";
+import { useEffect, useMemo, useState } from "react";
 
 interface Props {
   session: Session | null;
@@ -38,14 +39,39 @@ export function HostEditModal({
   onMarkSecretDirty,
 }: Props) {
   const { tr } = useI18n();
+  const [initialSecret, setInitialSecret] = useState("");
+  useEffect(() => {
+    if (!session) return;
+    setInitialSecret(secret);
+  }, [session?.id, secret, session]);
   if (!session) return null;
+  const hasDirty = useMemo(() => {
+    return (
+      form.name !== session.name ||
+      form.protocol !== session.protocol ||
+      form.host !== session.host ||
+      form.port !== session.port ||
+      form.username !== session.username ||
+      (form.encoding ?? "utf-8") !== (session.encoding ?? "utf-8") ||
+      (form.keepalive_secs ?? 30) !== (session.keepalive_secs ?? 30) ||
+      secret !== initialSecret
+    );
+  }, [form, session, secret, initialSecret]);
+  const requestClose = () => {
+    if (!hasDirty || testing) {
+      onClose();
+      return;
+    }
+    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
+    if (ok) onClose();
+  };
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={requestClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr("modal.editHost")}>
         <div className="modal-header">
           <h4>{tr("modal.editHost")}</h4>
-          <button type="button" className="modal-close" onClick={onClose} title={tr("modal.close")}>
+          <button type="button" className="modal-close" onClick={requestClose} title={tr("modal.close")}>
             ×
           </button>
         </div>
@@ -108,7 +134,7 @@ export function HostEditModal({
           </div>
         </div>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>
+          <button type="button" className="btn btn-ghost" onClick={requestClose}>
             {tr("modal.cancel")}
           </button>
           <button

@@ -8,6 +8,8 @@ import { RedisConnectionsPane } from "./redis/RedisConnectionsPane";
 import { RedisDbSwitchModal } from "./redis/RedisDbSwitchModal";
 import { RedisHeader } from "./redis/RedisHeader";
 import { useRedisPageState } from "./redis/useRedisPageState";
+import { useMemo, useState } from "react";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 interface Props {
   connections: RedisConnection[];
@@ -38,6 +40,7 @@ export default function RedisPage({
   onBack,
   tr,
 }: Props) {
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const state = useRedisPageState({
     connections,
     selectedId,
@@ -144,6 +147,10 @@ export default function RedisPage({
     setResizingCommandPanel,
     setResizingDataPane,
   } = state;
+  const pendingDeleteConn = useMemo(
+    () => connections.find((item) => item.id === pendingDeleteId) ?? null,
+    [connections, pendingDeleteId]
+  );
 
   return (
     <section className="workspace zk-page redis-page" ref={redisPageRef}>
@@ -174,7 +181,7 @@ export default function RedisPage({
             onSelect(conn.id);
             setEditOpen(true);
           }}
-          onDelete={(id) => void onDelete(id)}
+          onDelete={(id) => setPendingDeleteId(id)}
         />
         <div
           className="terminal-splitter redis-layout-splitter"
@@ -227,6 +234,7 @@ export default function RedisPage({
 
       <RedisConnectionModal
         open={createOpen}
+        confirmOnClose
         title={tr("redis.page.addConnection")}
         host={createHost}
         port={createPort}
@@ -251,6 +259,7 @@ export default function RedisPage({
 
       <RedisConnectionModal
         open={editOpen && Boolean(selected)}
+        confirmOnClose
         title={tr("modal.editHost")}
         host={editHost}
         port={editPort}
@@ -285,6 +294,20 @@ export default function RedisPage({
         onClose={() => setDbSwitchOpen(false)}
         onChangeValue={setDbSwitchValue}
         onSubmit={() => void switchConnectionDb()}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteConn)}
+        title={tr("session.delete")}
+        message={pendingDeleteConn ? tr("redis.page.deleteConfirm", { name: pendingDeleteConn.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={() => setPendingDeleteId(null)}
+        onConfirm={() => {
+          if (!pendingDeleteConn) return;
+          void onDelete(pendingDeleteConn.id);
+          setPendingDeleteId(null);
+        }}
       />
     </section>
   );

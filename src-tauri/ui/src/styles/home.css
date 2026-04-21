@@ -336,8 +336,30 @@
 
 .audit-export-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.audit-export-meta {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.audit-export-feedback {
+  font-size: 12px;
+  color: #8f9db8;
+}
+
+.audit-export-feedback.is-success {
+  color: #8ad9a1;
+}
+
+.audit-export-feedback.is-error {
+  color: #ff9ca8;
 }
 
 .audit-view-switch {

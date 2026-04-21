@@ -1,9 +1,11 @@
 import type { I18nKey } from "../../i18n";
 import type { RedisConnectionInput } from "../../services/types";
+import { useEffect, useMemo, useState } from "react";
 import { PasswordVisibilityToggle } from "../../components/session/PasswordVisibilityToggle";
 
 interface Props {
   open: boolean;
+  confirmOnClose?: boolean;
   title: string;
   host: string;
   port: number | "";
@@ -28,6 +30,7 @@ interface Props {
 
 export function RedisConnectionModal({
   open,
+  confirmOnClose = false,
   title,
   host,
   port,
@@ -49,10 +52,41 @@ export function RedisConnectionModal({
   onTest,
   onSubmit,
 }: Props) {
+  const [initialSnapshot, setInitialSnapshot] = useState<{ name: string; host: string; port: number | ""; db: number; secret: string } | null>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    setInitialSnapshot({
+      name: form.name,
+      host,
+      port,
+      db: Number(form.db ?? 0),
+      secret,
+    });
+  }, [open, form.name, host, port, form.db, secret]);
+
+  const hasDirty = useMemo(() => {
+    if (!initialSnapshot) return false;
+    return (
+      form.name !== initialSnapshot.name ||
+      host !== initialSnapshot.host ||
+      port !== initialSnapshot.port ||
+      Number(form.db ?? 0) !== initialSnapshot.db ||
+      secret !== initialSnapshot.secret
+    );
+  }, [form.name, host, port, form.db, secret, initialSnapshot]);
   if (!open) return null;
+  const requestClose = () => {
+    if (!confirmOnClose || !hasDirty || saving || testing) {
+      onClose();
+      return;
+    }
+    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
+    if (ok) onClose();
+  };
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-card redis-resizable-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-backdrop" onClick={requestClose}>
+      <div className="modal-card redis-resizable-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-header">
           <h4>{title}</h4>
         </div>
@@ -90,7 +124,7 @@ export function RedisConnectionModal({
           {saveResult ? <div className="modal-inline-notice modal-inline-notice-error">{saveResult}</div> : null}
         </div>
         <div className="modal-actions">
-          <button className="btn btn-ghost" disabled={saving} onClick={onClose}>
+          <button className="btn btn-ghost" disabled={saving} onClick={requestClose}>
             {tr("modal.cancel")}
           </button>
           <button className="btn btn-ghost" disabled={testing || saving || !host.trim()} onClick={onTest}>

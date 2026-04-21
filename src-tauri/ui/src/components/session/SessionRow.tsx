@@ -51,7 +51,7 @@ export function SessionRow({
     }, 1500);
   };
 
-  const copyIp = async (event: MouseEvent<HTMLSpanElement>) => {
+  const copyIp = async (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     event.stopPropagation();
     try {
@@ -82,10 +82,9 @@ export function SessionRow({
         </span>
         <span className="session-col host">
           <span className="host-text">{session.host}</span>
-          <span
+          <button
+            type="button"
             className="copy-icon-btn"
-            role="button"
-            tabIndex={0}
             title={tr("session.copyIp")}
             aria-label={tr("session.copyIp")}
             onMouseDown={(event) => {
@@ -93,19 +92,9 @@ export function SessionRow({
               event.stopPropagation();
             }}
             onClick={copyIp}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                event.stopPropagation();
-                void navigator.clipboard
-                  .writeText(session.host)
-                  .then(() => showCopied())
-                  .catch(() => undefined);
-              }
-            }}
           >
             {copied ? "✅" : "📋"}
-          </span>
+          </button>
           {copied ? <span className="copy-success-text">{tr("session.copied")}</span> : null}
         </span>
         <span className="session-col user">{session.username || "-"}</span>

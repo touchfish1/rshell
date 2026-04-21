@@ -33,11 +33,11 @@ export function RedisDbSwitchModal({
     <div className="modal-backdrop" onClick={onClose}>
       <div className="modal-card redis-resizable-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h4>切换 Redis DB</h4>
+          <h4>{tr("redis.form.dbSwitchTitle")}</h4>
         </div>
         <div className="session-form">
           <input value={conn.name} disabled />
-          {loading ? <div className="modal-inline-notice">正在查询 Redis DB 列表...</div> : null}
+          {loading ? <div className="modal-inline-notice">{tr("redis.form.dbLoading")}</div> : null}
           {!loading ? (
             <div className="redis-db-options">
               {options.map((row) => (
@@ -51,7 +51,7 @@ export function RedisDbSwitchModal({
               ))}
             </div>
           ) : null}
-          <input placeholder="请输入 DB（非负整数）" type="number" min={0} value={value} onChange={(e) => onChangeValue(e.target.value)} />
+          <input placeholder={tr("redis.form.dbInputPlaceholder")} type="number" min={0} value={value} onChange={(e) => onChangeValue(e.target.value)} />
           {result ? <div className="modal-inline-notice modal-inline-notice-error">{result}</div> : null}
         </div>
         <div className="modal-actions">
@@ -59,7 +59,7 @@ export function RedisDbSwitchModal({
             {tr("modal.cancel")}
           </button>
           <button className="btn btn-primary" disabled={saving} onClick={onSubmit}>
-            {saving ? tr("modal.saving") : "切换 DB"}
+            {saving ? tr("modal.saving") : tr("redis.form.dbSwitchAction")}
           </button>
         </div>
       </div>

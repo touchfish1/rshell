@@ -106,9 +106,9 @@ export function RedisBrowserPane(props: Props) {
       <div className="zk-browser">
         <div className="zk-browser-header">
           <input value={pattern} onChange={(e) => onPatternChange(e.target.value)} placeholder={tr("redis.page.patternPlaceholder")} />
-          <input value={groupDelimiter} onChange={(e) => onGroupDelimiterChange(e.target.value)} placeholder="分组分隔符，默认 :" />
+          <input value={groupDelimiter} onChange={(e) => onGroupDelimiterChange(e.target.value)} placeholder={tr("redis.page.groupDelimiterPlaceholder")} />
           <button className="btn btn-ghost" onClick={() => onLoadKeys()}>
-            {scanLoading ? tr("modal.testing") : tr("redis.page.loadKeys")}
+            {scanLoading ? tr("redis.page.searching") : tr("redis.page.loadKeys")}
           </button>
         </div>
         <div
@@ -135,7 +135,7 @@ export function RedisBrowserPane(props: Props) {
             </div>
             {keysLoaded && !scanLoading && keys.length === 0 ? <div className="card-subtitle">{tr("home.searchNoResults")}</div> : null}
           </div>
-          <div className="zk-pane-splitter" onMouseDown={onResizeDataPaneStart} title="拖动调整详情宽度" />
+          <div className="zk-pane-splitter" onMouseDown={onResizeDataPaneStart} title={tr("redis.page.resizeDetailPaneHint")} />
           <div className="zk-data">
             <div className="zk-data-head">
               <div className="card-title">

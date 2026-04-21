@@ -1,6 +1,6 @@
 [package]
 name = "rshell"
-version = "0.1.27"
+version = "0.1.28"
 edition = "2021"
 
 [dependencies]
@@ -22,6 +22,7 @@ thiserror = "2"
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "sync", "time", "net", "process"] }
 uuid = { version = "1", features = ["v4", "serde"] }
 zookeeper-client = { version = "0.11.1", features = ["tokio"] }
+java-serialization = "0.1.0"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
