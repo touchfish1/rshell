@@ -61,6 +61,26 @@ html[data-theme="light"] .home-header-status {
   color: #5c6678;
 }
 
+html[data-theme="light"] .home-search-row {
+  border-bottom-color: #d5dce8;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .home-search-input {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #111827;
+}
+
+html[data-theme="light"] .home-search-input::placeholder {
+  color: #6b7280;
+}
+
+html[data-theme="light"] .home-search-empty {
+  border-top-color: #d5dce8;
+  color: #64748b;
+}
+
 html[data-theme="light"] .card-title {
   color: #111827;
 }

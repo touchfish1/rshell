@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useI18n } from "../../i18n-context";
 import { createEmptyCondition, type MySqlBrowseTab, type MySqlQueryEditorState, type MySqlTableDataState } from "./types";
 
 interface Params {
@@ -26,6 +27,7 @@ export function useMySqlTabsManager({
   setActiveSchema,
   setActiveTable,
 }: Params) {
+  const { tr } = useI18n();
   const [browseTabs, setBrowseTabs] = useState<MySqlBrowseTab[]>([]);
   const [activeBrowseTabId, setActiveBrowseTabId] = useState<string | null>(null);
 
@@ -66,13 +68,18 @@ export function useMySqlTabsManager({
   };
 
   const addQueryTab = (schema: string) => {
-    const tab: MySqlBrowseTab = { id: `query:${schema}:${Date.now()}`, kind: "query", schema, title: `${schema} SQL` };
+    const tab: MySqlBrowseTab = {
+      id: `query:${schema}:${Date.now()}`,
+      kind: "query",
+      schema,
+      title: tr("mysql.page.queryTabTitle", { schema }),
+    };
     setBrowseTabs((prev) => [...prev, tab]);
     setActiveBrowseTabId(tab.id);
     setQueryEditorMap((prev) => ({
       ...prev,
       [tab.id]: {
-        sql: "SELECT * FROM <table_name> LIMIT 100;",
+        sql: tr("mysql.page.defaultSqlTemplate"),
         cursor: 0,
         running: false,
         explaining: false,
@@ -88,7 +95,7 @@ export function useMySqlTabsManager({
       kind: "table-edit",
       schema,
       table,
-      title: `编辑 ${schema}.${table}`,
+      title: tr("mysql.page.editTabTitle", { schema, table }),
     };
     setBrowseTabs((prev) => [...prev, tab]);
     setActiveBrowseTabId(tab.id);

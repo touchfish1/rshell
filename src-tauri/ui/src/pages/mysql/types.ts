@@ -53,7 +53,7 @@ export type SqlSuggestionState = {
 };
 
 export const FILTER_OPERATORS: Array<{ value: MySqlFilterOperator; label: string }> = [
-  { value: "contains", label: "包含" },
+  { value: "contains", label: "contains" },
   { value: "eq", label: "=" },
   { value: "ne", label: "!=" },
   { value: "gt", label: ">" },

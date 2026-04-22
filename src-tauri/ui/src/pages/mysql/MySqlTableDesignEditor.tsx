@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { mySqlExecuteQuery } from "../../services/bridge";
+import { useI18n } from "../../i18n-context";
 import { escapeSqlIdentifier, escapeSqlValue } from "./sqlUtils";
 
 type ColumnDraft = {
@@ -102,6 +103,7 @@ function parseIndexColumns(raw: string): string[] {
 }
 
 export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
+  const { tr } = useI18n();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -315,14 +317,14 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
       }
 
       if (sqlList.length === 0) {
-        setMessage("没有检测到变更");
+        setMessage(tr("mysql.page.noChanges"));
         return;
       }
 
       for (const sql of sqlList) {
         await mySqlExecuteQuery(connectionId, sql, 1, 0, schema);
       }
-      setMessage(`保存成功，已执行 ${sqlList.length} 条 SQL`);
+      setMessage(tr("mysql.page.saveSuccessSqlCount", { count: sqlList.length }));
       await loadMeta();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -334,20 +336,20 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
   return (
     <div className="mysql-table-design">
       <div className="mysql-table-design-toolbar">
-        <div className="mysql-table-design-title">{schema}.{table} 表结构编辑</div>
+        <div className="mysql-table-design-title">{tr("mysql.page.editTabTitle", { schema, table })}</div>
         <button className="btn btn-ghost" onClick={() => void loadMeta()} disabled={loading || saving}>
-          {loading ? "加载中..." : "刷新结构"}
+          {loading ? tr("sftp.loading") : tr("mysql.page.refreshStructure")}
         </button>
         <button className="btn" onClick={() => void saveAll()} disabled={!canSave}>
-          {saving ? "保存中..." : "保存变更"}
+          {saving ? tr("mysql.page.savingChanges") : tr("mysql.page.saveChanges")}
         </button>
       </div>
       <div className="mysql-table-design-tabbar">
         <button className={`btn btn-ghost ${activeTab === "columns" ? "is-active" : ""}`} onClick={() => setActiveTab("columns")}>
-          字段
+          {tr("mysql.page.tabColumns")}
         </button>
         <button className={`btn btn-ghost ${activeTab === "indexes" ? "is-active" : ""}`} onClick={() => setActiveTab("indexes")}>
-          索引
+          {tr("mysql.page.tabIndexes")}
         </button>
       </div>
       {error ? <div className="mysql-table-empty">{error}</div> : null}
@@ -355,25 +357,25 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
 
       {activeTab === "columns" ? (
         <div className="mysql-table-design-section">
-          <div className="mysql-table-design-section-title">表备注</div>
-          <input className="mysql-field" value={tableComment} onChange={(e) => setTableComment(e.target.value)} placeholder="表备注" />
+          <div className="mysql-table-design-section-title">{tr("mysql.page.tableComment")}</div>
+          <input className="mysql-field" value={tableComment} onChange={(e) => setTableComment(e.target.value)} placeholder={tr("mysql.page.tableComment")} />
         </div>
       ) : null}
 
       {activeTab === "columns" ? (
         <div className="mysql-table-design-section">
-          <div className="mysql-table-design-section-title">字段</div>
+          <div className="mysql-table-design-section-title">{tr("mysql.page.columnsSection")}</div>
           <div className="mysql-table-design-grid columns">
             {columns.map((col) => (
               <div key={col.id} className={`mysql-table-design-row ${col.markedDrop ? "is-drop" : ""}`}>
-                <input className="mysql-field" value={col.name} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, name: e.target.value } : x))} placeholder="字段名" />
+                <input className="mysql-field" value={col.name} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, name: e.target.value } : x))} placeholder={tr("mysql.page.columnName")} />
                 <select
                   className="mysql-field mysql-select"
                   value={col.type.trim()}
                   onChange={(e) => setColumns((prev) => prev.map((x) => (x.id === col.id ? { ...x, type: e.target.value } : x)))}
                 >
                   <option value="" disabled>
-                    选择类型
+                    {tr("mysql.page.selectType")}
                   </option>
                   {col.type.trim() && !columnTypeOptions.includes(col.type.trim()) ? <option value={col.type.trim()}>{col.type.trim()}</option> : null}
                   {columnTypeOptions.map((typeName) => (
@@ -382,20 +384,20 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
                     </option>
                   ))}
                 </select>
-                <input className="mysql-field" value={col.defaultValue} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, defaultValue: e.target.value } : x))} placeholder="默认值（空表示无）" />
-                <input className="mysql-field" value={col.comment} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, comment: e.target.value } : x))} placeholder="字段备注" />
-                <label className="mysql-table-design-check"><input type="checkbox" checked={col.nullable} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, nullable: e.target.checked } : x))} />可空</label>
-                <label className="mysql-table-design-check"><input type="checkbox" checked={col.markedDrop} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, markedDrop: e.target.checked } : x))} />删除</label>
+                <input className="mysql-field" value={col.defaultValue} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, defaultValue: e.target.value } : x))} placeholder={tr("mysql.page.defaultValuePlaceholder")} />
+                <input className="mysql-field" value={col.comment} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, comment: e.target.value } : x))} placeholder={tr("mysql.page.columnComment")} />
+                <label className="mysql-table-design-check"><input type="checkbox" checked={col.nullable} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, nullable: e.target.checked } : x))} />{tr("mysql.page.nullable")}</label>
+                <label className="mysql-table-design-check"><input type="checkbox" checked={col.markedDrop} onChange={(e) => setColumns((prev) => prev.map((x) => x.id === col.id ? { ...x, markedDrop: e.target.checked } : x))} />{tr("mysql.page.markDelete")}</label>
               </div>
             ))}
           </div>
           <button className="btn btn-ghost" onClick={() => setColumns((prev) => [...prev, { id: nextId(), name: "", type: "", nullable: true, defaultValue: "", extra: "", comment: "", isNew: true, markedDrop: false }])}>
-            新增字段
+            {tr("mysql.page.addField")}
           </button>
         </div>
       ) : (
         <div className="mysql-table-design-section">
-          <div className="mysql-table-design-section-title">索引</div>
+          <div className="mysql-table-design-section-title">{tr("mysql.page.indexesSection")}</div>
           <div className="mysql-table-design-grid indexes">
             {indexes.map((idx) => {
               const cols = parseIndexColumns(idx.columns);
@@ -403,17 +405,17 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
               return (
                 <div key={idx.id} className={`mysql-table-design-index-card ${idx.markedDrop ? "is-drop" : ""}`}>
                   <div className="mysql-table-design-index-head">
-                    <input className="mysql-field" value={idx.name} onChange={(e) => setIndexes((prev) => prev.map((x) => x.id === idx.id ? { ...x, name: e.target.value } : x))} placeholder="索引名" disabled={idx.name === "PRIMARY"} />
+                    <input className="mysql-field" value={idx.name} onChange={(e) => setIndexes((prev) => prev.map((x) => x.id === idx.id ? { ...x, name: e.target.value } : x))} placeholder={tr("mysql.page.indexName")} disabled={idx.name === "PRIMARY"} />
                     <select className="mysql-field mysql-select" value={idx.kind} onChange={(e) => setIndexes((prev) => prev.map((x) => x.id === idx.id ? { ...x, kind: e.target.value as IndexDraft["kind"] } : x))} disabled={idx.name === "PRIMARY"}>
-                      <option value="INDEX">普通</option>
-                      <option value="UNIQUE">唯一</option>
-                      <option value="PRIMARY">主键</option>
+                      <option value="INDEX">{tr("mysql.page.indexKindNormal")}</option>
+                      <option value="UNIQUE">{tr("mysql.page.indexKindUnique")}</option>
+                      <option value="PRIMARY">{tr("mysql.page.indexKindPrimary")}</option>
                     </select>
-                    <label className="mysql-table-design-check"><input type="checkbox" checked={idx.markedDrop} disabled={idx.name === "PRIMARY"} onChange={(e) => setIndexes((prev) => prev.map((x) => x.id === idx.id ? { ...x, markedDrop: e.target.checked } : x))} />删除</label>
+                    <label className="mysql-table-design-check"><input type="checkbox" checked={idx.markedDrop} disabled={idx.name === "PRIMARY"} onChange={(e) => setIndexes((prev) => prev.map((x) => x.id === idx.id ? { ...x, markedDrop: e.target.checked } : x))} />{tr("mysql.page.markDelete")}</label>
                   </div>
                   <div className="mysql-index-columns-editor">
                     <div className="mysql-index-columns-list">
-                      {cols.length === 0 ? <span className="mysql-table-empty">暂未选择字段</span> : null}
+                      {cols.length === 0 ? <span className="mysql-table-empty">{tr("mysql.page.noIndexColumns")}</span> : null}
                       {cols.map((colName, index) => (
                         <span key={`${colName}-${index}`} className="mysql-index-col-chip">
                           <span>{colName}</span>
@@ -460,7 +462,7 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
                         updateIndexColumns(idx.id, [...cols, picked]);
                       }}
                     >
-                      <option value="">添加字段到索引（按选择顺序生成）</option>
+                      <option value="">{tr("mysql.page.addFieldToIndex")}</option>
                       {selectableCols.map((name) => (
                         <option key={name} value={name}>
                           {name}
@@ -473,7 +475,7 @@ export function MySqlTableDesignEditor({ connectionId, schema, table }: Props) {
             })}
           </div>
           <button className="btn btn-ghost" onClick={() => setIndexes((prev) => [...prev, { id: nextId(), name: "", kind: "INDEX", columns: "", method: "BTREE", isNew: true, markedDrop: false }])}>
-            新增索引
+            {tr("mysql.page.addIndex")}
           </button>
         </div>
       )}

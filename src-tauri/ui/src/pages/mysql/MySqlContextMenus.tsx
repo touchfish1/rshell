@@ -70,7 +70,7 @@ export function MySqlContextMenus({
               onCloseDbContext();
             }}
           >
-            新建查询
+            {tr("mysql.page.newQuery")}
           </button>
         </div>
       ) : null}

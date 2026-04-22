@@ -1,10 +1,12 @@
 import type { MySqlConnection } from "../../services/types";
+import type { I18nKey } from "../../i18n";
 
 interface Props {
   connections: MySqlConnection[];
   selectedId?: string;
   databases: string[];
   activeSchema: string;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
   onSelect: (id: string) => void;
   onOpenConnection: (id: string) => void;
   onOpenContext: (x: number, y: number, connId: string) => void;
@@ -18,6 +20,7 @@ export function MySqlSidebar({
   selectedId,
   databases,
   activeSchema,
+  tr,
   onSelect,
   onOpenConnection,
   onOpenContext,
@@ -27,7 +30,7 @@ export function MySqlSidebar({
 }: Props) {
   return (
     <div className="zk-connections-pane mysql-connections-pane">
-      <div className="mysql-connections-header">MySQL Connections</div>
+      <div className="mysql-connections-header">{tr("mysql.page.connections")}</div>
       <div className="mysql-connections-list">
         {connections.map((conn) => (
           <div key={conn.id} className="mysql-tree-node">

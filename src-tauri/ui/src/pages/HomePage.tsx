@@ -120,7 +120,19 @@ export default function HomePage({
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
   const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0;
+  const [hostQuery, setHostQuery] = useState("");
   const [appVersion, setAppVersion] = useState("");
+  const normalizedHostQuery = hostQuery.trim().toLowerCase();
+  const filteredSessions = normalizedHostQuery
+    ? sessions.filter((session) => {
+        const fields = [session.name, session.host, session.username].map((value) => value.toLowerCase());
+        return fields.some((field) => field.includes(normalizedHostQuery));
+      })
+    : sessions;
+  const hasSearchResult = filteredSessions.length > 0;
+  const showSearchNoResults = hasSessions && !hasSearchResult && normalizedHostQuery.length > 0;
+  const selectedSearchSession = selectedId ? sessions.find((session) => session.id === selectedId) : undefined;
+  const canQuickConnect = !!selectedSearchSession && connectingSessionId !== selectedSearchSession.id;
 
   useEffect(() => {
     void getVersion()
@@ -151,6 +163,7 @@ export default function HomePage({
               className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
               onClick={() => onSwitchLang("zh-CN")}
               title={tr("lang.switchToZh")}
+              aria-pressed={lang === "zh-CN"}
             >
               {tr("lang.zh")}
             </button>
@@ -158,20 +171,29 @@ export default function HomePage({
               className={`btn btn-ghost ${lang === "en-US" ? "lang-active" : ""}`}
               onClick={() => onSwitchLang("en-US")}
               title={tr("lang.switchToEn")}
+              aria-pressed={lang === "en-US"}
             >
               {tr("lang.en")}
             </button>
           </div>
+          <button
+            className="btn"
+            onClick={() => void onConnect(selectedSearchSession?.id)}
+            disabled={!canQuickConnect}
+            title={selectedSearchSession ? tr("session.connectTitle", { name: selectedSearchSession.name }) : tr("top.noHostSelected")}
+          >
+            {connectingSessionId === selectedSearchSession?.id ? tr("session.connectingAction") : tr("session.connect")}
+          </button>
           <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
             {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
           </button>
           <button className="btn btn-ghost" onClick={onOpenAudit}>
             {tr("home.audit")}
           </button>
-          <span className={connected ? "pill pill-ok" : "pill"}>
+          <span className={connected ? "pill pill-ok" : "pill"} aria-live="polite">
             {connected ? tr("top.online") : tr("top.offline")}
           </span>
-          <span className="pill pill-muted">
+          <span className="pill pill-muted" aria-live="polite">
             {selected ? tr("top.current", { name: selected.name }) : tr("top.noHostSelected")}
           </span>
         </div>
@@ -196,13 +218,25 @@ export default function HomePage({
               >
                 {refreshBusy ? tr("home.refreshStatusRunning") : tr("home.refreshStatus")}
               </button>
-              <div className="home-header-status">{status}</div>
+              <div className="home-header-status" role="status" aria-live="polite">
+                {status}
+              </div>
             </div>
           </div>
           <div className="home-panel-body">
             <div className="home-list-wrapper">
+              <div className="home-search-row">
+                <input
+                  className="home-search-input"
+                  type="search"
+                  value={hostQuery}
+                  onChange={(event) => setHostQuery(event.target.value)}
+                  placeholder={tr("home.searchHostsPlaceholder")}
+                  aria-label={tr("home.searchHostsPlaceholder")}
+                />
+              </div>
               <SessionList
-                sessions={sessions}
+                sessions={filteredSessions}
                 connectingSessionId={connectingSessionId}
                 selectedId={selectedId}
                 reachabilityMap={reachabilityMap}
@@ -233,6 +267,7 @@ export default function HomePage({
                 onGetMysqlSecret={onGetMysqlSecret}
                 onUpdateMysql={onUpdateMysql}
               />
+              {showSearchNoResults ? <div className="home-search-empty">{tr("home.searchNoResults")}</div> : null}
               {!hasAnyConnections ? (
                 <div className="empty-state" role="note" aria-label={tr("home.ariaNoSession")}>
                   <div className="empty-title">{tr("home.emptyTitle")}</div>

@@ -125,6 +125,10 @@ export default function MySqlPage({
     querySuggestions && activeBrowseTab && querySuggestions.tabId === activeBrowseTab.id
       ? querySuggestions.items
       : [];
+  const filterOperators = FILTER_OPERATORS.map((operator) => ({
+    value: operator.value,
+    label: operator.value === "contains" ? tr("mysql.page.filterContains") : operator.label,
+  }));
 
 
   const {
@@ -210,7 +214,7 @@ export default function MySqlPage({
           <button className="btn btn-ghost" onClick={onBack}>{tr("terminal.back")}</button>
           <button className="btn btn-ghost" onClick={openCreate}>{tr("mysql.page.addConnection")}</button>
           <button className="btn btn-ghost" onClick={openTopQueryTab} disabled={!selected}>
-            新增查询
+            {tr("mysql.page.newQuery")}
           </button>
           <button className="btn btn-ghost" onClick={() => void loadSchema()} disabled={!selected || busy}>{tr("mysql.page.refreshSchema")}</button>
           <button className="btn btn-ghost" onClick={() => selected && void disconnectMySql(selected.id)} disabled={!selected}>{tr("mysql.page.disconnect")}</button>
@@ -226,6 +230,7 @@ export default function MySqlPage({
           selectedId={selectedId}
           databases={databases}
           activeSchema={activeSchema}
+          tr={tr}
           onSelect={onSelect}
           onOpenConnection={(id) => {
             onSelect(id);
@@ -262,10 +267,11 @@ export default function MySqlPage({
           activeQueryEditor={activeQueryEditor}
           querySuggestions={querySuggestions}
           activeSuggestionItems={activeSuggestionItems}
+          tr={tr}
           suggestionActiveIndex={suggestionActiveIndex}
           queryEditorRef={queryEditorRef}
           dataScrollRef={dataScrollRef}
-          filterOperators={FILTER_OPERATORS}
+          filterOperators={filterOperators}
           onSelectTab={selectBrowseTab}
           onSelectTable={(tableName) => {
             setActiveTable(tableName);

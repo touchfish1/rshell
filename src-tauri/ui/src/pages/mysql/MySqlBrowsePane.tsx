@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type RefObject } from "react";
+import type { I18nKey } from "../../i18n";
 import type { MySqlTableInfo } from "../../services/types";
 import { MySqlDataGrid } from "./MySqlDataGrid";
 import { MySqlTableDesignEditor } from "./MySqlTableDesignEditor";
@@ -30,6 +31,7 @@ interface Props {
   queryEditorRef: RefObject<HTMLTextAreaElement>;
   dataScrollRef: RefObject<HTMLDivElement>;
   filterOperators: Array<{ value: MySqlFilterOperator; label: string }>;
+  tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
   onSelectTab: (tab: MySqlBrowseTab) => void;
   onSelectTable: (table: string) => void;
   onOpenTableTab: (schema: string, table: string) => void;
@@ -68,6 +70,7 @@ export function MySqlBrowsePane(props: Props) {
     queryEditorRef,
     dataScrollRef,
     filterOperators,
+    tr,
   } = props;
   const [queryResultPage, setQueryResultPage] = useState(0);
   const [queryResultPageSize, setQueryResultPageSize] = useState(100);
@@ -103,7 +106,7 @@ export function MySqlBrowsePane(props: Props) {
   return (
     <div className="redis-browser-pane">
       <div className="redis-browser-toolbar mysql-browse-tabs">
-        {browseTabs.length === 0 ? <div className="mysql-toolbar-label">双击库/表后在这里显示 tab 列表</div> : null}
+        {browseTabs.length === 0 ? <div className="mysql-toolbar-label">{tr("mysql.page.tabHint")}</div> : null}
         {browseTabs.map((tab) => (
           <button key={tab.id} className={`mysql-data-tab ${activeBrowseTabId === tab.id ? "is-selected" : ""}`} onClick={() => props.onSelectTab(tab)}>
             {tab.title}
@@ -120,7 +123,7 @@ export function MySqlBrowsePane(props: Props) {
                     {(activeTableData?.conditions ?? []).map((condition) => (
                       <div key={condition.id} className="mysql-data-filter-row">
                         <select className="mysql-field mysql-select mysql-data-filter-select" value={condition.column} onChange={(event) => props.onChangeCondition(condition.id, { column: event.target.value })}>
-                          <option value="">选择列</option>
+                          <option value="">{tr("mysql.page.selectColumn")}</option>
                           {(activeTableData?.columns ?? []).map((column) => (
                             <option key={column} value={column}>{column}</option>
                           ))}
@@ -137,18 +140,18 @@ export function MySqlBrowsePane(props: Props) {
                           onKeyDown={(event) => {
                             if (event.key === "Enter") props.onQueryTable();
                           }}
-                          placeholder="筛选值"
+                          placeholder={tr("mysql.page.filterValuePlaceholder")}
                         />
-                        <button className="btn btn-ghost" onClick={() => props.onDeleteCondition(condition.id)}>删除</button>
+                        <button className="btn btn-ghost" onClick={() => props.onDeleteCondition(condition.id)}>{tr("session.delete")}</button>
                       </div>
                     ))}
                   </div>
                   <div className="mysql-data-filter-actions">
-                    <button className="btn btn-ghost" onClick={props.onAddCondition}>添加条件</button>
-                    <button className="btn" onClick={props.onQueryTable}>查询数据库</button>
+                    <button className="btn btn-ghost" onClick={props.onAddCondition}>{tr("mysql.page.addCondition")}</button>
+                    <button className="btn" onClick={props.onQueryTable}>{tr("mysql.page.queryDatabase")}</button>
                   </div>
                 </div>
-                {activeTableData?.loading ? <div className="mysql-table-empty">加载数据中...</div> : null}
+                {activeTableData?.loading ? <div className="mysql-table-empty">{tr("sftp.loading")}</div> : null}
                 {activeTableData?.error ? <div className="mysql-table-empty">{activeTableData.error}</div> : null}
                 {!activeTableData?.loading && !activeTableData?.error ? (
                   <>
@@ -158,7 +161,11 @@ export function MySqlBrowsePane(props: Props) {
                     {(activeTableData?.totalRows ?? 0) > (activeTableData?.pageSize ?? 100) ? (
                       <div className="mysql-table-pagination">
                         <span className="mysql-data-summary mysql-table-pagination-summary">
-                          当前第 {((activeTableData?.page ?? 0) + 1)} 页，返回 {activeTableData?.rows.length ?? 0} 行（每页 {activeTableData?.pageSize ?? 100} 行）
+                          {tr("mysql.page.tablePageSummary", {
+                            page: (activeTableData?.page ?? 0) + 1,
+                            rows: activeTableData?.rows.length ?? 0,
+                            pageSize: activeTableData?.pageSize ?? 100,
+                          })}
                         </span>
                         <select
                           className="mysql-field mysql-select mysql-table-page-size"
@@ -167,7 +174,7 @@ export function MySqlBrowsePane(props: Props) {
                         >
                           {[50, 100, 200, 500, 1000].map((size) => (
                             <option key={size} value={size}>
-                              {size}/页
+                              {tr("mysql.page.perPage", { size })}
                             </option>
                           ))}
                         </select>
@@ -176,7 +183,7 @@ export function MySqlBrowsePane(props: Props) {
                           disabled={(activeTableData?.page ?? 0) <= 0 || Boolean(activeTableData?.loading)}
                           onClick={() => props.onChangeTablePage(Math.max(0, (activeTableData?.page ?? 0) - 1))}
                         >
-                          上一页
+                          {tr("mysql.page.prevPage")}
                         </button>
                         <span className="mysql-table-empty mysql-table-pagination-text">
                           {((activeTableData?.page ?? 0) + 1)} / {Math.max(1, Math.ceil((activeTableData?.totalRows ?? 0) / (activeTableData?.pageSize ?? 100)))}
@@ -197,7 +204,7 @@ export function MySqlBrowsePane(props: Props) {
                             props.onChangeTablePage(target - 1);
                             setTableJumpPage(String(target));
                           }}
-                          placeholder="页码"
+                          placeholder={tr("mysql.page.pagePlaceholder")}
                         />
                         <button
                           className="btn btn-ghost mysql-table-page-btn"
@@ -210,7 +217,7 @@ export function MySqlBrowsePane(props: Props) {
                             setTableJumpPage(String(target));
                           }}
                         >
-                          跳转
+                          {tr("mysql.page.jump")}
                         </button>
                         <button
                           className="btn btn-ghost mysql-table-page-btn"
@@ -220,7 +227,7 @@ export function MySqlBrowsePane(props: Props) {
                           }
                           onClick={() => props.onChangeTablePage((activeTableData?.page ?? 0) + 1)}
                         >
-                          下一页
+                          {tr("mysql.page.nextPage")}
                         </button>
                       </div>
                     ) : null}
@@ -228,7 +235,7 @@ export function MySqlBrowsePane(props: Props) {
                       <button
                         type="button"
                         className="mysql-last-sql"
-                        title="点击复制当前执行 SQL"
+                        title={tr("mysql.page.copyCurrentSql")}
                         onClick={() => {
                           void navigator.clipboard
                             .writeText(activeTableData.lastSql ?? "")
@@ -236,7 +243,7 @@ export function MySqlBrowsePane(props: Props) {
                             .catch(() => undefined);
                         }}
                       >
-                        <span className="mysql-last-sql-label">{tableSqlCopied ? "已复制 SQL" : "当前执行 SQL（点击复制）"}</span>
+                        <span className="mysql-last-sql-label">{tableSqlCopied ? tr("mysql.page.copiedSql") : tr("mysql.page.currentSqlClickCopy")}</span>
                         <span className="mysql-last-sql-text">{activeTableData.lastSql}</span>
                       </button>
                     ) : null}
@@ -248,10 +255,10 @@ export function MySqlBrowsePane(props: Props) {
             <div className="mysql-data-view">
               <div className="mysql-data-grid-wrap mysql-query-editor-wrap">
                 <div className="mysql-query-toolbar">
-                  <span className="mysql-table-empty">当前数据库：{activeBrowseTab.schema}</span>
-                  <button className="btn btn-ghost" onClick={props.onFormatSql}>美化 SQL</button>
-                  <button className="btn btn-ghost" disabled={activeQueryEditor?.explaining} onClick={props.onExplainSql}>{activeQueryEditor?.explaining ? "EXPLAIN 中..." : "EXPLAIN"}</button>
-                  <button className="btn" disabled={activeQueryEditor?.running} onClick={props.onRunSql}>{activeQueryEditor?.running ? "运行中..." : "运行 SQL"}</button>
+                  <span className="mysql-table-empty">{tr("mysql.page.currentDatabase", { schema: activeBrowseTab.schema })}</span>
+                  <button className="btn btn-ghost" onClick={props.onFormatSql}>{tr("mysql.page.formatSql")}</button>
+                  <button className="btn btn-ghost" disabled={activeQueryEditor?.explaining} onClick={props.onExplainSql}>{activeQueryEditor?.explaining ? tr("mysql.page.explaining") : tr("mysql.page.explain")}</button>
+                  <button className="btn" disabled={activeQueryEditor?.running} onClick={props.onRunSql}>{activeQueryEditor?.running ? tr("mysql.page.running") : tr("mysql.page.runSql")}</button>
                 </div>
                 <textarea
                   ref={queryEditorRef}
@@ -284,12 +291,17 @@ export function MySqlBrowsePane(props: Props) {
                   <>
                     <div className="mysql-data-table-scroll">
                       <div className="mysql-data-summary">
-                        执行结果：影响行数 {activeQueryEditor.result.affected_rows}，当前第 {queryResultPage + 1} 页，返回 {queryResultPagedRows.length} 行（每页 {queryResultPageSize} 行）
+                        {tr("mysql.page.queryResultSummary", {
+                          affected: activeQueryEditor.result.affected_rows,
+                          page: queryResultPage + 1,
+                          rows: queryResultPagedRows.length,
+                          pageSize: queryResultPageSize,
+                        })}
                       </div>
                       <MySqlDataGrid columns={activeQueryEditor.result.columns} rows={queryResultPagedRows} />
                     </div>
                     <div className="mysql-table-pagination">
-                      <span className="mysql-data-summary mysql-table-pagination-summary">查询结果共 {queryResultTotal} 行</span>
+                      <span className="mysql-data-summary mysql-table-pagination-summary">{tr("mysql.page.queryResultTotal", { total: queryResultTotal })}</span>
                       <select
                         className="mysql-field mysql-select mysql-table-page-size"
                         value={queryResultPageSize}
@@ -300,7 +312,7 @@ export function MySqlBrowsePane(props: Props) {
                       >
                         {[50, 100, 200, 500, 1000].map((size) => (
                           <option key={size} value={size}>
-                            {size}/页
+                            {tr("mysql.page.perPage", { size })}
                           </option>
                         ))}
                       </select>
@@ -309,7 +321,7 @@ export function MySqlBrowsePane(props: Props) {
                         disabled={queryResultPage <= 0}
                         onClick={() => setQueryResultPage((prev) => Math.max(0, prev - 1))}
                       >
-                        上一页
+                        {tr("mysql.page.prevPage")}
                       </button>
                       <span className="mysql-table-empty mysql-table-pagination-text">
                         {queryResultPage + 1} / {Math.max(1, Math.ceil(queryResultTotal / queryResultPageSize))}
@@ -330,7 +342,7 @@ export function MySqlBrowsePane(props: Props) {
                           setQueryResultPage(target - 1);
                           setQueryResultJumpPage(String(target));
                         }}
-                        placeholder="页码"
+                        placeholder={tr("mysql.page.pagePlaceholder")}
                       />
                       <button
                         className="btn btn-ghost mysql-table-page-btn"
@@ -343,21 +355,21 @@ export function MySqlBrowsePane(props: Props) {
                           setQueryResultJumpPage(String(target));
                         }}
                       >
-                        跳转
+                        {tr("mysql.page.jump")}
                       </button>
                       <button
                         className="btn btn-ghost mysql-table-page-btn"
                         disabled={(queryResultPage + 1) * queryResultPageSize >= queryResultTotal}
                         onClick={() => setQueryResultPage((prev) => prev + 1)}
                       >
-                        下一页
+                        {tr("mysql.page.nextPage")}
                       </button>
                     </div>
                   </>
                 ) : null}
                 {activeQueryEditor?.explainResult ? (
                   <div className="mysql-data-table-scroll">
-                    <div className="mysql-data-summary">EXPLAIN 结果</div>
+                    <div className="mysql-data-summary">{tr("mysql.page.explainResult")}</div>
                     <MySqlDataGrid columns={activeQueryEditor.explainResult.columns} rows={activeQueryEditor.explainResult.rows} />
                   </div>
                 ) : null}
@@ -371,10 +383,10 @@ export function MySqlBrowsePane(props: Props) {
             </div>
           ) : (
             <div className="mysql-table-panel">
-              <h4>数据表（双击打开数据）</h4>
+              <h4>{tr("mysql.page.tablePanelTitle")}</h4>
               <div className="mysql-table-list">
-                {tablesLoading ? <div className="mysql-table-empty">加载中...</div> : null}
-                {!tablesLoading && tables.length === 0 ? <div className="mysql-table-empty">点击左侧数据库查看表</div> : null}
+                {tablesLoading ? <div className="mysql-table-empty">{tr("sftp.loading")}</div> : null}
+                {!tablesLoading && tables.length === 0 ? <div className="mysql-table-empty">{tr("mysql.page.selectDbToViewTables")}</div> : null}
                 {tables.map((table) => (
                   <button
                     key={table.name}
@@ -403,7 +415,7 @@ export function MySqlBrowsePane(props: Props) {
               setTableContextMenu(null);
             }}
           >
-            编辑表结构
+            {tr("mysql.page.editTable")}
           </button>
         </div>
       ) : null}
