@@ -33,6 +33,8 @@ pub struct SessionStore {
     redis_secret_path: PathBuf,
     mysql_db_path: PathBuf,
     mysql_secret_path: PathBuf,
+    envs_path: PathBuf,
+    current_env_path: PathBuf,
 }
 
 impl SessionStore {
@@ -51,7 +53,47 @@ impl SessionStore {
             redis_secret_path: base.join("redis_secrets.json"),
             mysql_db_path: base.join("mysql.json"),
             mysql_secret_path: base.join("mysql_secrets.json"),
+            envs_path: base.join("environments.json"),
+            current_env_path: base.join("current_environment.txt"),
         })
+    }
+
+    pub fn list_environments(&self) -> Result<Vec<String>, StoreError> {
+        if !self.envs_path.exists() {
+            return Ok(vec!["default".to_string()]);
+        }
+        let content =
+            fs::read_to_string(&self.envs_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        let mut envs: Vec<String> =
+            serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))?;
+        if envs.is_empty() {
+            envs.push("default".to_string());
+        }
+        Ok(envs)
+    }
+
+    pub fn save_environments(&self, envs: &[String]) -> Result<(), StoreError> {
+        let content =
+            serde_json::to_string_pretty(envs).map_err(|e| StoreError::Serialize(e.to_string()))?;
+        fs::write(&self.envs_path, content).map_err(|e| StoreError::Io(e.to_string()))
+    }
+
+    pub fn get_current_environment(&self) -> Result<String, StoreError> {
+        if !self.current_env_path.exists() {
+            return Ok("default".to_string());
+        }
+        let content =
+            fs::read_to_string(&self.current_env_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        let value = content.trim();
+        if value.is_empty() {
+            Ok("default".to_string())
+        } else {
+            Ok(value.to_string())
+        }
+    }
+
+    pub fn set_current_environment(&self, env: &str) -> Result<(), StoreError> {
+        fs::write(&self.current_env_path, env).map_err(|e| StoreError::Io(e.to_string()))
     }
 
     pub fn list(&self) -> Result<Vec<Session>, StoreError> {

@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { downloadSftpFile, testZookeeperConnection, uploadSftpFile } from "../services/bridge";
+import {
+  createEnvironment,
+  downloadSftpFile,
+  getCurrentEnvironment,
+  listEnvironments,
+  renameCurrentEnvironment,
+  switchEnvironment,
+  testZookeeperConnection,
+  uploadSftpFile,
+} from "../services/bridge";
 import type {
   MySqlConnection,
   RedisConnection,
@@ -36,6 +45,10 @@ export function useAppShell() {
   const [selectedMysqlId, setSelectedMysqlId] = useState<string | undefined>();
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
+  const [environments, setEnvironments] = useState<string[]>(["default"]);
+  const [currentEnvironment, setCurrentEnvironment] = useState("default");
+  const [environmentBusy, setEnvironmentBusy] = useState(false);
+  const [envReloadKey, setEnvReloadKey] = useState(0);
   const writerMapRef = useRef<Map<string, (content: string) => void>>(new Map());
   const { downloadTasks, createDownloadTask, finishDownloadTask, dismissDownloadTask } = useDownloadTasks();
   const { auditOpen, setAuditOpen, auditLoading, audits, loadAudits } = useAuditLogs(setError);
@@ -48,6 +61,19 @@ export function useAppShell() {
     setLang(next);
     setLangStorage(next);
   };
+
+  useEffect(() => {
+    void Promise.all([listEnvironments(), getCurrentEnvironment()])
+      .then(([envs, current]) => {
+        const next = envs.length > 0 ? envs : ["default"];
+        setEnvironments(next);
+        setCurrentEnvironment(current || next[0]);
+      })
+      .catch(() => {
+        setEnvironments(["default"]);
+        setCurrentEnvironment("default");
+      });
+  }, []);
 
   const { upgradeChecking, checkOnlineUpgrade, upgradePrompt, resolveUpgradePrompt } = useUpdater({
     setStatus,
@@ -175,6 +201,14 @@ export function useAppShell() {
     return (tabId: string, text: string) => writerMapRef.current.get(tabId)?.(text);
   }, []);
 
+  const refreshByEnvironmentSwitch = useCallback(() => {
+    setSelectedId(undefined);
+    setSelectedZkId(undefined);
+    setSelectedRedisId(undefined);
+    setSelectedMysqlId(undefined);
+    setEnvReloadKey((v) => v + 1);
+  }, []);
+
   useTerminalOutput({
     sessions,
     connectedIds,
@@ -198,6 +232,7 @@ export function useAppShell() {
     setStatus,
     setError,
     tr,
+    reloadKey: envReloadKey,
   });
 
   const {
@@ -213,6 +248,7 @@ export function useAppShell() {
     setStatus,
     setError,
     tr,
+    reloadKey: envReloadKey,
   });
 
   const {
@@ -228,6 +264,7 @@ export function useAppShell() {
     setStatus,
     setError,
     tr,
+    reloadKey: envReloadKey,
   });
 
   const {
@@ -243,6 +280,7 @@ export function useAppShell() {
     setStatus,
     setError,
     tr,
+    reloadKey: envReloadKey,
   });
 
   const testZkConnection = useCallback(async (input: ZookeeperConnectionInput, secret?: string) => {
@@ -258,9 +296,78 @@ export function useAppShell() {
     [connect]
   );
 
+  const switchCurrentEnvironment = useCallback(
+    async (name: string) => {
+      setEnvironmentBusy(true);
+      try {
+        const next = await switchEnvironment(name);
+        setCurrentEnvironment(next);
+        const envs = await listEnvironments();
+        setEnvironments(envs.length > 0 ? envs : [next]);
+        refreshByEnvironmentSwitch();
+        setStatus(tr("status.environmentSwitched", { name: next }));
+        setError(null);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(tr("error.switchEnvironmentFailed", { message }));
+      } finally {
+        setEnvironmentBusy(false);
+      }
+    },
+    [refreshByEnvironmentSwitch, tr]
+  );
+
+  const createAndSwitchEnvironment = useCallback(
+    async (name: string) => {
+      setEnvironmentBusy(true);
+      try {
+        const envs = await createEnvironment(name);
+        const next = await switchEnvironment(name);
+        setEnvironments(envs.length > 0 ? envs : [next]);
+        setCurrentEnvironment(next);
+        refreshByEnvironmentSwitch();
+        setStatus(tr("status.environmentCreated", { name: next }));
+        setError(null);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(tr("error.createEnvironmentFailed", { message }));
+      } finally {
+        setEnvironmentBusy(false);
+      }
+    },
+    [refreshByEnvironmentSwitch, tr]
+  );
+
+  const renameEnvironment = useCallback(
+    async (newName: string) => {
+      setEnvironmentBusy(true);
+      try {
+        const next = await renameCurrentEnvironment(newName);
+        setCurrentEnvironment(next);
+        const envs = await listEnvironments();
+        setEnvironments(envs.length > 0 ? envs : [next]);
+        refreshByEnvironmentSwitch();
+        setStatus(tr("status.environmentRenamed", { name: next }));
+        setError(null);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(tr("error.renameEnvironmentFailed", { message }));
+      } finally {
+        setEnvironmentBusy(false);
+      }
+    },
+    [refreshByEnvironmentSwitch, tr]
+  );
+
   return {
     lang,
     tr,
+    environments,
+    currentEnvironment,
+    environmentBusy,
+    switchCurrentEnvironment,
+    createAndSwitchEnvironment,
+    renameEnvironment,
     switchLang,
     currentPage,
     setCurrentPage,

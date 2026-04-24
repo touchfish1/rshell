@@ -15,6 +15,12 @@ export default function App() {
   const {
     lang,
     tr,
+    environments,
+    currentEnvironment,
+    environmentBusy,
+    switchCurrentEnvironment,
+    createAndSwitchEnvironment,
+    renameEnvironment,
     switchLang,
     currentPage,
     setCurrentPage,
@@ -312,6 +318,12 @@ export default function App() {
             lang={lang}
             onSwitchLang={switchLang}
             onRefreshHostStatus={refreshReachability}
+            environments={environments}
+            currentEnvironment={currentEnvironment}
+            environmentBusy={environmentBusy}
+            onSwitchEnvironment={switchCurrentEnvironment}
+            onCreateEnvironment={createAndSwitchEnvironment}
+            onRenameEnvironment={renameEnvironment}
             tr={tr}
           />
         ) : currentPage === "terminal" ? (

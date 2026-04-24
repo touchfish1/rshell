@@ -5,7 +5,14 @@ use crate::domain::redis::{RedisConnection, RedisConnectionInput};
 
 impl AppState {
     pub async fn list_redis_connections(&self) -> Vec<RedisConnection> {
-        self.redis_connections.lock().await.clone()
+        let env = self.get_current_environment().await;
+        self.redis_connections
+            .lock()
+            .await
+            .iter()
+            .filter(|c| c.environment == env)
+            .cloned()
+            .collect()
     }
 
     pub async fn create_redis_connection(
@@ -13,7 +20,8 @@ impl AppState {
         input: RedisConnectionInput,
         secret: Option<String>,
     ) -> Result<RedisConnection, String> {
-        let conn = input.into_connection();
+        let mut conn = input.into_connection();
+        conn.environment = self.get_current_environment().await;
         {
             let mut conns = self.redis_connections.lock().await;
             conns.push(conn.clone());

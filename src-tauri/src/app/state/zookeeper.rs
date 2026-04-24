@@ -10,7 +10,14 @@ use crate::domain::zookeeper::{ZookeeperConnection, ZookeeperConnectionInput};
 
 impl AppState {
     pub async fn list_zookeeper_connections(&self) -> Vec<ZookeeperConnection> {
-        self.zookeeper_connections.lock().await.clone()
+        let env = self.get_current_environment().await;
+        self.zookeeper_connections
+            .lock()
+            .await
+            .iter()
+            .filter(|c| c.environment == env)
+            .cloned()
+            .collect()
     }
 
     pub async fn create_zookeeper_connection(
@@ -18,7 +25,8 @@ impl AppState {
         input: ZookeeperConnectionInput,
         secret: Option<String>,
     ) -> Result<ZookeeperConnection, String> {
-        let conn = input.into_connection();
+        let mut conn = input.into_connection();
+        conn.environment = self.get_current_environment().await;
         {
             let mut conns = self.zookeeper_connections.lock().await;
             conns.push(conn.clone());

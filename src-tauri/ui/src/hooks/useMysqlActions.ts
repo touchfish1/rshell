@@ -18,8 +18,9 @@ export function useMysqlActions(opts: {
   setStatus: (text: string) => void;
   setError: (text: string | null) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  reloadKey?: number | string;
 }) {
-  const { connections, setConnections, selectedId, setSelectedId, setStatus, setError, tr } = opts;
+  const { connections, setConnections, selectedId, setSelectedId, setStatus, setError, tr, reloadKey } = opts;
 
   useEffect(() => {
     void listMySqlConnections()
@@ -30,7 +31,7 @@ export function useMysqlActions(opts: {
         const message = err instanceof Error ? err.message : String(err);
         setError(tr("error.loadMysqlFailed", { message }));
       });
-  }, [setConnections, setError, setSelectedId, tr]);
+  }, [setConnections, setError, setSelectedId, tr, reloadKey]);
 
   const create = async (input: MySqlConnectionInput, secret?: string): Promise<MySqlConnection | null> => {
     try {

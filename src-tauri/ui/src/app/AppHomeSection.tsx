@@ -62,6 +62,12 @@ interface AppHomeSectionProps {
   upgradeChecking: boolean;
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
+  environments: string[];
+  currentEnvironment: string;
+  environmentBusy: boolean;
+  onSwitchEnvironment: (name: string) => Promise<void>;
+  onCreateEnvironment: (name: string) => Promise<void>;
+  onRenameEnvironment: (newName: string) => Promise<void>;
   onRefreshHostStatus: () => void;
   tr: TranslateFn;
 }

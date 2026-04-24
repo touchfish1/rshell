@@ -5,7 +5,14 @@ use crate::domain::mysql::{MySqlConnection, MySqlConnectionInput};
 
 impl AppState {
     pub async fn list_mysql_connections(&self) -> Vec<MySqlConnection> {
-        self.mysql_connections.lock().await.clone()
+        let env = self.get_current_environment().await;
+        self.mysql_connections
+            .lock()
+            .await
+            .iter()
+            .filter(|c| c.environment == env)
+            .cloned()
+            .collect()
     }
 
     pub async fn create_mysql_connection(
@@ -13,7 +20,8 @@ impl AppState {
         input: MySqlConnectionInput,
         secret: Option<String>,
     ) -> Result<MySqlConnection, String> {
-        let conn = input.into_connection();
+        let mut conn = input.into_connection();
+        conn.environment = self.get_current_environment().await;
         {
             let mut conns = self.mysql_connections.lock().await;
             conns.push(conn.clone());

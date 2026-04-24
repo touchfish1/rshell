@@ -3,9 +3,15 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+fn default_environment() -> String {
+    "default".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RedisConnection {
     pub id: Uuid,
+    #[serde(default = "default_environment")]
+    pub environment: String,
     pub name: String,
     /// Redis address, e.g. `127.0.0.1:6379`
     pub address: String,
@@ -23,6 +29,7 @@ impl RedisConnectionInput {
     pub fn into_connection(self) -> RedisConnection {
         RedisConnection {
             id: Uuid::new_v4(),
+            environment: default_environment(),
             name: self.name,
             address: self.address,
             db: self.db.unwrap_or(0),

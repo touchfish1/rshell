@@ -18,8 +18,9 @@ export function useRedisActions(opts: {
   setStatus: (text: string) => void;
   setError: (text: string | null) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  reloadKey?: number | string;
 }) {
-  const { connections, setConnections, selectedId, setSelectedId, setStatus, setError, tr } = opts;
+  const { connections, setConnections, selectedId, setSelectedId, setStatus, setError, tr, reloadKey } = opts;
 
   useEffect(() => {
     void listRedisConnections()
@@ -31,7 +32,7 @@ export function useRedisActions(opts: {
         const message = err instanceof Error ? err.message : String(err);
         setError(tr("error.loadRedisFailed", { message }));
       });
-  }, [setConnections, setSelectedId, setError, tr]);
+  }, [setConnections, setSelectedId, setError, tr, reloadKey]);
 
   const create = async (input: RedisConnectionInput, secret?: string): Promise<RedisConnection | null> => {
     try {

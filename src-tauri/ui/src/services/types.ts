@@ -13,6 +13,7 @@ export interface WorkspaceTab {
 
 export interface Session {
   id: string;
+  environment?: string;
   name: string;
   protocol: Protocol;
   host: string;
@@ -77,6 +78,7 @@ export interface AuditRecord {
 
 export interface ZookeeperConnection {
   id: string;
+  environment?: string;
   name: string;
   connect_string: string;
   session_timeout_ms: number;
@@ -96,6 +98,7 @@ export interface ZkNodeData {
 
 export interface RedisConnection {
   id: string;
+  environment?: string;
   name: string;
   address: string;
   db: number;
@@ -162,6 +165,7 @@ export type RedisValueUpdate =
 
 export interface MySqlConnection {
   id: string;
+  environment?: string;
   name: string;
   host: string;
   port: number;
@@ -196,4 +200,13 @@ export interface MySqlQueryResult {
   columns: string[];
   rows: Array<Array<string | null>>;
   affected_rows: number;
+}
+
+export interface PostgresqlSyncSummary {
+  environment: string;
+  sessions: number;
+  zookeeper_connections: number;
+  redis_connections: number;
+  mysql_connections: number;
+  synced_at: string;
 }

@@ -44,6 +44,36 @@
   font-size: 12px;
 }
 
+.env-modal-card {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.env-modal-form {
+  gap: 12px;
+}
+
+.env-modal-select,
+.env-modal-input {
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--modal-border);
+  background: var(--modal-surface-muted);
+  color: var(--modal-text);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.env-modal-input::placeholder {
+  color: var(--modal-text-muted);
+}
+
+.env-modal-select:focus,
+.env-modal-input:focus {
+  outline: none;
+  border-color: rgba(79, 131, 255, 0.75);
+  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+}
+
 .home-card h3 {
   margin: 0 0 10px;
   font-size: 15px;

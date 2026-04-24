@@ -24,6 +24,7 @@ interface UseSessionActionsArgs {
   setStatus: (text: string) => void;
   setError: (text: string | null) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  reloadKey?: number | string;
 }
 
 export function useSessionActions({
@@ -39,6 +40,7 @@ export function useSessionActions({
   setStatus,
   setError,
   tr,
+  reloadKey,
 }: UseSessionActionsArgs) {
   useEffect(() => {
     void listSessions()
@@ -52,7 +54,7 @@ export function useSessionActions({
         const message = err instanceof Error ? err.message : String(err);
         setError(tr("error.loadSessionsFailed", { message }));
       });
-  }, [setError, setSelectedId, setSessions, tr]);
+  }, [setError, setSelectedId, setSessions, tr, reloadKey]);
 
   const create = async (input: SessionInput, secret?: string): Promise<Session | null> => {
     try {

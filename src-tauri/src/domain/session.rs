@@ -3,6 +3,10 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+fn default_environment() -> String {
+    "default".to_string()
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Protocol {
@@ -13,6 +17,8 @@ pub enum Protocol {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Session {
     pub id: Uuid,
+    #[serde(default = "default_environment")]
+    pub environment: String,
     pub name: String,
     pub protocol: Protocol,
     pub host: String,
@@ -37,6 +43,7 @@ impl SessionInput {
     pub fn into_session(self) -> Session {
         Session {
             id: Uuid::new_v4(),
+            environment: default_environment(),
             name: self.name,
             protocol: self.protocol,
             host: self.host,

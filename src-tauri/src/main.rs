@@ -100,6 +100,11 @@ fn main() {
             api::commands::mysql_execute_query,
             api::commands::mysql_explain_query,
             api::commands::mysql_alter_table_add_column,
+            api::commands::list_environments,
+            api::commands::get_current_environment,
+            api::commands::create_environment,
+            api::commands::rename_current_environment,
+            api::commands::switch_environment,
         ])
         .run(tauri::generate_context!())
         .expect("failed to run rshell");

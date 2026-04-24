@@ -10,6 +10,7 @@ mod command_sanitize;
 mod audit;
 mod common;
 mod metrics;
+mod environments;
 mod mysql;
 mod reachability;
 mod redis;
@@ -553,4 +554,32 @@ pub async fn mysql_alter_table_add_column(
     column_type: String,
 ) -> Result<(), String> {
     mysql::mysql_alter_table_add_column(state, id, schema, table, column_name, column_type).await
+}
+
+#[tauri::command]
+pub async fn list_environments(state: State<'_, AppState>) -> Result<Vec<String>, String> {
+    environments::list_environments(state).await
+}
+
+#[tauri::command]
+pub async fn get_current_environment(state: State<'_, AppState>) -> Result<String, String> {
+    environments::get_current_environment(state).await
+}
+
+#[tauri::command]
+pub async fn create_environment(state: State<'_, AppState>, name: String) -> Result<Vec<String>, String> {
+    environments::create_environment(state, name).await
+}
+
+#[tauri::command]
+pub async fn rename_current_environment(
+    state: State<'_, AppState>,
+    new_name: String,
+) -> Result<String, String> {
+    environments::rename_current_environment(state, new_name).await
+}
+
+#[tauri::command]
+pub async fn switch_environment(state: State<'_, AppState>, name: String) -> Result<String, String> {
+    environments::switch_environment(state, name).await
 }

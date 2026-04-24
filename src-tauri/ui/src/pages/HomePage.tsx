@@ -64,6 +64,12 @@ interface Props {
   upgradeChecking: boolean;
   lang: Lang;
   onSwitchLang: (lang: Lang) => void;
+  environments: string[];
+  currentEnvironment: string;
+  environmentBusy: boolean;
+  onSwitchEnvironment: (name: string) => Promise<void>;
+  onCreateEnvironment: (name: string) => Promise<void>;
+  onRenameEnvironment: (newName: string) => Promise<void>;
   onRefreshHostStatus: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
@@ -114,6 +120,12 @@ export default function HomePage({
   upgradeChecking,
   lang,
   onSwitchLang,
+  environments,
+  currentEnvironment,
+  environmentBusy,
+  onSwitchEnvironment,
+  onCreateEnvironment,
+  onRenameEnvironment,
   onRefreshHostStatus,
   tr,
 }: Props) {
@@ -122,6 +134,9 @@ export default function HomePage({
   const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0;
   const [hostQuery, setHostQuery] = useState("");
   const [appVersion, setAppVersion] = useState("");
+  const [environmentModalOpen, setEnvironmentModalOpen] = useState(false);
+  const [environmentInput, setEnvironmentInput] = useState("");
+  const [selectedEnvironment, setSelectedEnvironment] = useState(currentEnvironment);
   const normalizedHostQuery = hostQuery.trim().toLowerCase();
   const filteredSessions = normalizedHostQuery
     ? sessions.filter((session) => {
@@ -139,6 +154,23 @@ export default function HomePage({
       .then((v) => setAppVersion(v))
       .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    if (!environmentModalOpen) return;
+    setEnvironmentInput(currentEnvironment);
+    setSelectedEnvironment(currentEnvironment);
+  }, [environmentModalOpen, currentEnvironment]);
+
+  useEffect(() => {
+    if (!environmentModalOpen) return;
+    const onKeydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setEnvironmentModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeydown);
+    return () => window.removeEventListener("keydown", onKeydown);
+  }, [environmentModalOpen]);
 
   return (
     <section className="workspace home-page">
@@ -193,9 +225,14 @@ export default function HomePage({
           <span className={connected ? "pill pill-ok" : "pill"} aria-live="polite">
             {connected ? tr("top.online") : tr("top.offline")}
           </span>
-          <span className="pill pill-muted" aria-live="polite">
-            {selected ? tr("top.current", { name: selected.name }) : tr("top.noHostSelected")}
-          </span>
+          <button
+            className="btn btn-ghost"
+            disabled={environmentBusy}
+            onClick={() => setEnvironmentModalOpen(true)}
+            title={tr("top.environment")}
+          >
+            {tr("top.environmentCurrent", { name: currentEnvironment })}
+          </button>
         </div>
       </header>
 
@@ -286,6 +323,82 @@ export default function HomePage({
       </div>
 
       <footer>{status}</footer>
+      {environmentModalOpen ? (
+        <div className="modal-backdrop" onClick={() => setEnvironmentModalOpen(false)}>
+          <div className="modal-card env-modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="modal-header">
+              <h4>{tr("top.environment")}</h4>
+              <button
+                type="button"
+                className="modal-close"
+                onClick={() => setEnvironmentModalOpen(false)}
+                title={tr("modal.close")}
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-form env-modal-form">
+              <div className="modal-inline-notice">
+                {tr("top.environmentCurrent", { name: currentEnvironment })}
+              </div>
+              <select
+                className="env-modal-select"
+                value={selectedEnvironment}
+                onChange={(event) => setSelectedEnvironment(event.target.value)}
+                disabled={environmentBusy}
+              >
+                {environments.map((environment) => (
+                  <option key={environment} value={environment}>
+                    {environment}
+                  </option>
+                ))}
+              </select>
+              <input
+                className="env-modal-input"
+                value={environmentInput}
+                onChange={(event) => setEnvironmentInput(event.target.value)}
+                placeholder={tr("top.environmentInputPlaceholder")}
+                disabled={environmentBusy}
+              />
+            </div>
+            <div className="modal-actions">
+              <button className="btn btn-ghost" onClick={() => setEnvironmentModalOpen(false)} disabled={environmentBusy}>
+                {tr("modal.cancel")}
+              </button>
+              <button
+                className="btn btn-ghost"
+                disabled={environmentBusy || !selectedEnvironment}
+                onClick={async () => {
+                  await onSwitchEnvironment(selectedEnvironment);
+                  setEnvironmentModalOpen(false);
+                }}
+              >
+                {tr("top.environmentSwitch")}
+              </button>
+              <button
+                className="btn btn-ghost"
+                disabled={environmentBusy || !environmentInput.trim()}
+                onClick={async () => {
+                  await onCreateEnvironment(environmentInput.trim());
+                  setEnvironmentModalOpen(false);
+                }}
+              >
+                {tr("top.environmentCreate")}
+              </button>
+              <button
+                className="btn"
+                disabled={environmentBusy || !environmentInput.trim()}
+                onClick={async () => {
+                  await onRenameEnvironment(environmentInput.trim());
+                  setEnvironmentModalOpen(false);
+                }}
+              >
+                {tr("top.environmentRename")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <AuditLogModal
         open={auditOpen}
         loading={auditLoading}

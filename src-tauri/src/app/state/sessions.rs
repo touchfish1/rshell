@@ -7,7 +7,14 @@ use crate::domain::session::{Session, SessionInput};
 
 impl AppState {
     pub async fn list_sessions(&self) -> Vec<Session> {
-        self.sessions.lock().await.clone()
+        let env = self.get_current_environment().await;
+        self.sessions
+            .lock()
+            .await
+            .iter()
+            .filter(|s| s.environment == env)
+            .cloned()
+            .collect()
     }
 
     pub async fn create_session(
@@ -15,7 +22,8 @@ impl AppState {
         input: SessionInput,
         secret: Option<String>,
     ) -> Result<Session, String> {
-        let session = input.into_session();
+        let mut session = input.into_session();
+        session.environment = self.get_current_environment().await;
         {
             let mut sessions = self.sessions.lock().await;
             sessions.push(session.clone());

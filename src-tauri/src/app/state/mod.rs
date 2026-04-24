@@ -6,6 +6,7 @@ mod audit;
 mod audit_parse;
 mod convert;
 mod metrics;
+mod environments;
 mod sessions;
 mod sftp;
 mod ssh_helpers;
@@ -15,6 +16,8 @@ mod zookeeper;
 mod mysql;
 pub use self::sftp::SftpTextReadResult;
 pub use self::mysql::{MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo};
+#[cfg(feature = "postgresql_sync")]
+mod postgresql_sync;
 
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -98,6 +101,10 @@ pub struct AppState {
     active_mysql: Arc<Mutex<HashMap<Uuid, Arc<ActiveMySql>>>>,
     /// 审计：每个会话的输入解析状态
     audit_input_buffers: Arc<Mutex<HashMap<Uuid, AuditInputState>>>,
+    /// 当前环境（用于列表过滤与新建连接归属）
+    current_environment: Arc<Mutex<String>>,
+    /// 环境列表
+    environments: Arc<Mutex<Vec<String>>>,
 }
 
 impl Default for AppState {
@@ -107,6 +114,39 @@ impl Default for AppState {
         let zookeeper_connections = store.list_zk().unwrap_or_default();
         let redis_connections = store.list_redis().unwrap_or_default();
         let mysql_connections = store.list_mysql().unwrap_or_default();
+        let mut environments = store.list_environments().unwrap_or_else(|_| vec!["default".to_string()]);
+        if environments.is_empty() {
+            environments.push("default".to_string());
+        }
+        let mut current_environment = store
+            .get_current_environment()
+            .unwrap_or_else(|_| "default".to_string());
+        if !environments.iter().any(|e| e == &current_environment) {
+            environments.push(current_environment.clone());
+        }
+        for item in &sessions {
+            if !environments.iter().any(|e| e == &item.environment) {
+                environments.push(item.environment.clone());
+            }
+        }
+        for item in &zookeeper_connections {
+            if !environments.iter().any(|e| e == &item.environment) {
+                environments.push(item.environment.clone());
+            }
+        }
+        for item in &redis_connections {
+            if !environments.iter().any(|e| e == &item.environment) {
+                environments.push(item.environment.clone());
+            }
+        }
+        for item in &mysql_connections {
+            if !environments.iter().any(|e| e == &item.environment) {
+                environments.push(item.environment.clone());
+            }
+        }
+        if current_environment.trim().is_empty() {
+            current_environment = "default".to_string();
+        }
         Self {
             store,
             sessions: Arc::new(Mutex::new(sessions)),
@@ -118,6 +158,8 @@ impl Default for AppState {
             active_redis: Arc::new(Mutex::new(HashMap::new())),
             active_mysql: Arc::new(Mutex::new(HashMap::new())),
             audit_input_buffers: Arc::new(Mutex::new(HashMap::new())),
+            current_environment: Arc::new(Mutex::new(current_environment)),
+            environments: Arc::new(Mutex::new(environments)),
         }
     }
 }
