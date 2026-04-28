@@ -10,6 +10,7 @@ use crate::domain::audit::AuditRecord;
 use crate::domain::mysql::MySqlConnection;
 use crate::domain::redis::RedisConnection;
 use crate::domain::session::Session;
+use crate::domain::etcd::EtcdConnection;
 use crate::domain::zookeeper::ZookeeperConnection;
 use crate::infra::store_audit;
 use crate::infra::store_secret;
@@ -33,6 +34,8 @@ pub struct SessionStore {
     redis_secret_path: PathBuf,
     mysql_db_path: PathBuf,
     mysql_secret_path: PathBuf,
+    etcd_db_path: PathBuf,
+    etcd_secret_path: PathBuf,
     envs_path: PathBuf,
     current_env_path: PathBuf,
 }
@@ -53,6 +56,8 @@ impl SessionStore {
             redis_secret_path: base.join("redis_secrets.json"),
             mysql_db_path: base.join("mysql.json"),
             mysql_secret_path: base.join("mysql_secrets.json"),
+            etcd_db_path: base.join("etcd.json"),
+            etcd_secret_path: base.join("etcd_secrets.json"),
             envs_path: base.join("environments.json"),
             current_env_path: base.join("current_environment.txt"),
         })
@@ -202,6 +207,33 @@ impl SessionStore {
 
     pub fn delete_secret(&self, session_id: Uuid) -> Result<(), StoreError> {
         store_secret::delete_secret(&self.secret_path, session_id)
+    }
+
+    pub fn list_etcd(&self) -> Result<Vec<EtcdConnection>, StoreError> {
+        if !self.etcd_db_path.exists() {
+            return Ok(vec![]);
+        }
+        let content =
+            fs::read_to_string(&self.etcd_db_path).map_err(|e| StoreError::Io(e.to_string()))?;
+        serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))
+    }
+
+    pub fn save_all_etcd(&self, conns: &[EtcdConnection]) -> Result<(), StoreError> {
+        let content = serde_json::to_string_pretty(conns)
+            .map_err(|e| StoreError::Serialize(e.to_string()))?;
+        fs::write(&self.etcd_db_path, content).map_err(|e| StoreError::Io(e.to_string()))
+    }
+
+    pub fn set_etcd_secret(&self, conn_id: Uuid, secret: &str) -> Result<(), StoreError> {
+        store_secret::set_secret(&self.etcd_secret_path, conn_id, secret)
+    }
+
+    pub fn get_etcd_secret(&self, conn_id: Uuid) -> Result<Option<String>, StoreError> {
+        store_secret::get_secret(&self.etcd_secret_path, conn_id)
+    }
+
+    pub fn delete_etcd_secret(&self, conn_id: Uuid) -> Result<(), StoreError> {
+        store_secret::delete_secret(&self.etcd_secret_path, conn_id)
     }
 
     pub fn list_audits(&self, limit: Option<usize>) -> Result<Vec<AuditRecord>, StoreError> {

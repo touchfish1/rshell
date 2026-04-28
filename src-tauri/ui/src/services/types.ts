@@ -210,3 +210,22 @@ export interface PostgresqlSyncSummary {
   mysql_connections: number;
   synced_at: string;
 }
+
+export interface EtcdConnection {
+  id: string;
+  environment?: string;
+  name: string;
+  endpoints: string;
+}
+
+export interface EtcdConnectionInput {
+  name: string;
+  endpoints: string;
+}
+
+export interface EtcdKeyValue {
+  key: string;
+  value: string;
+  create_revision: number;
+  mod_revision: number;
+}

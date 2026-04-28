@@ -75,8 +75,8 @@
 }
 
 .modal-close:focus-visible {
-  outline: 2px solid rgba(91, 141, 239, 0.55);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--modal-surface), 0 0 0 4px var(--accent-ring);
 }
 
 .modal-body {
@@ -129,21 +129,21 @@
 }
 
 .modal-inline-notice-success {
-  border-color: rgba(74, 179, 126, 0.4);
-  background: rgba(74, 179, 126, 0.12);
-  color: #79d6a2;
+  border-color: rgba(34, 197, 94, 0.35);
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
 }
 
 .modal-inline-notice-warning {
-  border-color: rgba(224, 172, 87, 0.42);
-  background: rgba(224, 172, 87, 0.13);
-  color: #f4c97b;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fbbf24;
 }
 
 .modal-inline-notice-error {
-  border-color: rgba(214, 92, 110, 0.45);
-  background: rgba(214, 92, 110, 0.14);
-  color: #f2a0ac;
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
+  color: #fca5a5;
 }
 
 .session-form {
@@ -267,8 +267,8 @@
 }
 
 .cmdk-input:focus {
-  border-color: rgba(79, 131, 255, 0.7);
-  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .cmdk-list {
@@ -306,7 +306,7 @@
 
 .cmdk-item:hover:not(:disabled),
 .cmdk-item.active {
-  background: rgba(79, 131, 255, 0.14);
+  background: var(--accent-muted);
 }
 
 .cmdk-item:disabled {

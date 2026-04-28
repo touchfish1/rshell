@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { MySqlConnection, MySqlConnectionInput, RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
+import type { EtcdConnection, MySqlConnection, MySqlConnectionInput, RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
 import type { TrFn } from "../../i18n-context";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { HostCreateModal } from "./HostCreateModal";
@@ -14,10 +14,12 @@ interface Props {
   pendingDeleteRedis: RedisConnection | null;
   pendingDeleteMySql: MySqlConnection | null;
   pendingDeleteZk: ZookeeperConnection | null;
+  pendingDeleteEtcd: EtcdConnection | null;
   onCancelDeleteSession: () => void;
   onCancelDeleteRedis: () => void;
   onCancelDeleteMySql: () => void;
   onCancelDeleteZk: () => void;
+  onCancelDeleteEtcd: () => void;
   onConfirmDeleteSession: () => void;
   onConfirmDeleteRedis: () => void;
   onConfirmDeleteMySql: () => void;
@@ -106,14 +108,17 @@ export function SessionListModals(props: Props) {
     pendingDeleteRedis,
     pendingDeleteMySql,
     pendingDeleteZk,
+    pendingDeleteEtcd,
     onCancelDeleteSession,
     onCancelDeleteRedis,
     onCancelDeleteMySql,
     onCancelDeleteZk,
+    onCancelDeleteEtcd,
     onConfirmDeleteSession,
     onConfirmDeleteRedis,
     onConfirmDeleteMySql,
     onConfirmDeleteZk,
+    onConfirmDeleteEtcd,
     showCreateModal,
     createForm,
     createSecret,
@@ -244,6 +249,16 @@ export function SessionListModals(props: Props) {
         danger
         onCancel={onCancelDeleteZk}
         onConfirm={onConfirmDeleteZk}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeleteEtcd)}
+        title={tr("session.delete")}
+        message={pendingDeleteEtcd ? tr("etcd.page.deleteConfirm", { key: pendingDeleteEtcd.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={onCancelDeleteEtcd}
+        onConfirm={onConfirmDeleteEtcd}
       />
 
       <HostEditModal

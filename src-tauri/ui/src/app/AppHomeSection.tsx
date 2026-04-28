@@ -1,5 +1,7 @@
 import HomePage from "../pages/HomePage";
 import type {
+  EtcdConnection,
+  EtcdConnectionInput,
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
@@ -52,6 +54,12 @@ interface AppHomeSectionProps {
   onDeleteMysql: (id: string) => Promise<void>;
   onGetMysqlSecret: (id: string) => Promise<string | null>;
   onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
+  onConnectEtcd: (id: string) => void;
+  onCreateEtcd: (input: EtcdConnectionInput, secret?: string) => Promise<EtcdConnection | null>;
+  onDeleteEtcd: (id: string) => Promise<void>;
+  onGetEtcdSecret: (id: string) => Promise<string | null>;
+  onUpdateEtcd: (id: string, input: EtcdConnectionInput, secret?: string) => Promise<void>;
+  etcdConnections: EtcdConnection[];
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
   auditLoading: boolean;

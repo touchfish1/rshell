@@ -5,6 +5,8 @@ import AuditLogModal from "../components/AuditLogModal";
 import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
 import type {
+  EtcdConnection,
+  EtcdConnectionInput,
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
@@ -53,6 +55,12 @@ interface Props {
   onDeleteMysql: (id: string) => Promise<void>;
   onGetMysqlSecret: (id: string) => Promise<string | null>;
   onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
+  etcdConnections: EtcdConnection[];
+  onConnectEtcd: (id: string) => void;
+  onCreateEtcd: (input: EtcdConnectionInput, secret?: string) => Promise<EtcdConnection | null>;
+  onDeleteEtcd: (id: string) => Promise<void>;
+  onGetEtcdSecret: (id: string) => Promise<string | null>;
+  onUpdateEtcd: (id: string, input: EtcdConnectionInput, secret?: string) => Promise<void>;
   onConnect: (id?: string) => Promise<void>;
   onOnlineUpgrade: () => Promise<void>;
   auditOpen: boolean;
@@ -109,6 +117,12 @@ export default function HomePage({
   onDeleteMysql,
   onGetMysqlSecret,
   onUpdateMysql,
+  etcdConnections,
+  onConnectEtcd,
+  onCreateEtcd,
+  onDeleteEtcd,
+  onGetEtcdSecret,
+  onUpdateEtcd,
   onConnect,
   onOnlineUpgrade,
   auditOpen,
@@ -131,7 +145,7 @@ export default function HomePage({
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
-  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0;
+  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0 || etcdConnections.length > 0;
   const [hostQuery, setHostQuery] = useState("");
   const [appVersion, setAppVersion] = useState("");
   const [environmentModalOpen, setEnvironmentModalOpen] = useState(false);
@@ -176,6 +190,9 @@ export default function HomePage({
     <section className="workspace home-page">
       <header className="topbar">
         <div className="topbar-title">
+          <div className="app-badge" aria-hidden="true">
+            r
+          </div>
           <div className="topbar-title-text">
             <div className="topbar-title-line">
               rshell
@@ -303,6 +320,12 @@ export default function HomePage({
                 onDeleteMySql={onDeleteMysql}
                 onGetMysqlSecret={onGetMysqlSecret}
                 onUpdateMysql={onUpdateMysql}
+                etcdConnections={etcdConnections}
+                onConnectEtcd={onConnectEtcd}
+                onCreateEtcd={onCreateEtcd}
+                onDeleteEtcd={onDeleteEtcd}
+                onGetEtcdSecret={onGetEtcdSecret}
+                onUpdateEtcd={onUpdateEtcd}
               />
               {showSearchNoResults ? <div className="home-search-empty">{tr("home.searchNoResults")}</div> : null}
               {!hasAnyConnections ? (

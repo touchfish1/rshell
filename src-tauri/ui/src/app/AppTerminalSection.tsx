@@ -39,6 +39,11 @@ interface AppTerminalSectionProps {
   retryConnect: (tabId: string) => void;
   writerMapRef: MutableRefObject<Map<string, (content: string) => void>>;
   setError: (error: string | null) => void;
+  onNavigateZk: () => void;
+  onNavigateRedis: () => void;
+  onNavigateMysql: () => void;
+  onNavigateEtcd: () => void;
+  onOpenCreate: () => void;
 }
 
 export function AppTerminalSection({
@@ -73,6 +78,11 @@ export function AppTerminalSection({
   retryConnect,
   writerMapRef,
   setError,
+  onNavigateZk,
+  onNavigateRedis,
+  onNavigateMysql,
+  onNavigateEtcd,
+  onOpenCreate,
 }: AppTerminalSectionProps) {
   return (
     <TerminalPage
@@ -117,6 +127,11 @@ export function AppTerminalSection({
       onDisconnect={onDisconnect}
       onUpdateHost={onUpdateHost}
       onGetHostMetrics={(session) => getHostMetrics(session.id)}
+      onNavigateZk={onNavigateZk}
+      onNavigateRedis={onNavigateRedis}
+      onNavigateMysql={onNavigateMysql}
+      onNavigateEtcd={onNavigateEtcd}
+      onOpenCreate={onOpenCreate}
       terminals={tabs.map((tab) => ({
         id: tab.id,
         node: (

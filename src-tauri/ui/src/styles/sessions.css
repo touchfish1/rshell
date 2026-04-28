@@ -1,10 +1,14 @@
+/* ============================================================
+   Session list — Table with host reachability, actions
+   ============================================================ */
+
 .session-list {
   --session-col-name: 140px;
   --session-col-host: 220px;
   padding: 0;
-  background: #0b1018;
-  border: 1px solid rgba(48, 56, 74, 0.6);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -13,52 +17,57 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 10px 12px;
-  border-bottom: 1px solid rgba(48, 56, 74, 0.6);
-  background: #0a0f17;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .session-list-header h3 {
   margin: 0;
   font-size: 14px;
-  color: #cfd6e4;
+  color: var(--text-primary);
+  font-weight: 600;
 }
 
 .session-list-search-row {
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(48, 56, 74, 0.6);
-  background: #0a0f17;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .session-list-search-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 7px 10px;
+  padding: 7px 12px;
   font-size: 13px;
-  border-radius: 8px;
-  border: 1px solid rgba(56, 65, 86, 0.85);
-  background: #0e141e;
-  color: #e7eaf0;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 
 .session-list-search-input::placeholder {
-  color: #6c778c;
+  color: var(--text-muted);
 }
 
 .session-list-search-input:focus {
   outline: none;
-  border-color: rgba(110, 140, 200, 0.65);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .session-table-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) 200px;
   align-items: center;
   padding: 8px 12px;
-  color: #7e8aa3;
+  color: var(--text-muted);
   font-size: 11px;
-  border-bottom: 1px solid rgba(48, 56, 74, 0.6);
-  background: #0b1018;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .session-table-head-main {
@@ -96,11 +105,12 @@
   transform: translateX(-50%);
   width: 1px;
   height: calc(100% - 18px);
-  background: rgba(112, 125, 148, 0.45);
+  background: var(--border-subtle);
 }
 
 .col-resize-handle:hover::before {
-  background: rgba(140, 160, 190, 0.9);
+  background: var(--accent);
+  opacity: 0.5;
 }
 
 .session-table-body {
@@ -111,51 +121,54 @@
 
 li.session-search-empty {
   padding: 18px 14px;
-  color: #8a96ad;
+  color: var(--text-muted);
   font-size: 13px;
   text-align: center;
-  border-bottom: 1px solid rgba(48, 56, 74, 0.45);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .session-line {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
+  grid-template-columns: minmax(0, 1fr) 200px;
   align-items: stretch;
-  border-bottom: 1px solid rgba(48, 56, 74, 0.45);
-}
-
-.session-line-connecting .session-main {
-  opacity: 0.92;
-}
-
-.session-line-connecting .connect:disabled {
-  opacity: 0.75;
-  cursor: wait;
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background var(--ease-fast);
 }
 
 .session-line:last-child {
   border-bottom: none;
 }
 
+.session-line-connecting .session-main {
+  opacity: 0.85;
+}
+
+.session-line-connecting .connect:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
 .session-main {
   width: 100%;
   border: none;
   background: transparent;
-  color: #d7ddea;
+  color: var(--text-primary);
   text-align: left;
   padding: 0 12px;
   display: grid;
   grid-template-columns: var(--session-col-name) var(--session-col-host) 110px 80px 70px 80px;
   gap: 8px;
   align-items: center;
+  cursor: pointer;
+  transition: background var(--ease-fast);
 }
 
 .session-line:hover .session-main {
-  background: rgba(31, 42, 58, 0.45);
+  background: var(--bg-hover);
 }
 
 .session-line.active .session-main {
-  background: rgba(38, 53, 75, 0.55);
+  background: var(--bg-active);
 }
 
 .session-col {
@@ -169,7 +182,7 @@ li.session-search-empty {
 }
 
 .session-col.name {
-  color: #f1f5ff;
+  color: var(--text-primary);
   font-weight: 600;
   gap: 8px;
 }
@@ -183,11 +196,11 @@ li.session-search-empty {
 .os-icon {
   width: 18px;
   height: 18px;
-  border-radius: 5px;
+  border-radius: 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.2px;
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -214,7 +227,7 @@ li.session-search-empty {
 }
 
 .session-col.host {
-  color: #c9d2e5;
+  color: var(--text-secondary);
   gap: 6px;
 }
 
@@ -228,7 +241,7 @@ li.session-search-empty {
 .copy-icon-btn {
   border: none;
   background: transparent;
-  color: #92a2be;
+  color: var(--text-muted);
   font-size: 12px;
   line-height: 1;
   cursor: pointer;
@@ -237,82 +250,96 @@ li.session-search-empty {
 }
 
 .copy-icon-btn:hover {
-  color: #ced9ed;
+  color: var(--text-secondary);
 }
 
 .copy-success-text {
   font-size: 11px;
-  color: #6ce2ab;
+  color: var(--accent);
 }
 
 .session-col.proto,
 .session-col.port,
 .session-col.user {
-  color: #9facc4;
+  color: var(--text-secondary);
 }
 
 .session-col.status {
-  color: #7a879f;
+  color: var(--text-muted);
 }
 
 .session-col.status.ok {
-  color: #6ce2ab;
+  color: var(--success);
 }
 
 .session-latency {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
-  opacity: 0.88;
+  opacity: 0.85;
 }
 
 .session-col.status.checking {
-  color: #f3cf72;
+  color: var(--warning);
 }
 
 .session-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 4px;
   padding: 6px 8px;
 }
 
 .session-actions button {
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
-  padding: 6px 10px;
-  border: 1px solid rgba(48, 56, 74, 0.9);
-  background: rgba(18, 24, 35, 0.7);
-  color: #c8d1e3;
+  padding: 5px 10px;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  transition: background var(--ease-fast), border-color var(--ease-fast), color var(--ease-fast);
+}
+
+.session-actions button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .session-actions .connect {
-  border-color: rgba(45, 139, 92, 0.95);
-  background: #28b873;
-  color: #eefaf3;
-  font-weight: 700;
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.1);
+  color: #4ade80;
+  font-weight: 600;
 }
 
 .session-actions .connect:hover {
-  background: #31c37d;
+  background: rgba(34, 197, 94, 0.18);
+  border-color: rgba(34, 197, 94, 0.7);
 }
 
 .session-actions .danger {
-  border-color: rgba(107, 42, 58, 0.9);
-  background: rgba(42, 20, 28, 0.7);
-  color: #ffd3dc;
+  border-color: rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.08);
+  color: #fca5a5;
+}
+
+.session-actions .danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.6);
 }
 
 .session-actions .edit,
 .session-actions .more {
-  border-color: rgba(56, 65, 86, 0.9);
-  background: rgba(23, 29, 41, 0.82);
-  color: #c4cede;
+  border-color: var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
 }
 
 .session-actions .edit:hover,
 .session-actions .more:hover {
-  background: rgba(33, 41, 57, 0.9);
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+  color: var(--text-primary);
 }
 
 .session-more-wrap {
@@ -324,27 +351,27 @@ li.session-search-empty {
   top: calc(100% + 6px);
   right: 0;
   min-width: 140px;
-  background: #0d131d;
-  border: 1px solid rgba(55, 66, 90, 0.95);
-  border-radius: 8px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
   padding: 4px;
   display: grid;
   gap: 4px;
-  z-index: 5;
+  z-index: 20;
+  box-shadow: var(--shadow-md);
 }
 
 .session-more-menu button {
   width: 100%;
   text-align: left;
   font-size: 12px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
+  padding: 6px 10px;
+  border: none;
   background: transparent;
-  color: #c6d1e3;
+  color: var(--text-primary);
+  border-radius: 4px;
 }
 
 .session-more-menu button:hover {
-  border-color: rgba(56, 65, 86, 0.9);
-  background: rgba(28, 37, 52, 0.7);
+  background: var(--bg-hover);
 }
-

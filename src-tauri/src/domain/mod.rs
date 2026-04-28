@@ -5,4 +5,5 @@ pub mod mysql;
 pub mod redis;
 pub mod session;
 pub mod terminal;
+pub mod etcd;
 pub mod zookeeper;

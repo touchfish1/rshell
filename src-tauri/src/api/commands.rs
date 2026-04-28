@@ -18,6 +18,7 @@ mod sessions;
 mod sftp;
 mod system;
 mod terminal;
+mod etcd;
 mod zookeeper;
 
 use tauri::{AppHandle, State};
@@ -26,9 +27,11 @@ use crate::app::{AppState, AuditRecord, HostMetrics, MySqlColumnInfo, MySqlQuery
 use crate::domain::mysql::{MySqlConnection, MySqlConnectionInput};
 use crate::domain::session::{Session, SessionInput};
 use crate::domain::redis::{RedisConnection, RedisConnectionInput};
+use crate::domain::etcd::{EtcdConnection, EtcdConnectionInput};
 use crate::domain::zookeeper::{ZookeeperConnection, ZookeeperConnectionInput};
 pub use reachability::HostReachability;
 pub use redis::{RedisDatabaseInfo, RedisKeyData, RedisScanResult, RedisValueData, RedisValueUpdate};
+pub use crate::domain::etcd::EtcdKeyValue;
 pub use zookeeper::ZkNodeData;
 
 #[tauri::command]
@@ -554,6 +557,101 @@ pub async fn mysql_alter_table_add_column(
     column_type: String,
 ) -> Result<(), String> {
     mysql::mysql_alter_table_add_column(state, id, schema, table, column_name, column_type).await
+}
+
+#[tauri::command]
+pub async fn list_etcd_connections(
+    state: State<'_, AppState>,
+) -> Result<Vec<EtcdConnection>, String> {
+    etcd::list_etcd_connections(state).await
+}
+
+#[tauri::command]
+pub async fn create_etcd_connection(
+    state: State<'_, AppState>,
+    input: EtcdConnectionInput,
+    secret: Option<String>,
+) -> Result<EtcdConnection, String> {
+    etcd::create_etcd_connection(state, input, secret).await
+}
+
+#[tauri::command]
+pub async fn update_etcd_connection(
+    state: State<'_, AppState>,
+    id: String,
+    input: EtcdConnectionInput,
+    secret: Option<String>,
+) -> Result<EtcdConnection, String> {
+    etcd::update_etcd_connection(state, id, input, secret).await
+}
+
+#[tauri::command]
+pub async fn delete_etcd_connection(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    etcd::delete_etcd_connection(state, id).await
+}
+
+#[tauri::command]
+pub async fn has_etcd_secret(state: State<'_, AppState>, id: String) -> Result<bool, String> {
+    etcd::has_etcd_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn get_etcd_secret(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Option<String>, String> {
+    etcd::get_etcd_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn connect_etcd(
+    state: State<'_, AppState>,
+    id: String,
+    secret: Option<String>,
+) -> Result<(), String> {
+    etcd::connect_etcd(state, id, secret).await
+}
+
+#[tauri::command]
+pub async fn disconnect_etcd(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    etcd::disconnect_etcd(state, id).await
+}
+
+#[tauri::command]
+pub async fn etcd_list_keys(
+    state: State<'_, AppState>,
+    id: String,
+    prefix: String,
+) -> Result<Vec<String>, String> {
+    etcd::etcd_list_keys(state, id, prefix).await
+}
+
+#[tauri::command]
+pub async fn etcd_get_value(
+    state: State<'_, AppState>,
+    id: String,
+    key: String,
+) -> Result<Option<EtcdKeyValue>, String> {
+    etcd::etcd_get_value(state, id, key).await
+}
+
+#[tauri::command]
+pub async fn etcd_set_value(
+    state: State<'_, AppState>,
+    id: String,
+    key: String,
+    value: String,
+) -> Result<(), String> {
+    etcd::etcd_set_value(state, id, key, value).await
+}
+
+#[tauri::command]
+pub async fn etcd_delete_key(
+    state: State<'_, AppState>,
+    id: String,
+    key: String,
+) -> Result<(), String> {
+    etcd::etcd_delete_key(state, id, key).await
 }
 
 #[tauri::command]

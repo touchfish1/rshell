@@ -10,6 +10,8 @@ import {
   uploadSftpFile,
 } from "../services/bridge";
 import type {
+  EtcdConnection,
+  EtcdConnectionInput,
   MySqlConnection,
   RedisConnection,
   Session,
@@ -21,6 +23,7 @@ import { useDownloadTasks } from "./useDownloadTasks";
 import { useSessionPing } from "./useSessionPing";
 import { useRedisActions } from "./useRedisActions";
 import { useSessionActions } from "./useSessionActions";
+import { useEtcdActions } from "./useEtcdActions";
 import { useZookeeperActions } from "./useZookeeperActions";
 import { useMysqlActions } from "./useMysqlActions";
 import { useSftpState } from "./useSftpState";
@@ -36,13 +39,15 @@ export function useAppShell() {
   const [lang, setLang] = useState<Lang>(() => detectInitialLang());
   const [sessions, setSessions] = useState<Session[]>([]);
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper" | "redis" | "mysql" | "mysqlData">("home");
+  const [currentPage, setCurrentPage] = useState<"home" | "terminal" | "zookeeper" | "redis" | "mysql" | "mysqlData" | "etcd">("home");
   const [zkConnections, setZkConnections] = useState<ZookeeperConnection[]>([]);
   const [redisConnections, setRedisConnections] = useState<RedisConnection[]>([]);
   const [selectedZkId, setSelectedZkId] = useState<string | undefined>();
   const [selectedRedisId, setSelectedRedisId] = useState<string | undefined>();
   const [mysqlConnections, setMysqlConnections] = useState<MySqlConnection[]>([]);
   const [selectedMysqlId, setSelectedMysqlId] = useState<string | undefined>();
+  const [etcdConnections, setEtcdConnections] = useState<EtcdConnection[]>([]);
+  const [selectedEtcdId, setSelectedEtcdId] = useState<string | undefined>();
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
   const [error, setError] = useState<string | null>(null);
   const [environments, setEnvironments] = useState<string[]>(["default"]);
@@ -206,6 +211,7 @@ export function useAppShell() {
     setSelectedZkId(undefined);
     setSelectedRedisId(undefined);
     setSelectedMysqlId(undefined);
+    setSelectedEtcdId(undefined);
     setEnvReloadKey((v) => v + 1);
   }, []);
 
@@ -277,6 +283,22 @@ export function useAppShell() {
     setConnections: setMysqlConnections,
     selectedId: selectedMysqlId,
     setSelectedId: setSelectedMysqlId,
+    setStatus,
+    setError,
+    tr,
+    reloadKey: envReloadKey,
+  });
+
+  const {
+    create: createEtcd,
+    update: updateEtcd,
+    remove: removeEtcd,
+    getSecret: getEtcdSecret,
+  } = useEtcdActions({
+    connections: etcdConnections,
+    setConnections: setEtcdConnections,
+    selectedId: selectedEtcdId,
+    setSelectedId: setSelectedEtcdId,
     setStatus,
     setError,
     tr,
@@ -425,6 +447,13 @@ export function useAppShell() {
     updateMysql,
     removeMysql,
     getMysqlSecret,
+    etcdConnections,
+    selectedEtcdId,
+    setSelectedEtcdId,
+    createEtcd,
+    updateEtcd,
+    removeEtcd,
+    getEtcdSecret,
     reachabilityMap,
     refreshBusy,
     refreshReachability,

@@ -46,6 +46,11 @@ interface Props {
   onDisconnect: (id?: string) => void;
   onUpdateHost: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onGetHostMetrics: (session: Session) => Promise<HostMetrics>;
+  onNavigateZk: () => void;
+  onNavigateRedis: () => void;
+  onNavigateMysql: () => void;
+  onNavigateEtcd: () => void;
+  onOpenCreate: () => void;
 }
 
 export default function TerminalPage({
@@ -81,6 +86,11 @@ export default function TerminalPage({
   onDisconnect,
   onUpdateHost,
   onGetHostMetrics,
+  onNavigateZk,
+  onNavigateRedis,
+  onNavigateMysql,
+  onNavigateEtcd,
+  onOpenCreate,
 }: Props) {
   const { workspaceRef, workspaceStyle, onDragStartHosts, onDragStartSftp } = useSplitPanels();
   const [tabMenu, setTabMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
@@ -133,6 +143,21 @@ export default function TerminalPage({
         <div className="actions">
           <ColorThemeToggle tr={tr} />
           <TerminalFontControls tr={tr} />
+          <button type="button" className="btn btn-ghost" title="New connection" onClick={onOpenCreate}>
+            + New
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onNavigateZk}>
+            ZK
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onNavigateRedis}>
+            Redis
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onNavigateMysql}>
+            MySQL
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={onNavigateEtcd}>
+            Etcd
+          </button>
           <button
             type="button"
             className="btn btn-ghost"

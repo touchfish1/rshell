@@ -13,6 +13,7 @@ mod ssh_helpers;
 mod terminal_io;
 mod redis;
 mod zookeeper;
+mod etcd;
 mod mysql;
 pub use self::sftp::SftpTextReadResult;
 pub use self::mysql::{MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo};
@@ -25,6 +26,7 @@ use std::sync::Arc;
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
+use crate::domain::etcd::EtcdConnection;
 use crate::domain::session::Session;
 use crate::domain::mysql::MySqlConnection;
 use crate::domain::terminal::TerminalClient;
@@ -57,6 +59,11 @@ pub struct ActiveRedis {
 
 pub struct ActiveMySql {
     pub pool: sqlx::MySqlPool,
+}
+
+/// 已连接的 Etcd 客户端。
+pub struct ActiveEtcd {
+    pub client: tokio::sync::Mutex<etcd_client::Client>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -99,6 +106,10 @@ pub struct AppState {
     mysql_connections: Arc<Mutex<Vec<MySqlConnection>>>,
     /// 已建立 MySQL 连接：`conn_id ->` 活跃连接池
     active_mysql: Arc<Mutex<HashMap<Uuid, Arc<ActiveMySql>>>>,
+    /// Etcd 连接列表（与磁盘同步）
+    etcd_connections: Arc<Mutex<Vec<EtcdConnection>>>,
+    /// 已建立 Etcd 连接：`conn_id ->` 活跃客户端
+    active_etcd: Arc<Mutex<HashMap<Uuid, Arc<ActiveEtcd>>>>,
     /// 审计：每个会话的输入解析状态
     audit_input_buffers: Arc<Mutex<HashMap<Uuid, AuditInputState>>>,
     /// 当前环境（用于列表过滤与新建连接归属）
@@ -114,6 +125,7 @@ impl Default for AppState {
         let zookeeper_connections = store.list_zk().unwrap_or_default();
         let redis_connections = store.list_redis().unwrap_or_default();
         let mysql_connections = store.list_mysql().unwrap_or_default();
+        let etcd_connections = store.list_etcd().unwrap_or_default();
         let mut environments = store.list_environments().unwrap_or_else(|_| vec!["default".to_string()]);
         if environments.is_empty() {
             environments.push("default".to_string());
@@ -144,6 +156,11 @@ impl Default for AppState {
                 environments.push(item.environment.clone());
             }
         }
+        for item in &etcd_connections {
+            if !environments.iter().any(|e| e == &item.environment) {
+                environments.push(item.environment.clone());
+            }
+        }
         if current_environment.trim().is_empty() {
             current_environment = "default".to_string();
         }
@@ -157,6 +174,8 @@ impl Default for AppState {
             active_zookeeper: Arc::new(Mutex::new(HashMap::new())),
             active_redis: Arc::new(Mutex::new(HashMap::new())),
             active_mysql: Arc::new(Mutex::new(HashMap::new())),
+            etcd_connections: Arc::new(Mutex::new(etcd_connections)),
+            active_etcd: Arc::new(Mutex::new(HashMap::new())),
             audit_input_buffers: Arc::new(Mutex::new(HashMap::new())),
             current_environment: Arc::new(Mutex::new(current_environment)),
             environments: Arc::new(Mutex::new(environments)),

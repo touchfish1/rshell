@@ -1,9 +1,10 @@
 import type { KeyboardEvent } from "react";
-import type { HostReachability, MySqlConnection, RedisConnection, Session, ZookeeperConnection } from "../../services/types";
+import type { EtcdConnection, HostReachability, MySqlConnection, RedisConnection, Session, ZookeeperConnection } from "../../services/types";
 import { MySqlConnectionRow } from "./MySqlConnectionRow";
 import type { TrFn } from "../../i18n-context";
 import { RedisConnectionRow } from "./RedisConnectionRow";
 import { SessionRow } from "./SessionRow";
+import { EtcdConnectionRow } from "./EtcdConnectionRow";
 import { ZkConnectionRow } from "./ZkConnectionRow";
 
 interface Props {
@@ -13,6 +14,7 @@ interface Props {
   displayedZkConnections: ZookeeperConnection[];
   displayedRedisConnections: RedisConnection[];
   displayedMySqlConnections: MySqlConnection[];
+  displayedEtcdConnections: EtcdConnection[];
   selectedId?: string;
   connectingSessionId?: string | null;
   hostQuery: string;
@@ -23,6 +25,7 @@ interface Props {
   onConnectZk?: (id: string) => void;
   onConnectRedis?: (id: string) => void;
   onConnectMySql?: (id: string) => void;
+  onConnectEtcd?: (id: string) => void;
   onOpenEditSession: (session: Session) => void;
   onDuplicateHost: (session: Session) => void;
   onAskDeleteSession: (id: string) => void;
@@ -32,6 +35,8 @@ interface Props {
   onAskDeleteRedis: (conn: RedisConnection) => void;
   onOpenEditMySql: (conn: MySqlConnection) => void;
   onAskDeleteMySql: (conn: MySqlConnection) => void;
+  onOpenEditEtcd: (conn: EtcdConnection) => void;
+  onAskDeleteEtcd: (conn: EtcdConnection) => void;
 }
 
 export function SessionListBody({
@@ -41,6 +46,7 @@ export function SessionListBody({
   displayedZkConnections,
   displayedRedisConnections,
   displayedMySqlConnections,
+  displayedEtcdConnections,
   selectedId,
   connectingSessionId,
   hostQuery,
@@ -51,6 +57,7 @@ export function SessionListBody({
   onConnectZk,
   onConnectRedis,
   onConnectMySql,
+  onConnectEtcd,
   onOpenEditSession,
   onDuplicateHost,
   onAskDeleteSession,
@@ -60,6 +67,8 @@ export function SessionListBody({
   onAskDeleteRedis,
   onOpenEditMySql,
   onAskDeleteMySql,
+  onOpenEditEtcd,
+  onAskDeleteEtcd,
 }: Props) {
   return (
     <ul className="session-table-body" tabIndex={0} aria-label={tr("session.listKeyboardHint")} onKeyDown={onListKeyDown}>
@@ -97,6 +106,9 @@ export function SessionListBody({
       ) : null}
       {displayedZkConnections.map((conn) => (
         <ZkConnectionRow key={`zk-${conn.id}`} conn={conn} tr={tr} onConnect={onConnectZk} onEdit={onOpenEditZk} onDelete={onAskDeleteZk} />
+      ))}
+      {displayedEtcdConnections.map((conn) => (
+        <EtcdConnectionRow key={`etcd-${conn.id}`} conn={conn} tr={tr} onConnect={onConnectEtcd} onEdit={onOpenEditEtcd} onDelete={onAskDeleteEtcd} />
       ))}
       {displayedRedisConnections.map((conn) => (
         <RedisConnectionRow

@@ -54,7 +54,7 @@
 }
 
 .terminal-splitter:hover {
-  background: rgba(79, 131, 255, 0.2);
+  background: var(--accent-muted);
 }
 
 .terminal-sftp {
@@ -116,8 +116,8 @@
 }
 
 .terminal-hosts button.active {
-  border-color: rgba(79, 131, 255, 0.8);
-  background: rgba(37, 53, 76, 0.72);
+  border-color: var(--accent);
+  background: var(--accent-muted);
 }
 
 .terminal-hosts button.host-connecting {

@@ -6,6 +6,7 @@ import { UpgradeConfirmModal } from "./components/UpgradeConfirmModal";
 import { CloseConfirmModal } from "./components/CloseConfirmModal";
 import { I18nProvider } from "./i18n-context";
 import { AppRedisSection } from "./app/AppRedisSection";
+import { AppEtcdSection } from "./app/AppEtcdSection";
 import { AppMySqlSection } from "./app/AppMySqlSection";
 import { useAppShell } from "./hooks/useAppShell";
 import { CommandPaletteModal, type CommandPaletteItem } from "./components/CommandPaletteModal";
@@ -77,6 +78,13 @@ export default function App() {
     updateMysql,
     removeMysql,
     getMysqlSecret,
+    etcdConnections,
+    selectedEtcdId,
+    setSelectedEtcdId,
+    createEtcd,
+    updateEtcd,
+    removeEtcd,
+    getEtcdSecret,
     reachabilityMap,
     refreshBusy,
     refreshReachability,
@@ -143,6 +151,12 @@ export default function App() {
       label: "打开 MySQL",
       keywords: ["mysql", "sql", "database", "mysql页"],
       run: () => setCurrentPage("mysql"),
+    });
+    items.push({
+      id: "nav:etcd",
+      label: "打开 Etcd",
+      keywords: ["etcd", "kv", "key-value", "etcd页"],
+      run: () => setCurrentPage("etcd"),
     });
 
     if (currentPage === "home") {
@@ -256,12 +270,13 @@ export default function App() {
   return (
     <I18nProvider value={{ lang, tr }}>
       <main className="app-shell">
-        {currentPage === "home" ? (
+        <div style={{ display: currentPage === "home" ? "" : "none" }}>
           <AppHomeSection
             sessions={sessions}
             zkConnections={zkConnections}
             redisConnections={redisConnections}
             mysqlConnections={mysqlConnections}
+            etcdConnections={etcdConnections}
             connectingSessionId={connectingHostId}
             selectedId={selectedId}
             reachabilityMap={reachabilityMap}
@@ -302,6 +317,14 @@ export default function App() {
             onDeleteMysql={removeMysql}
             onGetMysqlSecret={getMysqlSecret}
             onUpdateMysql={updateMysql}
+            onConnectEtcd={(id: string) => {
+              setSelectedEtcdId(id);
+              setCurrentPage("etcd");
+            }}
+            onCreateEtcd={createEtcd}
+            onDeleteEtcd={removeEtcd}
+            onGetEtcdSecret={getEtcdSecret}
+            onUpdateEtcd={updateEtcd}
             onOnlineUpgrade={checkOnlineUpgrade}
             auditOpen={auditOpen}
             auditLoading={auditLoading}
@@ -326,7 +349,8 @@ export default function App() {
             onRenameEnvironment={renameEnvironment}
             tr={tr}
           />
-        ) : currentPage === "terminal" ? (
+        </div>
+        <div style={{ display: currentPage === "terminal" ? "" : "none" }}>
           <AppTerminalSection
             sessions={sessions}
             connectingSessionId={connectingHostId}
@@ -370,8 +394,14 @@ export default function App() {
             retryConnect={(tabId) => retryConnect(tabId)}
             writerMapRef={writerMapRef}
             setError={setError}
+            onNavigateZk={() => setCurrentPage("zookeeper")}
+            onNavigateRedis={() => setCurrentPage("redis")}
+            onNavigateMysql={() => setCurrentPage("mysql")}
+            onNavigateEtcd={() => setCurrentPage("etcd")}
+            onOpenCreate={() => setCurrentPage("home")}
           />
-        ) : currentPage === "zookeeper" ? (
+        </div>
+        <div style={{ display: currentPage === "zookeeper" ? "" : "none" }}>
           <AppZookeeperSection
             connections={zkConnections}
             selectedId={selectedZkId}
@@ -386,7 +416,8 @@ export default function App() {
             onBack={() => setCurrentPage("home")}
             tr={tr}
           />
-        ) : currentPage === "redis" ? (
+        </div>
+        <div style={{ display: currentPage === "redis" ? "" : "none" }}>
           <AppRedisSection
             connections={redisConnections}
             selectedId={selectedRedisId}
@@ -403,7 +434,24 @@ export default function App() {
             onBack={() => setCurrentPage("home")}
             tr={tr}
           />
-        ) : (
+        </div>
+        <div style={{ display: currentPage === "etcd" ? "" : "none" }}>
+          <AppEtcdSection
+            connections={etcdConnections}
+            selectedId={selectedEtcdId}
+            status={status}
+            error={error}
+            onDismissError={() => setError(null)}
+            onSelect={setSelectedEtcdId}
+            onCreate={createEtcd}
+            onUpdate={updateEtcd}
+            onDelete={removeEtcd}
+            onGetSecret={getEtcdSecret}
+            onBack={() => setCurrentPage("home")}
+            tr={tr}
+          />
+        </div>
+        <div style={{ display: currentPage === "mysql" || currentPage === "mysqlData" ? "" : "none" }}>
           <AppMySqlSection
             connections={mysqlConnections}
             selectedId={selectedMysqlId}
@@ -418,7 +466,7 @@ export default function App() {
             onBack={() => setCurrentPage("home")}
             tr={tr}
           />
-        )}
+        </div>
         <DownloadToastStack
           tasks={downloadTasks}
           onError={(message) => setError(message)}

@@ -80,7 +80,7 @@
   height: 100%;
   width: 0;
   border-radius: 999px;
-  background: linear-gradient(90deg, #4f83ff 0%, #78ccff 100%);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-hover) 100%);
 }
 
 .sftp-monitor-time {
@@ -140,8 +140,8 @@
 }
 
 .sftp-bc-part:hover {
-  background: rgba(79, 131, 255, 0.14);
-  color: #dfe8ff;
+  background: var(--accent-muted);
+  color: var(--accent-hover);
 }
 
 .sftp-bc-sep {
@@ -169,7 +169,7 @@
 .sftp-dir:hover:not(:disabled),
 .sftp-file:hover:not(:disabled) {
   background: rgba(24, 34, 50, 0.55);
-  border-color: rgba(79, 131, 255, 0.22);
+  border-color: var(--accent-ring);
 }
 
 .sftp-parent {
@@ -324,7 +324,7 @@
 }
 
 .sftp-editor-textarea:focus {
-  border-color: rgba(91, 141, 239, 0.55);
+  border-color: var(--accent-ring);
 }
 
 .sftp-editor-actions {

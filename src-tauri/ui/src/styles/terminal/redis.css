@@ -34,8 +34,8 @@
 }
 
 .workspace.redis-page .topbar .actions .lang-switch .lang-active {
-  background: rgba(79, 131, 255, 0.3);
-  color: #dbe7ff;
+  background: var(--accent-muted);
+  color: var(--accent);
 }
 
 .workspace.redis-page .terminal-layout {
@@ -84,8 +84,8 @@
 
 .workspace.redis-page .zk-browser-header input:focus {
   outline: none;
-  border-color: rgba(79, 131, 255, 0.78);
-  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 /* 连接列表压缩版布局优化（原来在混合 css 里） */
@@ -109,8 +109,8 @@
   min-height: 24px;
   padding: 0 8px;
   border-radius: 999px;
-  border: 1px solid rgba(79, 131, 255, 0.5);
-  color: #a9c3ff;
+  border: 1px solid var(--accent-ring);
+  color: var(--accent);
   font-size: 12px;
   white-space: nowrap;
 }

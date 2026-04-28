@@ -1,98 +1,202 @@
+/* ============================================================
+   rshell Design System
+   — Consistent, professional, minimal "real-tool" aesthetic
+   ============================================================ */
+
 :root {
-  color: #e7e8ea;
-  background: #0b0f17;
-  font-family: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   color-scheme: dark;
 
-  /* 弹窗 / 浮层（与 modals.css、terminal 内嵌层共用） */
-  --overlay-backdrop: rgba(2, 4, 8, 0.62);
-  --overlay-blur: 10px;
-  --modal-surface: #0d1016;
-  --modal-surface-muted: #0a0d12;
-  --modal-border: rgba(255, 255, 255, 0.07);
-  --modal-border-inner: rgba(255, 255, 255, 0.045);
-  --modal-text: #e9edf3;
-  --modal-text-muted: #9aa3b2;
-  --modal-radius: 8px;
-  --modal-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
-  --modal-accent: #5b8def;
+  /* ---- Typography ---- */
+  font-family: "Inter", "SF Pro Display", "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Cascadia Mono", "Consolas", ui-monospace, monospace;
+
+  /* ---- Surface hierarchy (solid = less AI-glass, more real-tool) ---- */
+  --bg-page: #0d1117;
+  --bg-surface: #161b22;
+  --bg-elevated: #1c2333;
+  --bg-hover: #222834;
+  --bg-active: #282e3f;
+
+  /* ---- Text hierarchy ---- */
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+
+  /* ---- Accent: cyan-teal (distinctive terminal feel) ---- */
+  --accent: #2dd4bf;
+  --accent-hover: #5eead4;
+  --accent-muted: rgba(45, 212, 191, 0.12);
+  --accent-ring: rgba(45, 212, 191, 0.3);
+
+  /* ---- Semantic colors ---- */
+  --success: #22c55e;
+  --success-muted: rgba(34, 197, 94, 0.12);
+  --warning: #f59e0b;
+  --warning-muted: rgba(245, 158, 11, 0.12);
+  --danger: #ef4444;
+  --danger-muted: rgba(239, 68, 68, 0.12);
+
+  /* ---- Borders (visible but clean — no "invisible UI") ---- */
+  --border-default: #30363d;
+  --border-subtle: #21262d;
+  --border-accent: rgba(45, 212, 191, 0.4);
+
+  /* ---- Radii ---- */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* ---- Shadows ---- */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
+
+  /* ---- Transition ---- */
+  --ease-fast: 120ms ease;
+  --ease-normal: 200ms ease;
+
+  /* ---- Modal/overlay legacy (kept for backward compat) ---- */
+  --surface-0: var(--bg-page);
+  --surface-1: rgba(22, 27, 34, 0.85);
+  --surface-2: rgba(28, 35, 51, 0.75);
+  --border-1: var(--border-default);
+  --border-2: var(--border-subtle);
+  --shadow-1: var(--shadow-md);
+  --shadow-2: var(--shadow-lg);
+  --overlay-backdrop: rgba(1, 4, 9, 0.65);
+  --overlay-blur: 8px;
+  --modal-surface: #0d1117;
+  --modal-surface-muted: #0a0d14;
+  --modal-border: rgba(48, 54, 61, 0.8);
+  --modal-border-inner: rgba(48, 54, 61, 0.5);
+  --modal-text: #e6edf3;
+  --modal-text-muted: #8b949e;
+  --modal-radius: var(--radius-md);
+  --modal-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+  --modal-accent: var(--accent);
 }
+
+/* ---- Global ---- */
 
 body {
   margin: 0;
+  color: var(--text-primary);
+  background: var(--bg-page);
 }
+
+::selection {
+  background: var(--accent-muted);
+  color: var(--text-primary);
+}
+
+/* ---- App shell ---- */
 
 .app-shell {
   display: block;
   min-height: 100vh;
-  background: linear-gradient(180deg, #0b0f17 0%, #0a0d13 100%);
+  background: var(--bg-page);
 }
+
+/* ---- Focus ring (accent, not blue) ---- */
 
 .btn:focus-visible,
 .session-list button:focus-visible,
 .session-form input:focus-visible,
-.session-form select:focus-visible {
-  outline: 3px solid rgba(79, 131, 255, 0.35);
-  outline-offset: 2px;
+.session-form select:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--bg-page), 0 0 0 4px var(--accent-ring);
 }
+
+/* ---- Buttons ---- */
 
 .btn {
   appearance: none;
-  border: 1px solid #2a3346;
-  background: rgba(22, 27, 37, 0.7);
-  color: #e7e8ea;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  transition: transform 120ms ease, border-color 120ms ease, background 120ms ease, opacity 120ms ease;
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background var(--ease-fast),
+    border-color var(--ease-fast),
+    box-shadow var(--ease-fast),
+    transform var(--ease-fast),
+    opacity var(--ease-fast);
 }
 
 .btn:hover:not(:disabled) {
-  border-color: rgba(91, 141, 239, 0.45);
-  background: rgba(30, 36, 48, 0.92);
+  background: var(--bg-hover);
+  border-color: var(--border-default);
 }
 
 .btn:active:not(:disabled) {
-  background: rgba(24, 29, 40, 0.95);
+  background: var(--bg-active);
+  transform: translateY(0);
 }
 
 .btn:disabled {
-  opacity: 0.55;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Primary action — accent teal */
+
 .btn-primary {
-  border-color: rgba(79, 131, 255, 0.6);
-  background: rgba(34, 63, 110, 0.7);
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .btn-primary:hover:not(:disabled) {
-  border-color: rgba(79, 131, 255, 0.85);
-  background: rgba(38, 71, 124, 0.78);
+  border-color: var(--accent-hover);
+  background: rgba(45, 212, 191, 0.2);
+  box-shadow: 0 0 20px rgba(45, 212, 191, 0.1);
 }
 
+.btn-primary:active:not(:disabled) {
+  background: rgba(45, 212, 191, 0.25);
+}
+
+/* Danger */
+
 .btn-danger {
-  border-color: rgba(200, 88, 102, 0.55);
-  background: rgba(100, 32, 44, 0.45);
-  color: #f2d6da;
+  border-color: rgba(239, 68, 68, 0.4);
+  background: var(--danger-muted);
+  color: #fca5a5;
+  font-weight: 500;
 }
 
 .btn-danger:hover:not(:disabled) {
-  border-color: rgba(220, 105, 118, 0.7);
-  background: rgba(120, 38, 52, 0.55);
-  color: #fff;
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.2);
+  color: #fecaca;
 }
 
+/* Ghost */
+
 .btn-ghost {
+  border-color: transparent;
   background: transparent;
-  border-color: rgba(42, 51, 70, 0.8);
-  color: #cfe4ff;
+  color: var(--text-secondary);
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(22, 27, 37, 0.55);
+  border-color: var(--border-default);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
+
+/* ---- Theme controls ---- */
 
 .theme-controls {
   display: inline-flex;
@@ -107,7 +211,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #b8c3d9;
+  color: var(--text-secondary);
 }
 
 .theme-control-label {
@@ -116,18 +220,20 @@ body {
 
 .theme-control select {
   min-width: 108px;
-  background: rgba(15, 20, 29, 0.75);
-  border: 1px solid rgba(48, 56, 74, 0.9);
-  color: #e7e8ea;
-  padding: 6px 8px;
-  border-radius: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
 }
+
+/* ---- Empty states ---- */
 
 .empty-steps {
   margin: 12px 0 0;
   padding-left: 20px;
-  color: #9aa6bc;
+  color: var(--text-secondary);
   font-size: 13px;
   line-height: 1.55;
   text-align: left;
@@ -136,29 +242,30 @@ body {
 .empty-doc {
   margin: 10px 0 0;
   font-size: 12px;
-  color: #7f8dab;
+  color: var(--text-muted);
 }
 
-/* 全局颜色主题切换（日间 / 夜间 / 系统） */
+/* ---- Color theme toggle (light / dark / system) ---- */
+
 .color-theme-toggle {
   display: inline-flex;
   align-items: stretch;
-  border: 1px solid rgba(42, 51, 70, 0.9);
-  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  background: rgba(15, 20, 29, 0.55);
+  background: var(--bg-surface);
 }
 
 .color-theme-seg {
   border: none;
-  border-right: 1px solid rgba(48, 56, 74, 0.65);
+  border-right: 1px solid var(--border-subtle);
   background: transparent;
-  color: #b8c3d9;
+  color: var(--text-secondary);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 5px 10px;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background var(--ease-fast), color var(--ease-fast);
 }
 
 .color-theme-seg:last-child {
@@ -166,103 +273,133 @@ body {
 }
 
 .color-theme-seg:hover:not(.color-theme-seg-active) {
-  background: rgba(255, 255, 255, 0.04);
-  color: #e7edf7;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .color-theme-seg-active {
-  background: rgba(79, 131, 255, 0.26);
-  color: #eaf2ff;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 600;
 }
+
+/* ============================================================
+   LIGHT THEME
+   ============================================================ */
 
 html[data-theme="light"] {
   color-scheme: light;
+
+  --bg-page: #f6f8fa;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f3f4f6;
+  --bg-hover: #f0f2f5;
+  --bg-active: #e8eaed;
+
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --text-muted: #6e7681;
+
+  --accent: #0d9488;
+  --accent-hover: #0f766e;
+  --accent-muted: rgba(13, 148, 136, 0.1);
+  --accent-ring: rgba(13, 148, 136, 0.25);
+
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+
+  --border-default: #d0d7de;
+  --border-subtle: #e1e4e8;
+  --border-accent: rgba(13, 148, 136, 0.4);
+
+  --shadow-sm: 0 1px 3px rgba(31, 35, 40, 0.08);
+  --shadow-md: 0 4px 12px rgba(31, 35, 40, 0.1);
+  --shadow-lg: 0 12px 40px rgba(31, 35, 40, 0.14);
+
+  --overlay-backdrop: rgba(27, 31, 36, 0.3);
+  --modal-surface: #ffffff;
+  --modal-surface-muted: #f6f8fa;
+  --modal-border: rgba(208, 215, 222, 0.9);
+  --modal-border-inner: rgba(208, 215, 222, 0.6);
+  --modal-text: #1f2328;
+  --modal-text-muted: #656d76;
+  --modal-shadow: 0 12px 40px rgba(27, 31, 36, 0.12);
+  --modal-accent: var(--accent);
 }
 
-html[data-theme="light"] :root,
 html[data-theme="light"] body {
-  color: #1b2230;
-  background: #f3f5f9;
+  color: var(--text-primary);
+  background: var(--bg-page);
 }
 
 html[data-theme="light"] .app-shell {
-  background: linear-gradient(180deg, #f3f5f9 0%, #e9edf5 100%);
+  background: var(--bg-page);
 }
 
 html[data-theme="light"] .btn {
-  border-color: #c5cedd;
-  background: rgba(255, 255, 255, 0.92);
-  color: #1b2230;
+  border-color: var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+html[data-theme="light"] .btn-primary {
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  color: var(--accent);
 }
 
 html[data-theme="light"] .btn-ghost {
-  border-color: #c5cedd;
-  color: #2a3a55;
+  border-color: transparent;
+  color: var(--text-secondary);
 }
 
 html[data-theme="light"] .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.75);
+  border-color: var(--border-default);
+  background: var(--bg-hover);
 }
 
 html[data-theme="light"] .btn-danger {
-  border-color: rgba(180, 70, 85, 0.55);
-  background: rgba(255, 236, 238, 0.95);
-  color: #7a1e2d;
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.06);
+  color: #b91c1c;
 }
 
 html[data-theme="light"] .btn-danger:hover:not(:disabled) {
-  background: rgba(255, 220, 224, 1);
-  border-color: rgba(200, 80, 95, 0.65);
+  border-color: var(--danger);
+  background: rgba(220, 38, 38, 0.1);
 }
 
-html[data-theme="light"] {
-  --overlay-backdrop: rgba(18, 22, 30, 0.4);
-  --overlay-blur: 12px;
-  --modal-surface: #ffffff;
-  --modal-surface-muted: #f6f7f9;
-  --modal-border: rgba(15, 22, 35, 0.1);
-  --modal-border-inner: rgba(15, 22, 35, 0.06);
-  --modal-text: #141820;
-  --modal-text-muted: #5c6678;
-  --modal-shadow: 0 24px 48px rgba(20, 28, 45, 0.12);
-  --modal-accent: #2d62c9;
+html[data-theme="light"] .color-theme-toggle {
+  border-color: var(--border-default);
+  background: var(--bg-surface);
 }
 
-html[data-theme="light"] .modal-card {
-  background: var(--modal-surface);
-  border-color: var(--modal-border);
+html[data-theme="light"] .color-theme-seg {
+  border-right-color: var(--border-subtle);
+  color: var(--text-secondary);
 }
 
-html[data-theme="light"] .modal-header h4 {
-  color: var(--modal-text);
-}
-
-html[data-theme="light"] .modal-body {
-  color: var(--modal-text-muted);
-}
-
-html[data-theme="light"] .modal-inline-notice,
-html[data-theme="light"] .placeholder-row {
-  background: var(--modal-surface-muted);
-  border-color: var(--modal-border);
-  color: var(--modal-text-muted);
+html[data-theme="light"] .color-theme-seg-active {
+  background: var(--accent-muted);
+  color: var(--accent);
 }
 
 html[data-theme="light"] .session-list {
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--bg-surface);
 }
 
 html[data-theme="light"] .session-line .session-main {
-  color: #1b2230;
+  color: var(--text-primary);
 }
 
 html[data-theme="light"] .session-tabs {
   background: #eef1f6;
-  border-bottom-color: #d5dce8;
+  border-bottom-color: var(--border-default);
 }
 
 html[data-theme="light"] .session-tab-main {
-  color: #1b2230;
+  color: var(--text-primary);
 }
 
 html[data-theme="light"] .terminal-workspace {
@@ -270,37 +407,16 @@ html[data-theme="light"] .terminal-workspace {
 }
 
 html[data-theme="light"] .theme-control {
-  color: #3a4558;
+  color: var(--text-secondary);
 }
 
 html[data-theme="light"] .theme-control select {
-  background: #ffffff;
-  border-color: #c5cedd;
-  color: #1b2230;
-}
-
-html[data-theme="light"] .empty-state {
-  border-color: #c5cedd;
-  background: rgba(255, 255, 255, 0.72);
-}
-
-html[data-theme="light"] .color-theme-toggle {
-  border-color: #c5cedd;
-  background: rgba(255, 255, 255, 0.92);
-}
-
-html[data-theme="light"] .color-theme-seg {
-  border-right-color: #e2e8f0;
-  color: #475569;
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  color: var(--text-primary);
 }
 
 html[data-theme="light"] .color-theme-seg:hover:not(.color-theme-seg-active) {
-  background: rgba(241, 245, 249, 0.95);
-  color: #0f172a;
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
-
-html[data-theme="light"] .color-theme-seg-active {
-  background: rgba(37, 99, 235, 0.14);
-  color: #1e3a8a;
-}
-

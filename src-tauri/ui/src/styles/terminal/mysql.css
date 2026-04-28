@@ -45,8 +45,8 @@
 
 .workspace.mysql-page .mysql-field:focus {
   outline: none;
-  border-color: rgba(79, 131, 255, 0.78);
-  box-shadow: 0 0 0 3px rgba(79, 131, 255, 0.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-ring);
 }
 
 .workspace.mysql-page .mysql-select {
@@ -112,9 +112,9 @@
 }
 
 .workspace.mysql-page .mysql-connection-card.is-selected {
-  border-color: rgba(79, 131, 255, 0.82);
-  background: rgba(29, 45, 73, 0.86);
-  box-shadow: 0 0 0 2px rgba(79, 131, 255, 0.16);
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  box-shadow: 0 0 0 2px var(--accent-ring);
 }
 
 .workspace.mysql-page .mysql-connection-main {
@@ -163,9 +163,9 @@
 }
 
 .workspace.mysql-page .mysql-db-node.is-selected {
-  border-color: rgba(79, 131, 255, 0.78);
-  background: rgba(32, 48, 76, 0.86);
-  color: #eff6ff;
+  border-color: var(--accent);
+  background: var(--accent-muted);
+  color: var(--accent-hover);
 }
 
 .workspace.mysql-page .mysql-browse-tabs {
@@ -210,8 +210,8 @@
 }
 
 .workspace.mysql-page .mysql-data-tab.is-selected {
-  border-color: rgba(79, 131, 255, 0.84);
-  background: rgba(29, 45, 73, 0.88);
+  border-color: var(--accent);
+  background: var(--accent-muted);
 }
 
 .workspace.mysql-page .redis-browser-pane {
@@ -283,8 +283,8 @@
 }
 
 .workspace.mysql-page .mysql-table-item.is-selected {
-  border-color: rgba(79, 131, 255, 0.84);
-  background: rgba(29, 45, 73, 0.88);
+  border-color: var(--accent);
+  background: var(--accent-muted);
 }
 
 .workspace.mysql-page .mysql-table-empty {
@@ -317,7 +317,7 @@
 }
 
 .mysql-context-item:hover {
-  border-color: rgba(79, 131, 255, 0.45);
+  border-color: var(--accent-ring);
   background: rgba(40, 57, 87, 0.45);
 }
 

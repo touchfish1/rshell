@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import type {
+  EtcdConnection,
+  EtcdConnectionInput,
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
@@ -58,6 +60,12 @@ interface Props {
   onDeleteMySql: (id: string) => Promise<void>;
   onGetMysqlSecret: (id: string) => Promise<string | null>;
   onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
+  etcdConnections: EtcdConnection[];
+  onConnectEtcd?: (id: string) => void;
+  onCreateEtcd: (input: EtcdConnectionInput, secret?: string) => Promise<EtcdConnection | null>;
+  onDeleteEtcd: (id: string) => Promise<void>;
+  onGetEtcdSecret: (id: string) => Promise<string | null>;
+  onUpdateEtcd: (id: string, input: EtcdConnectionInput, secret?: string) => Promise<void>;
 }
 
 export default function SessionList({
@@ -91,6 +99,12 @@ export default function SessionList({
   onDeleteMySql,
   onGetMysqlSecret,
   onUpdateMysql,
+  etcdConnections,
+  onConnectEtcd,
+  onCreateEtcd,
+  onDeleteEtcd,
+  onGetEtcdSecret,
+  onUpdateEtcd,
 }: Props) {
   const { tr } = useI18n();
   const [hostQuery, setHostQuery] = useState("");
@@ -98,6 +112,7 @@ export default function SessionList({
   const [pendingDelete, setPendingDelete] = useState<Session | null>(null);
   const [pendingDeleteRedis, setPendingDeleteRedis] = useState<RedisConnection | null>(null);
   const [pendingDeleteMySql, setPendingDeleteMySql] = useState<MySqlConnection | null>(null);
+  const [pendingDeleteEtcd, setPendingDeleteEtcd] = useState<EtcdConnection | null>(null);
 
   const { gridStyle, onResizeNameStart, onResizeHostStart } = useSessionListColumns();
 
@@ -146,6 +161,18 @@ export default function SessionList({
       );
     });
   }, [hostQuery, redisConnections]);
+  const displayedEtcdConnections = useMemo(() => {
+    const q = hostQuery.trim().toLowerCase();
+    if (!q) return etcdConnections;
+    return etcdConnections.filter((conn) => {
+      return (
+        conn.name.toLowerCase().includes(q) ||
+        conn.endpoints.toLowerCase().includes(q) ||
+        "etcd".includes(q)
+      );
+    });
+  }, [hostQuery, etcdConnections]);
+
   const displayedMySqlConnections = useMemo(() => {
     const q = hostQuery.trim().toLowerCase();
     if (!q) return mysqlConnections;
@@ -183,6 +210,10 @@ export default function SessionList({
   const runDeleteMySql = async (conn: MySqlConnection) => {
     await onDeleteMySql(conn.id);
     setPendingDeleteMySql(null);
+  };
+  const runDeleteEtcd = async (conn: EtcdConnection) => {
+    await onDeleteEtcd(conn.id);
+    setPendingDeleteEtcd(null);
   };
   const {
     mysqlEditConnection,
@@ -374,6 +405,7 @@ export default function SessionList({
         displayedZkConnections={displayedZkConnections}
         displayedRedisConnections={displayedRedisConnections}
         displayedMySqlConnections={displayedMySqlConnections}
+        displayedEtcdConnections={displayedEtcdConnections}
         selectedId={selectedId}
         connectingSessionId={connectingSessionId}
         hostQuery={hostQuery}
@@ -384,6 +416,7 @@ export default function SessionList({
         onConnectZk={onConnectZk}
         onConnectRedis={onConnectRedis}
         onConnectMySql={onConnectMySql}
+        onConnectEtcd={onConnectEtcd}
         onOpenEditSession={openEdit}
         onDuplicateHost={(item) => void duplicateHost(item)}
         onAskDeleteSession={(id) => {
@@ -397,6 +430,8 @@ export default function SessionList({
         onAskDeleteRedis={setPendingDeleteRedis}
         onOpenEditMySql={openEditMysql}
         onAskDeleteMySql={setPendingDeleteMySql}
+        onOpenEditEtcd={(conn) => onConnectEtcd?.(conn.id)}
+        onAskDeleteEtcd={setPendingDeleteEtcd}
       />
       <SessionListModals
         tr={tr}
@@ -404,10 +439,12 @@ export default function SessionList({
         pendingDeleteRedis={pendingDeleteRedis}
         pendingDeleteMySql={pendingDeleteMySql}
         pendingDeleteZk={pendingDeleteZk}
+        pendingDeleteEtcd={pendingDeleteEtcd}
         onCancelDeleteSession={() => setPendingDelete(null)}
         onCancelDeleteRedis={() => setPendingDeleteRedis(null)}
         onCancelDeleteMySql={() => setPendingDeleteMySql(null)}
         onCancelDeleteZk={() => setPendingDeleteZk(null)}
+        onCancelDeleteEtcd={() => setPendingDeleteEtcd(null)}
         onConfirmDeleteSession={() => {
           if (pendingDelete) void runDelete(pendingDelete);
         }}
@@ -419,6 +456,9 @@ export default function SessionList({
         }}
         onConfirmDeleteZk={() => {
           if (pendingDeleteZk) void runDeleteZk(pendingDeleteZk);
+        }}
+        onConfirmDeleteEtcd={() => {
+          if (pendingDeleteEtcd) void runDeleteEtcd(pendingDeleteEtcd);
         }}
         showCreateModal={showCreateModal}
         createForm={createForm}
