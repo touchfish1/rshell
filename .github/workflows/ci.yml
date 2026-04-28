@@ -43,6 +43,7 @@ jobs:
             librsvg2-dev \
             patchelf
       - uses: dtolnay/rust-toolchain@stable
+      - uses: arduino/setup-protoc@v3
       - uses: actions/setup-node@v4
         with:
           node-version: 20
