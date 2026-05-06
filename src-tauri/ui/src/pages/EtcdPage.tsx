@@ -11,6 +11,7 @@ import {
 import { EtcdConnectionList } from "../components/etcd/EtcdConnectionList";
 import { ErrorBanner } from "../components/ErrorBanner";
 import { ColorThemeToggle } from "../components/ColorThemeToggle";
+import { CommandStatusBar } from "../components/CommandStatusBar";
 import type { I18nKey } from "../i18n";
 
 interface Props {
@@ -56,6 +57,7 @@ export default function EtcdPage({
   const [editorText, setEditorText] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<string | null>(null);
+  const [currentCommand, setCurrentCommand] = useState<string | null>(null);
 
   useEffect(() => {
     setConnected(false);
@@ -69,14 +71,20 @@ export default function EtcdPage({
   const ensureConnected = async () => {
     if (!selected) throw new Error(tr("etcd.error.noConnectionSelected"));
     if (connected) return;
-    await connectEtcd(selected.id);
-    setConnected(true);
+    setCurrentCommand("CONNECT");
+    try {
+      await connectEtcd(selected.id);
+      setConnected(true);
+    } finally {
+      setCurrentCommand(null);
+    }
   };
 
   const loadKeys = async () => {
     if (!selected) return;
     setKeysLoading(true);
     setSaveResult(null);
+    setCurrentCommand(`ETCD GET --prefix ${prefix}`);
     try {
       await ensureConnected();
       const result = await etcdListKeys(selected.id, prefix);
@@ -87,6 +95,7 @@ export default function EtcdPage({
       setSaveResult(tr("etcd.page.saveFailed", { message }));
     } finally {
       setKeysLoading(false);
+      setCurrentCommand(null);
     }
   };
 
@@ -96,6 +105,7 @@ export default function EtcdPage({
     setKeyValue(null);
     setEditorText("");
     setSaveResult(null);
+    setCurrentCommand(`ETCD GET ${key}`);
     try {
       await ensureConnected();
       const data = await etcdGetValue(selected.id, key);
@@ -105,6 +115,8 @@ export default function EtcdPage({
       const message = e instanceof Error ? e.message : String(e);
       setSaveResult(tr("etcd.page.saveFailed", { message }));
       setKeyValue(null);
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -112,6 +124,7 @@ export default function EtcdPage({
     if (!selected || !selectedKey) return;
     setSaving(true);
     setSaveResult(null);
+    setCurrentCommand(`ETCD PUT ${selectedKey}`);
     try {
       await ensureConnected();
       await etcdSetValue(selected.id, selectedKey, editorText);
@@ -124,6 +137,7 @@ export default function EtcdPage({
       setSaveResult(tr("etcd.page.saveFailed", { message }));
     } finally {
       setSaving(false);
+      setCurrentCommand(null);
     }
   };
 
@@ -132,6 +146,7 @@ export default function EtcdPage({
     const confirmed = window.confirm(tr("etcd.page.deleteConfirm", { key: selectedKey }));
     if (!confirmed) return;
 
+    setCurrentCommand(`ETCD DELETE ${selectedKey}`);
     try {
       await ensureConnected();
       await etcdDeleteKey(selected.id, selectedKey);
@@ -144,6 +159,8 @@ export default function EtcdPage({
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       setSaveResult(tr("etcd.page.deleteFailed", { message }));
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -281,6 +298,7 @@ export default function EtcdPage({
           )}
         </div>
       </div>
+      <CommandStatusBar command={currentCommand} label={tr("cmdBar.title")} />
     </section>
   );
 }

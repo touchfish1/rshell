@@ -742,14 +742,15 @@ html[data-theme="light"] .workspace.mysql-page .mysql-data-tabs {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab {
-  border-color: #cad5e9;
-  background: #ffffff;
-  color: #1e3254;
+  color: #111827;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-data-tab:hover {
+  background: rgba(148, 163, 184, 0.25);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab.is-selected {
-  border-color: rgba(37, 99, 235, 0.62);
-  background: rgba(219, 234, 254, 0.78);
+  background: rgba(219, 234, 254, 0.85);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab-close {
@@ -783,8 +784,8 @@ html[data-theme="light"] .workspace.mysql-page .redis-browser-body {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-browse-tabs {
-  border-bottom-color: #cad5e9;
-  background: #f8fbff;
+  border-bottom-color: #d5dce8;
+  background: #f1f5f9;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-grid-wrap {
@@ -1004,6 +1005,15 @@ html[data-theme="light"] .redis-command-panel-body {
 
 html[data-theme="light"] .redis-command-line {
   color: #1f2937;
+}
+
+html[data-theme="light"] .command-status-bar {
+  border-top-color: #d5dce8;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .command-status-text {
+  color: #2563eb;
 }
 
 html[data-theme="light"] .redis-typed-editor input {

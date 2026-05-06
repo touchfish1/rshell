@@ -345,6 +345,38 @@
   text-overflow: ellipsis;
 }
 
+.command-status-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 28px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-surface);
+}
+
+.command-status-label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.command-status-text {
+  color: var(--accent-ring);
+  font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.command-status-text.idle {
+  color: var(--text-muted);
+  font-family: inherit;
+}
+
 .redis-typed-editor {
   margin-top: 10px;
   flex: 1 1 auto;

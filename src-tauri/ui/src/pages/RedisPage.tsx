@@ -8,6 +8,7 @@ import { RedisConnectionsPane } from "./redis/RedisConnectionsPane";
 import { RedisDbSwitchModal } from "./redis/RedisDbSwitchModal";
 import { RedisHeader } from "./redis/RedisHeader";
 import { useRedisPageState } from "./redis/useRedisPageState";
+import { CommandStatusBar } from "../components/CommandStatusBar";
 import { useMemo, useState } from "react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 
@@ -68,6 +69,7 @@ export default function RedisPage({
     connPanelWidth,
     commandPanelHeight,
     commandLogs,
+    currentCommand,
     createOpen,
     setCreateOpen,
     createForm,
@@ -243,6 +245,7 @@ export default function RedisPage({
         />
       </div>
       <RedisCommandLog logs={commandLogs} height={commandPanelHeight} onResizeStart={() => setResizingCommandPanel(true)} />
+      <CommandStatusBar command={currentCommand} label={tr("cmdBar.title")} />
 
       <RedisConnectionModal
         open={createOpen}

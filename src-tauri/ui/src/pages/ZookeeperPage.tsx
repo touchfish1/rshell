@@ -6,6 +6,7 @@ import { ErrorBanner } from "../components/ErrorBanner";
 import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import type { I18nKey } from "../i18n";
 import { ZkBrowserPane } from "./zookeeper/ZkBrowserPane";
+import { CommandStatusBar } from "../components/CommandStatusBar";
 
 interface Props {
   connections: ZookeeperConnection[];
@@ -61,6 +62,7 @@ export default function ZookeeperPage({
   const [saveResult, setSaveResult] = useState<string | null>(null);
   const [zkDataWidth, setZkDataWidth] = useState(460);
   const [resizingDataPane, setResizingDataPane] = useState(false);
+  const [currentCommand, setCurrentCommand] = useState<string | null>(null);
   const browserBodyRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -78,13 +80,19 @@ export default function ZookeeperPage({
   const ensureConnected = async () => {
     if (!selected) throw new Error(tr("zk.error.noConnectionSelected"));
     if (connected) return;
-    await connectZookeeper(selected.id);
-    setConnected(true);
+    setCurrentCommand("CONNECT");
+    try {
+      await connectZookeeper(selected.id);
+      setConnected(true);
+    } finally {
+      setCurrentCommand(null);
+    }
   };
 
   const loadChildren = async (path: string) => {
     if (!selected) return;
     setTreeState((prev) => ({ ...prev, [path]: "loading" }));
+    setCurrentCommand(`ls ${path}`);
     try {
       await ensureConnected();
       const children = await zkListChildren(selected.id, path);
@@ -96,6 +104,8 @@ export default function ZookeeperPage({
       const message = e instanceof Error ? e.message : String(e);
       setSaveResult(tr("zk.page.saveFailed", { message }));
       throw e;
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -111,6 +121,7 @@ export default function ZookeeperPage({
     setNodeData(null);
     setEditorText("");
     setSaveResult(null);
+    setCurrentCommand(`get ${path}`);
     try {
       await ensureConnected();
       const data = await zkGetData(selected.id, path);
@@ -120,6 +131,8 @@ export default function ZookeeperPage({
       const message = e instanceof Error ? e.message : String(e);
       setSaveResult(tr("zk.page.saveFailed", { message }));
       setNodeData(null);
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -127,6 +140,7 @@ export default function ZookeeperPage({
     if (!selected || !nodeData || nodeData.data_utf8 == null) return;
     setSavingNode(true);
     setSaveResult(null);
+    setCurrentCommand(`set ${selectedPath}`);
     try {
       await ensureConnected();
       await zkSetData(selected.id, selectedPath, editorText);
@@ -139,6 +153,7 @@ export default function ZookeeperPage({
       setSaveResult(tr("zk.page.saveFailed", { message }));
     } finally {
       setSavingNode(false);
+      setCurrentCommand(null);
     }
   };
 
@@ -243,6 +258,7 @@ export default function ZookeeperPage({
           joinPath={joinPath}
         />
       </div>
+      <CommandStatusBar command={currentCommand} label={tr("cmdBar.title")} />
     </section>
   );
 }

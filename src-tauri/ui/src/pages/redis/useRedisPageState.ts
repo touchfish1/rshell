@@ -60,6 +60,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
   const [ttlInput, setTtlInput] = useState("");
   const [saveResult, setSaveResult] = useState<string | null>(null);
   const [commandLogs, setCommandLogs] = useState<string[]>([]);
+  const [currentCommand, setCurrentCommand] = useState<string | null>(null);
   const [connPanelWidth, setConnPanelWidth] = useState(320);
   const [resizingConnPanel, setResizingConnPanel] = useState(false);
   const [commandPanelHeight, setCommandPanelHeight] = useState(156);
@@ -226,8 +227,13 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     if (!selected) throw new Error(tr("redis.error.noConnectionSelected"));
     if (connected) return;
     appendCommandLog("CONNECT");
-    await connectRedis(selected.id);
-    setConnected(true);
+    setCurrentCommand("CONNECT");
+    try {
+      await connectRedis(selected.id);
+      setConnected(true);
+    } finally {
+      setCurrentCommand(null);
+    }
   };
 
   const pickKey = async (keyBase64: string) => {
@@ -236,6 +242,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
       await ensureConnected();
       appendCommandLog(`TYPE ${keyBase64}`);
       appendCommandLog(`TTL ${keyBase64}`);
+      setCurrentCommand(`TYPE / TTL ${keyBase64}`);
       const data = await redisGetKeyData(selected.id, keyBase64);
       setSelectedKeyData(data);
       setTtlInput(data.ttl_seconds >= 0 ? String(data.ttl_seconds) : "");
@@ -298,6 +305,8 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setSaveResult(tr("modal.testFailed", { message }));
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -312,6 +321,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
       await ensureConnected();
       const matchPattern = normalizeRedisMatchPattern(pattern);
       appendCommandLog(`SCAN ${reset ? 0 : scanCursor} MATCH ${matchPattern} COUNT 100`);
+      setCurrentCommand(`SCAN ${reset ? 0 : scanCursor} MATCH ${matchPattern} COUNT 100`);
       const result = await redisScanKeys(selected.id, reset ? 0 : scanCursor, matchPattern, 100);
       setScanCursor(result.next_cursor);
       setKeys((prev) => {
@@ -343,6 +353,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
       setSaveResult(tr("modal.testFailed", { message }));
     } finally {
       setScanLoading(false);
+      setCurrentCommand(null);
     }
   };
 
@@ -378,29 +389,36 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     }
     try {
       await ensureConnected();
+      let cmd = "";
       switch (payload.kind) {
         case "string":
-          appendCommandLog(`SET ${selectedKeyData.key_base64}`);
+          cmd = `SET ${selectedKeyData.key_base64}`;
+          appendCommandLog(cmd);
           break;
         case "hash":
+          cmd = `HSET ${selectedKeyData.key_base64} ...`;
           appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-          appendCommandLog(`HSET ${selectedKeyData.key_base64} ...`);
+          appendCommandLog(cmd);
           break;
         case "list":
+          cmd = `RPUSH ${selectedKeyData.key_base64} ...`;
           appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-          appendCommandLog(`RPUSH ${selectedKeyData.key_base64} ...`);
+          appendCommandLog(cmd);
           break;
         case "set":
+          cmd = `SADD ${selectedKeyData.key_base64} ...`;
           appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-          appendCommandLog(`SADD ${selectedKeyData.key_base64} ...`);
+          appendCommandLog(cmd);
           break;
         case "zset":
+          cmd = `ZADD ${selectedKeyData.key_base64} ...`;
           appendCommandLog(`DEL ${selectedKeyData.key_base64}`);
-          appendCommandLog(`ZADD ${selectedKeyData.key_base64} ...`);
+          appendCommandLog(cmd);
           break;
         default:
           break;
       }
+      setCurrentCommand(cmd);
       await redisSetKeyData(selected.id, selectedKeyData.key_base64, payload);
       await pickKey(selectedKeyData.key_base64);
       setSaveResult(tr("redis.page.saveSuccess"));
@@ -408,6 +426,8 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
       const message = err instanceof Error ? err.message : String(err);
       appendCommandLog(`SAVE FAILED: ${message}`);
       setSaveResult(tr("modal.testFailed", { message }));
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -416,7 +436,9 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     try {
       await ensureConnected();
       const nextTtl = ttlInput.trim() ? Number(ttlInput) : undefined;
-      appendCommandLog(Number.isFinite(nextTtl) ? `EXPIRE ${selectedKeyData.key_base64} ${nextTtl}` : `PERSIST ${selectedKeyData.key_base64}`);
+      const ttlCmd = Number.isFinite(nextTtl) ? `EXPIRE ${selectedKeyData.key_base64} ${nextTtl}` : `PERSIST ${selectedKeyData.key_base64}`;
+      appendCommandLog(ttlCmd);
+      setCurrentCommand(ttlCmd);
       await redisSetTtl(selected.id, selectedKeyData.key_base64, Number.isFinite(nextTtl) ? nextTtl : undefined);
       await pickKey(selectedKeyData.key_base64);
       setSaveResult(tr("redis.page.ttlSaved"));
@@ -424,6 +446,8 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
       const message = err instanceof Error ? err.message : String(err);
       appendCommandLog(`TTL FAILED: ${message}`);
       setSaveResult(tr("modal.testFailed", { message }));
+    } finally {
+      setCurrentCommand(null);
     }
   };
 
@@ -470,7 +494,9 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     try {
       const secret = await onGetSecret(dbSwitchConn.id);
       await onUpdate(dbSwitchConn.id, { name: dbSwitchConn.name, address: dbSwitchConn.address, db: nextDb }, secret ?? undefined);
-      appendCommandLog(`SELECT ${nextDb}`);
+      const selectCmd = `SELECT ${nextDb}`;
+      appendCommandLog(selectCmd);
+      setCurrentCommand(selectCmd);
       if (selectedId === dbSwitchConn.id) {
         await disconnectRedis(dbSwitchConn.id).catch(() => undefined);
         setConnected(false);
@@ -488,6 +514,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
       setDbSwitchResult(tr("redis.form.dbSwitchFailed", { message }));
     } finally {
       setDbSwitchSaving(false);
+      setCurrentCommand(null);
     }
   };
 
@@ -563,9 +590,14 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
 
   const disconnectActive = async () => {
     if (!selected) return;
-    await disconnectRedis(selected.id);
-    appendCommandLog("DISCONNECT");
-    setConnected(false);
+    setCurrentCommand("DISCONNECT");
+    try {
+      await disconnectRedis(selected.id);
+      appendCommandLog("DISCONNECT");
+      setConnected(false);
+    } finally {
+      setCurrentCommand(null);
+    }
   };
 
   return {
@@ -590,6 +622,7 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     ttlInput,
     saveResult,
     commandLogs,
+    currentCommand,
     connPanelWidth,
     resizingConnPanel,
     commandPanelHeight,
