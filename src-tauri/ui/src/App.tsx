@@ -10,6 +10,9 @@ import { AppEtcdSection } from "./app/AppEtcdSection";
 import { AppMySqlSection } from "./app/AppMySqlSection";
 import { useAppShell } from "./hooks/useAppShell";
 import { CommandPaletteModal, type CommandPaletteItem } from "./components/CommandPaletteModal";
+import { HostCreateModal } from "./components/session/HostCreateModal";
+import { useSessionListForms } from "./components/session/useSessionListForms";
+import { ColorThemeToggle } from "./components/ColorThemeToggle";
 import { useEffect, useMemo, useState } from "react";
 
 export default function App() {
@@ -37,6 +40,9 @@ export default function App() {
     mysqlConnections,
     selectedMysqlId,
     setSelectedMysqlId,
+    postgresqlConnections,
+    selectedPostgresqlId,
+    setSelectedPostgresqlId,
     status,
     error,
     setError,
@@ -78,6 +84,10 @@ export default function App() {
     updateMysql,
     removeMysql,
     getMysqlSecret,
+    createPostgreSql,
+    updatePostgreSql,
+    removePostgreSql,
+    getPostgreSqlSecret,
     etcdConnections,
     selectedEtcdId,
     setSelectedEtcdId,
@@ -106,6 +116,36 @@ export default function App() {
   } = useAppShell();
 
   const [cmdkOpen, setCmdkOpen] = useState(false);
+
+  const unifiedForms = useSessionListForms({
+    onCreate: create,
+    onCreateZk: createZk,
+    onCreateRedis: createRedis,
+    onCreateMySql: createMysql,
+    onCreatePostgreSql: createPostgreSql,
+    onUpdate: update,
+    onTestConnect: testConnect,
+    onTestZk: testZkConnection,
+    onGetSecret: getSecret,
+    onConnect: connect,
+    onConnectZk: (id: string) => {
+      setSelectedZkId(id);
+      setCurrentPage("zookeeper");
+    },
+    onConnectRedis: (id: string) => {
+      setSelectedRedisId(id);
+      setCurrentPage("redis");
+    },
+    onConnectMySql: (id: string) => {
+      setSelectedMysqlId(id);
+      setCurrentPage("mysql");
+    },
+    onConnectPostgreSql: (id: string) => {
+      setSelectedPostgresqlId(id);
+      setCurrentPage("home");
+    },
+    tr,
+  });
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -267,15 +307,94 @@ export default function App() {
     tabs,
   ]);
 
+  const openedConnectionTypeOptions = useMemo(() => {
+    const options: Array<{ value: "terminal" | "zookeeper" | "redis" | "mysql" | "etcd"; label: string }> = [];
+    if (sessions.length > 0) options.push({ value: "terminal", label: tr("terminal.workspace") });
+    if (zkConnections.length > 0) options.push({ value: "zookeeper", label: tr("home.zookeeper") });
+    if (redisConnections.length > 0) options.push({ value: "redis", label: tr("home.redis") });
+    if (mysqlConnections.length > 0) options.push({ value: "mysql", label: tr("home.mysql") });
+    if (etcdConnections.length > 0) options.push({ value: "etcd", label: "Etcd" });
+    if (options.length === 0) {
+      options.push({ value: "terminal", label: tr("terminal.workspace") });
+    }
+    return options;
+  }, [sessions.length, zkConnections.length, redisConnections.length, mysqlConnections.length, etcdConnections.length, tr]);
+
+  const subpageCurrentType = currentPage === "mysqlData" ? "mysql" : currentPage;
+  const subpageSelectValue = openedConnectionTypeOptions.some((item) => item.value === subpageCurrentType)
+    ? subpageCurrentType
+    : openedConnectionTypeOptions[0].value;
+  const subpageContainerStyle = {
+    height: "calc(100vh - 56px)",
+    overflow: "hidden",
+  } as const;
+
   return (
     <I18nProvider value={{ lang, tr }}>
-      <main className="app-shell">
+      <main
+        className="app-shell"
+        style={currentPage === "home" ? undefined : { height: "100vh", overflow: "hidden" }}
+      >
+        {currentPage !== "home" ? (
+          <header className="topbar">
+            <div className="topbar-title">
+              <div className="app-badge" aria-hidden="true">
+                r
+              </div>
+              <div className="topbar-title-text">
+                <div className="topbar-title-line">rshell</div>
+                <div className="topbar-subtitle">{tr("top.subtitle")}</div>
+              </div>
+            </div>
+            <div className="actions">
+              <ColorThemeToggle tr={tr} />
+              <div className="lang-switch" role="group" aria-label={tr("top.ariaLanguageSwitch")}>
+                <button
+                  className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
+                  onClick={() => switchLang("zh-CN")}
+                  title={tr("lang.switchToZh")}
+                  aria-pressed={lang === "zh-CN"}
+                >
+                  {tr("lang.zh")}
+                </button>
+                <button
+                  className={`btn btn-ghost ${lang === "en-US" ? "lang-active" : ""}`}
+                  onClick={() => switchLang("en-US")}
+                  title={tr("lang.switchToEn")}
+                  aria-pressed={lang === "en-US"}
+                >
+                  {tr("lang.en")}
+                </button>
+              </div>
+              <button className="btn btn-ghost" onClick={() => setCurrentPage("home")}>
+                {tr("terminal.back")}
+              </button>
+              <button className="btn btn-ghost lang-active" onClick={() => unifiedForms.setShowCreateModal(true)}>
+                {tr("top.addConnection")}
+              </button>
+              <select
+                className="btn btn-ghost"
+                aria-label="opened connection type switch"
+                value={subpageSelectValue}
+                onChange={(event) => setCurrentPage(event.target.value as "terminal" | "zookeeper" | "redis" | "mysql" | "etcd")}
+              >
+                {openedConnectionTypeOptions.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+              <span className="pill pill-muted">{status}</span>
+            </div>
+          </header>
+        ) : null}
         <div style={{ display: currentPage === "home" ? "" : "none" }}>
           <AppHomeSection
             sessions={sessions}
             zkConnections={zkConnections}
             redisConnections={redisConnections}
             mysqlConnections={mysqlConnections}
+            postgresqlConnections={postgresqlConnections}
             etcdConnections={etcdConnections}
             connectingSessionId={connectingHostId}
             selectedId={selectedId}
@@ -290,6 +409,7 @@ export default function App() {
             onCreateZk={createZk}
             onCreateRedis={createRedis}
             onCreateMysql={createMysql}
+            onCreatePostgreSql={createPostgreSql}
             onUpdate={update}
             onDelete={remove}
             onTestConnect={testConnect}
@@ -311,12 +431,19 @@ export default function App() {
               setSelectedMysqlId(id);
               setCurrentPage("mysql");
             }}
+            onConnectPostgreSql={(id: string) => {
+              setSelectedPostgresqlId(id);
+              setCurrentPage("home");
+            }}
             onGetRedisSecret={getRedisSecret}
             onUpdateRedis={updateRedis}
             onDeleteRedis={removeRedis}
             onDeleteMysql={removeMysql}
             onGetMysqlSecret={getMysqlSecret}
             onUpdateMysql={updateMysql}
+            onDeletePostgreSql={removePostgreSql}
+            onGetPostgreSqlSecret={getPostgreSqlSecret}
+            onUpdatePostgreSql={updatePostgreSql}
             onConnectEtcd={(id: string) => {
               setSelectedEtcdId(id);
               setCurrentPage("etcd");
@@ -348,9 +475,10 @@ export default function App() {
             onCreateEnvironment={createAndSwitchEnvironment}
             onRenameEnvironment={renameEnvironment}
             tr={tr}
+            onOpenUnifiedCreate={() => unifiedForms.setShowCreateModal(true)}
           />
         </div>
-        <div style={{ display: currentPage === "terminal" ? "" : "none" }}>
+        <div style={{ display: currentPage === "terminal" ? "" : "none", ...subpageContainerStyle }}>
           <AppTerminalSection
             sessions={sessions}
             connectingSessionId={connectingHostId}
@@ -401,7 +529,7 @@ export default function App() {
             onOpenCreate={() => setCurrentPage("home")}
           />
         </div>
-        <div style={{ display: currentPage === "zookeeper" ? "" : "none" }}>
+        <div style={{ display: currentPage === "zookeeper" ? "" : "none", ...subpageContainerStyle }}>
           <AppZookeeperSection
             connections={zkConnections}
             selectedId={selectedZkId}
@@ -415,9 +543,10 @@ export default function App() {
             onGetSecret={getZkSecret}
             onBack={() => setCurrentPage("home")}
             tr={tr}
+            onOpenUnifiedCreate={() => unifiedForms.setShowCreateModal(true)}
           />
         </div>
-        <div style={{ display: currentPage === "redis" ? "" : "none" }}>
+        <div style={{ display: currentPage === "redis" ? "" : "none", ...subpageContainerStyle }}>
           <AppRedisSection
             connections={redisConnections}
             selectedId={selectedRedisId}
@@ -433,9 +562,10 @@ export default function App() {
             onSwitchLang={switchLang}
             onBack={() => setCurrentPage("home")}
             tr={tr}
+            onOpenUnifiedCreate={() => unifiedForms.setShowCreateModal(true)}
           />
         </div>
-        <div style={{ display: currentPage === "etcd" ? "" : "none" }}>
+        <div style={{ display: currentPage === "etcd" ? "" : "none", ...subpageContainerStyle }}>
           <AppEtcdSection
             connections={etcdConnections}
             selectedId={selectedEtcdId}
@@ -449,9 +579,10 @@ export default function App() {
             onGetSecret={getEtcdSecret}
             onBack={() => setCurrentPage("home")}
             tr={tr}
+            onOpenUnifiedCreate={() => unifiedForms.setShowCreateModal(true)}
           />
         </div>
-        <div style={{ display: currentPage === "mysql" || currentPage === "mysqlData" ? "" : "none" }}>
+        <div style={{ display: currentPage === "mysql" || currentPage === "mysqlData" ? "" : "none", ...subpageContainerStyle }}>
           <AppMySqlSection
             connections={mysqlConnections}
             selectedId={selectedMysqlId}
@@ -465,6 +596,7 @@ export default function App() {
             onGetSecret={getMysqlSecret}
             onBack={() => setCurrentPage("home")}
             tr={tr}
+            onOpenUnifiedCreate={() => unifiedForms.setShowCreateModal(true)}
           />
         </div>
         <DownloadToastStack
@@ -490,6 +622,22 @@ export default function App() {
             onCancel={() => setCloseConfirmOpen(false)}
           />
         ) : null}
+        <HostCreateModal
+          open={unifiedForms.showCreateModal}
+          form={unifiedForms.createForm}
+          secret={unifiedForms.createSecret}
+          testing={unifiedForms.createTesting}
+          saving={unifiedForms.createSubmitting}
+          testResult={unifiedForms.createTestResult}
+          hostInputRef={unifiedForms.hostInputRef}
+          protocolPort={unifiedForms.createProtocolPort}
+          onClose={() => unifiedForms.setShowCreateModal(false)}
+          onChangeForm={unifiedForms.setCreateForm}
+          onChangeSecret={unifiedForms.setCreateSecret}
+          onTest={() => void unifiedForms.testCreateConnect()}
+          onSubmit={() => void unifiedForms.submitCreate(false)}
+          onSubmitAndConnect={() => void unifiedForms.submitCreate(true)}
+        />
         <CommandPaletteModal open={cmdkOpen} tr={tr} items={cmdkItems} onClose={() => setCmdkOpen(false)} />
       </main>
     </I18nProvider>

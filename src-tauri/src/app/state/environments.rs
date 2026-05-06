@@ -104,6 +104,21 @@ impl AppState {
             }
         }
         {
+            let mut items = self.postgresql_connections.lock().await;
+            let mut changed = false;
+            for item in items.iter_mut() {
+                if item.environment == old_name {
+                    item.environment = new_name.clone();
+                    changed = true;
+                }
+            }
+            if changed {
+                self.store
+                    .save_all_postgresql(&items)
+                    .map_err(|e| e.to_string())?;
+            }
+        }
+        {
             let mut envs = self.environments.lock().await;
             envs.retain(|e| e != &old_name);
             if !envs.iter().any(|e| e == &new_name) {

@@ -10,6 +10,8 @@ import type {
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
+  PostgreSqlConnection,
+  PostgreSqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -47,6 +49,7 @@ interface Props {
   onDeleteZk: (id: string) => Promise<void>;
   redisConnections: RedisConnection[];
   mysqlConnections: MySqlConnection[];
+  postgresqlConnections: PostgreSqlConnection[];
   onConnectRedis: (id: string) => void;
   onConnectMysql: (id: string) => void;
   onGetRedisSecret: (id: string) => Promise<string | null>;
@@ -55,6 +58,11 @@ interface Props {
   onDeleteMysql: (id: string) => Promise<void>;
   onGetMysqlSecret: (id: string) => Promise<string | null>;
   onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
+  onCreatePostgreSql: (input: PostgreSqlConnectionInput, secret?: string) => Promise<PostgreSqlConnection | null>;
+  onConnectPostgreSql: (id: string) => void;
+  onDeletePostgreSql: (id: string) => Promise<void>;
+  onGetPostgreSqlSecret: (id: string) => Promise<string | null>;
+  onUpdatePostgreSql: (id: string, input: PostgreSqlConnectionInput, secret?: string) => Promise<void>;
   etcdConnections: EtcdConnection[];
   onConnectEtcd: (id: string) => void;
   onCreateEtcd: (input: EtcdConnectionInput, secret?: string) => Promise<EtcdConnection | null>;
@@ -80,6 +88,7 @@ interface Props {
   onRenameEnvironment: (newName: string) => Promise<void>;
   onRefreshHostStatus: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  onOpenUnifiedCreate?: () => void;
 }
 
 export default function HomePage({
@@ -109,6 +118,7 @@ export default function HomePage({
   onDeleteZk,
   redisConnections,
   mysqlConnections,
+  postgresqlConnections,
   onConnectRedis,
   onConnectMysql,
   onGetRedisSecret,
@@ -117,6 +127,11 @@ export default function HomePage({
   onDeleteMysql,
   onGetMysqlSecret,
   onUpdateMysql,
+  onCreatePostgreSql,
+  onConnectPostgreSql,
+  onDeletePostgreSql,
+  onGetPostgreSqlSecret,
+  onUpdatePostgreSql,
   etcdConnections,
   onConnectEtcd,
   onCreateEtcd,
@@ -142,10 +157,11 @@ export default function HomePage({
   onRenameEnvironment,
   onRefreshHostStatus,
   tr,
+  onOpenUnifiedCreate,
 }: Props) {
   const selected = sessions.find((s) => s.id === selectedId);
   const hasSessions = sessions.length > 0;
-  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0 || etcdConnections.length > 0;
+  const hasAnyConnections = sessions.length > 0 || zkConnections.length > 0 || redisConnections.length > 0 || mysqlConnections.length > 0 || postgresqlConnections.length > 0 || etcdConnections.length > 0;
   const [hostQuery, setHostQuery] = useState("");
   const [appVersion, setAppVersion] = useState("");
   const [environmentModalOpen, setEnvironmentModalOpen] = useState(false);
@@ -236,6 +252,11 @@ export default function HomePage({
           <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
             {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
           </button>
+          {onOpenUnifiedCreate ? (
+            <button className="btn btn-ghost lang-active" onClick={onOpenUnifiedCreate}>
+              {tr("top.addConnection")}
+            </button>
+          ) : null}
           <button className="btn btn-ghost" onClick={onOpenAudit}>
             {tr("home.audit")}
           </button>
@@ -299,6 +320,7 @@ export default function HomePage({
                 onCreateZk={onCreateZk}
                 onCreateRedis={onCreateRedis}
                 onCreateMySql={onCreateMysql}
+                onCreatePostgreSql={onCreatePostgreSql}
                 onUpdate={onUpdate}
                 onDelete={onDelete}
                 onTestConnect={onTestConnect}
@@ -314,12 +336,17 @@ export default function HomePage({
                 mysqlConnections={mysqlConnections}
                 onConnectRedis={onConnectRedis}
                 onConnectMySql={onConnectMysql}
+                onConnectPostgreSql={onConnectPostgreSql}
                 onGetRedisSecret={onGetRedisSecret}
                 onUpdateRedis={onUpdateRedis}
                 onDeleteRedis={onDeleteRedis}
                 onDeleteMySql={onDeleteMysql}
                 onGetMysqlSecret={onGetMysqlSecret}
                 onUpdateMysql={onUpdateMysql}
+                postgresqlConnections={postgresqlConnections}
+                onDeletePostgreSql={onDeletePostgreSql}
+                onGetPostgreSqlSecret={onGetPostgreSqlSecret}
+                onUpdatePostgreSql={onUpdatePostgreSql}
                 etcdConnections={etcdConnections}
                 onConnectEtcd={onConnectEtcd}
                 onCreateEtcd={onCreateEtcd}

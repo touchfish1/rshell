@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { EtcdConnection, MySqlConnection, MySqlConnectionInput, RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
+import type { EtcdConnection, MySqlConnection, MySqlConnectionInput, PostgreSqlConnection, PostgreSqlConnectionInput, RedisConnection, RedisConnectionInput, Session, SessionInput, ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
 import type { TrFn } from "../../i18n-context";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { HostCreateModal } from "./HostCreateModal";
@@ -15,15 +15,19 @@ interface Props {
   pendingDeleteMySql: MySqlConnection | null;
   pendingDeleteZk: ZookeeperConnection | null;
   pendingDeleteEtcd: EtcdConnection | null;
+  pendingDeletePostgreSql: PostgreSqlConnection | null;
   onCancelDeleteSession: () => void;
   onCancelDeleteRedis: () => void;
   onCancelDeleteMySql: () => void;
   onCancelDeleteZk: () => void;
   onCancelDeleteEtcd: () => void;
+  onCancelDeletePostgreSql: () => void;
   onConfirmDeleteSession: () => void;
   onConfirmDeleteRedis: () => void;
   onConfirmDeleteMySql: () => void;
   onConfirmDeleteZk: () => void;
+  onConfirmDeleteEtcd: () => void;
+  onConfirmDeletePostgreSql: () => void;
 
   showCreateModal: boolean;
   createForm: SessionInput;
@@ -99,6 +103,21 @@ interface Props {
   onToggleMySqlEditSecretVisible: () => void;
   onTestEditMySql: () => void;
   onSubmitEditMySql: () => void;
+
+  postgresqlEditConnection: PostgreSqlConnection | null;
+  postgresqlEditForm: PostgreSqlConnectionInput;
+  postgresqlEditSecret: string;
+  postgresqlEditSecretVisible: boolean;
+  postgresqlEditSecretLoading: boolean;
+  postgresqlEditTesting: boolean;
+  postgresqlEditSaving: boolean;
+  postgresqlEditResult: string | null;
+  onCloseEditPostgreSql: () => void;
+  onChangePostgreSqlEditForm: (v: PostgreSqlConnectionInput) => void;
+  onChangePostgreSqlEditSecret: (v: string) => void;
+  onTogglePostgreSqlEditSecretVisible: () => void;
+  onTestEditPostgreSql: () => void;
+  onSubmitEditPostgreSql: () => void;
 }
 
 export function SessionListModals(props: Props) {
@@ -109,16 +128,19 @@ export function SessionListModals(props: Props) {
     pendingDeleteMySql,
     pendingDeleteZk,
     pendingDeleteEtcd,
+    pendingDeletePostgreSql,
     onCancelDeleteSession,
     onCancelDeleteRedis,
     onCancelDeleteMySql,
     onCancelDeleteZk,
     onCancelDeleteEtcd,
+    onCancelDeletePostgreSql,
     onConfirmDeleteSession,
     onConfirmDeleteRedis,
     onConfirmDeleteMySql,
     onConfirmDeleteZk,
     onConfirmDeleteEtcd,
+    onConfirmDeletePostgreSql,
     showCreateModal,
     createForm,
     createSecret,
@@ -189,6 +211,20 @@ export function SessionListModals(props: Props) {
     onToggleMySqlEditSecretVisible,
     onTestEditMySql,
     onSubmitEditMySql,
+    postgresqlEditConnection,
+    postgresqlEditForm,
+    postgresqlEditSecret,
+    postgresqlEditSecretVisible,
+    postgresqlEditSecretLoading,
+    postgresqlEditTesting,
+    postgresqlEditSaving,
+    postgresqlEditResult,
+    onCloseEditPostgreSql,
+    onChangePostgreSqlEditForm,
+    onChangePostgreSqlEditSecret,
+    onTogglePostgreSqlEditSecretVisible,
+    onTestEditPostgreSql,
+    onSubmitEditPostgreSql,
   } = props;
 
   return (
@@ -249,6 +285,16 @@ export function SessionListModals(props: Props) {
         danger
         onCancel={onCancelDeleteZk}
         onConfirm={onConfirmDeleteZk}
+      />
+      <ConfirmDialog
+        open={Boolean(pendingDeletePostgreSql)}
+        title={tr("session.delete")}
+        message={pendingDeletePostgreSql ? tr("session.deleteConfirm", { name: pendingDeletePostgreSql.name }) : ""}
+        cancelLabel={tr("modal.cancel")}
+        confirmLabel={tr("session.delete")}
+        danger
+        onCancel={onCancelDeletePostgreSql}
+        onConfirm={onConfirmDeletePostgreSql}
       />
       <ConfirmDialog
         open={Boolean(pendingDeleteEtcd)}
@@ -325,6 +371,22 @@ export function SessionListModals(props: Props) {
         onToggleSecretVisible={onToggleMySqlEditSecretVisible}
         onTest={onTestEditMySql}
         onSubmit={onSubmitEditMySql}
+      />
+      <MySqlConnectionEditModal
+        connection={postgresqlEditConnection}
+        form={postgresqlEditForm}
+        secret={postgresqlEditSecret}
+        secretVisible={postgresqlEditSecretVisible}
+        secretLoading={postgresqlEditSecretLoading}
+        testing={postgresqlEditTesting}
+        saving={postgresqlEditSaving}
+        testResult={postgresqlEditResult}
+        onClose={onCloseEditPostgreSql}
+        onChangeForm={onChangePostgreSqlEditForm}
+        onChangeSecret={onChangePostgreSqlEditSecret}
+        onToggleSecretVisible={onTogglePostgreSqlEditSecretVisible}
+        onTest={onTestEditPostgreSql}
+        onSubmit={onSubmitEditPostgreSql}
       />
     </>
   );

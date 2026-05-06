@@ -132,6 +132,7 @@ export function AppTerminalSection({
       onNavigateMysql={onNavigateMysql}
       onNavigateEtcd={onNavigateEtcd}
       onOpenCreate={onOpenCreate}
+      hideHeader
       terminals={tabs.map((tab) => ({
         id: tab.id,
         node: (

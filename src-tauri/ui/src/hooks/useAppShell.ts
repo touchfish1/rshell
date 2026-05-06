@@ -13,6 +13,8 @@ import type {
   EtcdConnection,
   EtcdConnectionInput,
   MySqlConnection,
+  PostgreSqlConnection,
+  PostgreSqlConnectionInput,
   RedisConnection,
   Session,
   ZookeeperConnection,
@@ -26,6 +28,7 @@ import { useSessionActions } from "./useSessionActions";
 import { useEtcdActions } from "./useEtcdActions";
 import { useZookeeperActions } from "./useZookeeperActions";
 import { useMysqlActions } from "./useMysqlActions";
+import { usePostgreSqlActions } from "./usePostgreSqlActions";
 import { useSftpState } from "./useSftpState";
 import { useTerminalOutput } from "./useTerminalOutput";
 import { useUpdater } from "./useUpdater";
@@ -46,6 +49,8 @@ export function useAppShell() {
   const [selectedRedisId, setSelectedRedisId] = useState<string | undefined>();
   const [mysqlConnections, setMysqlConnections] = useState<MySqlConnection[]>([]);
   const [selectedMysqlId, setSelectedMysqlId] = useState<string | undefined>();
+  const [postgresqlConnections, setPostgresqlConnections] = useState<PostgreSqlConnection[]>([]);
+  const [selectedPostgresqlId, setSelectedPostgresqlId] = useState<string | undefined>();
   const [etcdConnections, setEtcdConnections] = useState<EtcdConnection[]>([]);
   const [selectedEtcdId, setSelectedEtcdId] = useState<string | undefined>();
   const [status, setStatus] = useState(() => t(detectInitialLang(), "status.idle"));
@@ -211,6 +216,7 @@ export function useAppShell() {
     setSelectedZkId(undefined);
     setSelectedRedisId(undefined);
     setSelectedMysqlId(undefined);
+    setSelectedPostgresqlId(undefined);
     setSelectedEtcdId(undefined);
     setEnvReloadKey((v) => v + 1);
   }, []);
@@ -283,6 +289,21 @@ export function useAppShell() {
     setConnections: setMysqlConnections,
     selectedId: selectedMysqlId,
     setSelectedId: setSelectedMysqlId,
+    setStatus,
+    setError,
+    tr,
+    reloadKey: envReloadKey,
+  });
+  const {
+    create: createPostgreSql,
+    update: updatePostgreSql,
+    remove: removePostgreSql,
+    getSecret: getPostgreSqlSecret,
+  } = usePostgreSqlActions({
+    connections: postgresqlConnections,
+    setConnections: setPostgresqlConnections,
+    selectedId: selectedPostgresqlId,
+    setSelectedId: setSelectedPostgresqlId,
     setStatus,
     setError,
     tr,
@@ -405,6 +426,9 @@ export function useAppShell() {
     mysqlConnections,
     selectedMysqlId,
     setSelectedMysqlId,
+    postgresqlConnections,
+    selectedPostgresqlId,
+    setSelectedPostgresqlId,
     status,
     error,
     setError,
@@ -447,6 +471,10 @@ export function useAppShell() {
     updateMysql,
     removeMysql,
     getMysqlSecret,
+    createPostgreSql,
+    updatePostgreSql,
+    removePostgreSql,
+    getPostgreSqlSecret,
     etcdConnections,
     selectedEtcdId,
     setSelectedEtcdId,

@@ -12,6 +12,8 @@ interface Props {
   onBack: () => void;
   onOpenCreate: () => void;
   onDisconnect: () => void;
+  onOpenUnifiedCreate?: () => void;
+  hidden?: boolean;
 }
 
 export function RedisHeader({
@@ -24,7 +26,10 @@ export function RedisHeader({
   onBack,
   onOpenCreate,
   onDisconnect,
+  onOpenUnifiedCreate,
+  hidden = false,
 }: Props) {
+  if (hidden) return null;
   return (
     <header className="topbar">
       <div className="topbar-title">
@@ -51,6 +56,11 @@ export function RedisHeader({
             {tr("lang.en")}
           </button>
         </div>
+        {onOpenUnifiedCreate ? (
+          <button className="btn btn-ghost" onClick={onOpenUnifiedCreate}>
+            {tr("top.addConnection")}
+          </button>
+        ) : null}
         <button className="btn btn-ghost" onClick={onBack}>
           {tr("terminal.back")}
         </button>

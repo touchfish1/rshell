@@ -3,7 +3,10 @@
 mod state;
 
 pub use crate::domain::audit::AuditRecord;
-pub use state::{AppState, HostMetrics, MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo, SftpEntry, SftpTextReadResult};
+pub use state::{
+    AppState, HostMetrics, MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo, PostgreSqlColumnInfo,
+    PostgreSqlQueryResult, PostgreSqlTableInfo, SftpEntry, SftpTextReadResult,
+};
 
 #[cfg(test)]
 mod state_tests;

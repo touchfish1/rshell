@@ -6,6 +6,10 @@ dist/
 *.log
 .DS_Store
 updater.key
-redis
-postgresql
-src-tauri/postgresql
+/redis
+/postgresql
+/src-tauri/postgresql
+!src-tauri/src/app/state/postgresql/
+!src-tauri/src/app/state/postgresql/**
+!src-tauri/src/api/commands/postgresql/
+!src-tauri/src/api/commands/postgresql/**

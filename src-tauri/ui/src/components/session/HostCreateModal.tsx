@@ -106,9 +106,9 @@ export function HostCreateModal({
               onChange={(e) => {
                 const protocol = e.target.value as Protocol;
                 const currentDefaultPort =
-                  form.protocol === "ssh" ? 22 : form.protocol === "telnet" ? 23 : form.protocol === "redis" ? 6379 : form.protocol === "mysql" ? 3306 : 2181;
+                  form.protocol === "ssh" ? 22 : form.protocol === "telnet" ? 23 : form.protocol === "redis" ? 6379 : form.protocol === "mysql" ? 3306 : form.protocol === "postgresql" ? 5432 : 2181;
                 const nextDefaultPort =
-                  protocol === "ssh" ? 22 : protocol === "telnet" ? 23 : protocol === "redis" ? 6379 : protocol === "mysql" ? 3306 : 2181;
+                  protocol === "ssh" ? 22 : protocol === "telnet" ? 23 : protocol === "redis" ? 6379 : protocol === "mysql" ? 3306 : protocol === "postgresql" ? 5432 : 2181;
                 const keepCustomPort = Boolean(form.port) && form.port !== currentDefaultPort;
                 onChangeForm({
                   ...form,
@@ -122,6 +122,7 @@ export function HostCreateModal({
               <option value="zookeeper">Zookeeper</option>
               <option value="redis">Redis</option>
               <option value="mysql">MySQL</option>
+              <option value="postgresql">PostgreSQL</option>
             </select>
             <input
               ref={hostInputRef}

@@ -51,6 +51,7 @@ interface Props {
   onNavigateMysql: () => void;
   onNavigateEtcd: () => void;
   onOpenCreate: () => void;
+  hideHeader?: boolean;
 }
 
 export default function TerminalPage({
@@ -91,6 +92,7 @@ export default function TerminalPage({
   onNavigateMysql,
   onNavigateEtcd,
   onOpenCreate,
+  hideHeader = false,
 }: Props) {
   const { workspaceRef, workspaceStyle, onDragStartHosts, onDragStartSftp } = useSplitPanels();
   const [tabMenu, setTabMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
@@ -138,6 +140,7 @@ export default function TerminalPage({
       className="workspace terminal-page"
       title={`${tr("terminal.workspaceShortcutsHint")} · ${tr("terminal.zoomKeyboardHint")}`}
     >
+      {hideHeader ? null : (
       <header className="terminal-top">
         <h2>{activeSession?.name ?? tr("terminal.workspace")}</h2>
         <div className="actions">
@@ -174,6 +177,7 @@ export default function TerminalPage({
           </button>
         </div>
       </header>
+      )}
       <SessionTabs
         tabs={tabs}
         activeTabId={activeTabId}

@@ -12,6 +12,7 @@ mod common;
 mod metrics;
 mod environments;
 mod mysql;
+mod postgresql;
 mod reachability;
 mod redis;
 mod sessions;
@@ -23,8 +24,9 @@ mod zookeeper;
 
 use tauri::{AppHandle, State};
 
-use crate::app::{AppState, AuditRecord, HostMetrics, MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo, SftpEntry, SftpTextReadResult};
+use crate::app::{AppState, AuditRecord, HostMetrics, MySqlColumnInfo, MySqlQueryResult, MySqlTableInfo, PostgreSqlColumnInfo, PostgreSqlQueryResult, PostgreSqlTableInfo, SftpEntry, SftpTextReadResult};
 use crate::domain::mysql::{MySqlConnection, MySqlConnectionInput};
+use crate::domain::postgresql::{PostgreSqlConnection, PostgreSqlConnectionInput};
 use crate::domain::session::{Session, SessionInput};
 use crate::domain::redis::{RedisConnection, RedisConnectionInput};
 use crate::domain::etcd::{EtcdConnection, EtcdConnectionInput};
@@ -557,6 +559,115 @@ pub async fn mysql_alter_table_add_column(
     column_type: String,
 ) -> Result<(), String> {
     mysql::mysql_alter_table_add_column(state, id, schema, table, column_name, column_type).await
+}
+
+#[tauri::command]
+pub async fn list_postgresql_connections(
+    state: State<'_, AppState>,
+) -> Result<Vec<PostgreSqlConnection>, String> {
+    postgresql::list_postgresql_connections(state).await
+}
+
+#[tauri::command]
+pub async fn create_postgresql_connection(
+    state: State<'_, AppState>,
+    input: PostgreSqlConnectionInput,
+    secret: Option<String>,
+) -> Result<PostgreSqlConnection, String> {
+    postgresql::create_postgresql_connection(state, input, secret).await
+}
+
+#[tauri::command]
+pub async fn update_postgresql_connection(
+    state: State<'_, AppState>,
+    id: String,
+    input: PostgreSqlConnectionInput,
+    secret: Option<String>,
+) -> Result<PostgreSqlConnection, String> {
+    postgresql::update_postgresql_connection(state, id, input, secret).await
+}
+
+#[tauri::command]
+pub async fn delete_postgresql_connection(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    postgresql::delete_postgresql_connection(state, id).await
+}
+
+#[tauri::command]
+pub async fn get_postgresql_secret(state: State<'_, AppState>, id: String) -> Result<Option<String>, String> {
+    postgresql::get_postgresql_secret(state, id).await
+}
+
+#[tauri::command]
+pub async fn connect_postgresql(
+    state: State<'_, AppState>,
+    id: String,
+    secret: Option<String>,
+) -> Result<(), String> {
+    postgresql::connect_postgresql(state, id, secret).await
+}
+
+#[tauri::command]
+pub async fn test_postgresql_connection(
+    host: String,
+    port: Option<u16>,
+    username: String,
+    database: Option<String>,
+    secret: Option<String>,
+) -> Result<(), String> {
+    postgresql::test_postgresql_connection(host, port, username, database, secret).await
+}
+
+#[tauri::command]
+pub async fn disconnect_postgresql(state: State<'_, AppState>, id: String) -> Result<(), String> {
+    postgresql::disconnect_postgresql(state, id).await
+}
+
+#[tauri::command]
+pub async fn postgresql_list_databases(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<Vec<String>, String> {
+    postgresql::postgresql_list_databases(state, id).await
+}
+
+#[tauri::command]
+pub async fn postgresql_list_tables(
+    state: State<'_, AppState>,
+    id: String,
+    schema: String,
+) -> Result<Vec<PostgreSqlTableInfo>, String> {
+    postgresql::postgresql_list_tables(state, id, schema).await
+}
+
+#[tauri::command]
+pub async fn postgresql_list_columns(
+    state: State<'_, AppState>,
+    id: String,
+    schema: String,
+    table: String,
+) -> Result<Vec<PostgreSqlColumnInfo>, String> {
+    postgresql::postgresql_list_columns(state, id, schema, table).await
+}
+
+#[tauri::command]
+pub async fn postgresql_execute_query(
+    state: State<'_, AppState>,
+    id: String,
+    sql: String,
+    limit: Option<u64>,
+    offset: Option<u64>,
+    schema: Option<String>,
+) -> Result<PostgreSqlQueryResult, String> {
+    postgresql::postgresql_execute_query(state, id, sql, limit, offset, schema).await
+}
+
+#[tauri::command]
+pub async fn postgresql_explain_query(
+    state: State<'_, AppState>,
+    id: String,
+    sql: String,
+) -> Result<PostgreSqlQueryResult, String> {
+    postgresql::postgresql_explain_query(state, id, sql).await
 }
 
 #[tauri::command]

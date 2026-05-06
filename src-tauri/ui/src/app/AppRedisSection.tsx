@@ -19,8 +19,9 @@ interface AppRedisSectionProps {
   onSwitchLang: (lang: Lang) => void;
   onBack: () => void;
   tr: TranslateFn;
+  onOpenUnifiedCreate?: () => void;
 }
 
 export function AppRedisSection(props: AppRedisSectionProps) {
-  return <RedisPage {...props} />;
+  return <RedisPage {...props} hideHeader />;
 }

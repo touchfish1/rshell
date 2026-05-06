@@ -24,6 +24,7 @@ export const zhCN: Dict = {
   "top.environmentRenameHint": "输入新的环境名称",
   "top.current": "当前：{name}",
   "top.noHostSelected": "未选择主机",
+  "top.addConnection": "新增连接",
   "top.ariaLanguageSwitch": "语言切换",
   "home.hostList": "主机列表",
   "home.hostListHint":

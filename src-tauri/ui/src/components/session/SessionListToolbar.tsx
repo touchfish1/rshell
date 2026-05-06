@@ -12,9 +12,6 @@ export function SessionListToolbar({ hostQuery, onHostQueryChange, tr, onOpenCre
     <>
       <div className="session-list-header">
         <h3>{tr("session.management")}</h3>
-        <button className="btn btn-ghost" onClick={onOpenCreate} title={tr("session.addHost")}>
-          {tr("session.addHost")}
-        </button>
       </div>
       <div className="session-list-search-row">
         <input

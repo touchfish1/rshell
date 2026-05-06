@@ -18,6 +18,7 @@ interface AppZookeeperSectionProps {
   onGetSecret: (id: string) => Promise<string | null>;
   onBack: () => void;
   tr: TranslateFn;
+  onOpenUnifiedCreate?: () => void;
 }
 
 export function AppZookeeperSection({
@@ -33,6 +34,7 @@ export function AppZookeeperSection({
   onGetSecret,
   onBack,
   tr,
+  onOpenUnifiedCreate,
 }: AppZookeeperSectionProps) {
   return (
     <ZookeeperPage
@@ -51,6 +53,8 @@ export function AppZookeeperSection({
       onGetSecret={onGetSecret}
       onBack={onBack}
       tr={tr}
+      onOpenUnifiedCreate={onOpenUnifiedCreate}
+      hideHeader
     />
   );
 }

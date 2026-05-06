@@ -3,6 +3,8 @@ import type {
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
+  PostgreSqlConnection,
+  PostgreSqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -12,6 +14,7 @@ import type {
 } from "../../services/types";
 import { testRedisConnection } from "../../services/bridge";
 import { testMySqlConnection } from "../../services/bridge";
+import { testPostgreSqlConnection } from "../../services/bridge";
 import type { I18nKey } from "../../i18n";
 
 const defaultForm: SessionInput = {
@@ -29,6 +32,7 @@ interface Options {
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onCreateMySql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
+  onCreatePostgreSql: (input: PostgreSqlConnectionInput, secret?: string) => Promise<PostgreSqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
   onTestZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<void>;
@@ -37,6 +41,7 @@ interface Options {
   onConnectZk?: (id: string) => void;
   onConnectRedis?: (id: string) => void;
   onConnectMySql?: (id: string) => void;
+  onConnectPostgreSql?: (id: string) => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
 }
 
@@ -81,6 +86,7 @@ export function useSessionListForms({
   onCreateZk,
   onCreateRedis,
   onCreateMySql,
+  onCreatePostgreSql,
   onUpdate,
   onTestConnect,
   onTestZk,
@@ -89,6 +95,7 @@ export function useSessionListForms({
   onConnectZk,
   onConnectRedis,
   onConnectMySql,
+  onConnectPostgreSql,
   tr,
 }: Options) {
   const [createForm, setCreateForm] = useState<SessionInput>(defaultForm);
@@ -114,6 +121,7 @@ export function useSessionListForms({
     if (createForm.protocol === "telnet") return 23;
     if (createForm.protocol === "redis") return 6379;
     if (createForm.protocol === "mysql") return 3306;
+    if (createForm.protocol === "postgresql") return 5432;
     return 2181;
   }, [createForm.protocol]);
   const editProtocolPort = useMemo(() => (editForm.protocol === "ssh" ? 22 : 23), [editForm.protocol]);
@@ -164,6 +172,20 @@ export function useSessionListForms({
         if (!created) return;
         if (connectAfterSave) {
           onConnectMySql?.(created.id);
+        }
+      } else if (createForm.protocol === "postgresql") {
+        const created = await onCreatePostgreSql(
+          {
+            name: createForm.name,
+            host: createForm.host,
+            port: createForm.port,
+            username: createForm.username,
+          },
+          createSecret || undefined
+        );
+        if (!created) return;
+        if (connectAfterSave) {
+          onConnectPostgreSql?.(created.id);
         }
       } else {
         const created = await onCreate(createForm, createSecret || undefined);
@@ -255,6 +277,9 @@ export function useSessionListForms({
         setCreateTestResult(tr("modal.testSuccess"));
       } else if (createForm.protocol === "mysql") {
         await testMySqlConnection(createForm.host, createForm.port || 3306, createForm.username, undefined, createSecret || undefined);
+        setCreateTestResult(tr("modal.testSuccess"));
+      } else if (createForm.protocol === "postgresql") {
+        await testPostgreSqlConnection(createForm.host, createForm.port || 5432, createForm.username, undefined, createSecret || undefined);
         setCreateTestResult(tr("modal.testSuccess"));
       } else {
         const r = await onTestConnect(createForm);

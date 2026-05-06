@@ -17,8 +17,9 @@ interface AppMySqlSectionProps {
   onGetSecret: (id: string) => Promise<string | null>;
   onBack: () => void;
   tr: TranslateFn;
+  onOpenUnifiedCreate?: () => void;
 }
 
 export function AppMySqlSection(props: AppMySqlSectionProps) {
-  return <MySqlPage {...props} />;
+  return <MySqlPage {...props} hideHeader />;
 }

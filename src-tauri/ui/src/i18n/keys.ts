@@ -22,6 +22,7 @@ export type I18nKey =
   | "top.environmentRenameHint"
   | "top.current"
   | "top.noHostSelected"
+  | "top.addConnection"
   | "top.ariaLanguageSwitch"
   | "home.hostList"
   | "home.hostListHint"

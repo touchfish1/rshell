@@ -26,6 +26,8 @@ interface Props {
   onSwitchLang: (lang: Lang) => void;
   onBack: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  onOpenUnifiedCreate?: () => void;
+  hideHeader?: boolean;
 }
 
 export default function RedisPage({
@@ -43,6 +45,8 @@ export default function RedisPage({
   onSwitchLang,
   onBack,
   tr,
+  onOpenUnifiedCreate,
+  hideHeader = false,
 }: Props) {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const state = useRedisPageState({
@@ -168,6 +172,8 @@ export default function RedisPage({
         onBack={onBack}
         onOpenCreate={() => setCreateOpen(true)}
         onDisconnect={() => void disconnectActive()}
+        onOpenUnifiedCreate={onOpenUnifiedCreate}
+        hidden={hideHeader}
       />
 
       {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}

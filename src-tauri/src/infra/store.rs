@@ -8,6 +8,7 @@ use uuid::Uuid;
 
 use crate::domain::audit::AuditRecord;
 use crate::domain::mysql::MySqlConnection;
+use crate::domain::postgresql::PostgreSqlConnection;
 use crate::domain::redis::RedisConnection;
 use crate::domain::session::Session;
 use crate::domain::etcd::EtcdConnection;
@@ -34,6 +35,8 @@ pub struct SessionStore {
     redis_secret_path: PathBuf,
     mysql_db_path: PathBuf,
     mysql_secret_path: PathBuf,
+    postgresql_db_path: PathBuf,
+    postgresql_secret_path: PathBuf,
     etcd_db_path: PathBuf,
     etcd_secret_path: PathBuf,
     envs_path: PathBuf,
@@ -56,6 +59,8 @@ impl SessionStore {
             redis_secret_path: base.join("redis_secrets.json"),
             mysql_db_path: base.join("mysql.json"),
             mysql_secret_path: base.join("mysql_secrets.json"),
+            postgresql_db_path: base.join("postgresql.json"),
+            postgresql_secret_path: base.join("postgresql_secrets.json"),
             etcd_db_path: base.join("etcd.json"),
             etcd_secret_path: base.join("etcd_secrets.json"),
             envs_path: base.join("environments.json"),
@@ -195,6 +200,33 @@ impl SessionStore {
 
     pub fn delete_mysql_secret(&self, conn_id: Uuid) -> Result<(), StoreError> {
         store_secret::delete_secret(&self.mysql_secret_path, conn_id)
+    }
+
+    pub fn list_postgresql(&self) -> Result<Vec<PostgreSqlConnection>, StoreError> {
+        if !self.postgresql_db_path.exists() {
+            return Ok(vec![]);
+        }
+        let content = fs::read_to_string(&self.postgresql_db_path)
+            .map_err(|e| StoreError::Io(e.to_string()))?;
+        serde_json::from_str(&content).map_err(|e| StoreError::Serialize(e.to_string()))
+    }
+
+    pub fn save_all_postgresql(&self, conns: &[PostgreSqlConnection]) -> Result<(), StoreError> {
+        let content = serde_json::to_string_pretty(conns)
+            .map_err(|e| StoreError::Serialize(e.to_string()))?;
+        fs::write(&self.postgresql_db_path, content).map_err(|e| StoreError::Io(e.to_string()))
+    }
+
+    pub fn set_postgresql_secret(&self, conn_id: Uuid, secret: &str) -> Result<(), StoreError> {
+        store_secret::set_secret(&self.postgresql_secret_path, conn_id, secret)
+    }
+
+    pub fn get_postgresql_secret(&self, conn_id: Uuid) -> Result<Option<String>, StoreError> {
+        store_secret::get_secret(&self.postgresql_secret_path, conn_id)
+    }
+
+    pub fn delete_postgresql_secret(&self, conn_id: Uuid) -> Result<(), StoreError> {
+        store_secret::delete_secret(&self.postgresql_secret_path, conn_id)
     }
 
     pub fn set_secret(&self, session_id: Uuid, secret: &str) -> Result<(), StoreError> {

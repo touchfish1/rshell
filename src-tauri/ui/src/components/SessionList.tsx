@@ -5,6 +5,8 @@ import type {
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
+  PostgreSqlConnection,
+  PostgreSqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -22,6 +24,7 @@ import { useSessionListForms } from "./session/useSessionListForms";
 import { useZkSessionEditor } from "./session/useZkSessionEditor";
 import { useRedisConnectionEditor } from "./session/useRedisConnectionEditor";
 import { useMySqlConnectionEditor } from "./session/useMySqlConnectionEditor";
+import { usePostgreSqlConnectionEditor } from "./session/usePostgreSqlConnectionEditor";
 import { useI18n } from "../i18n-context";
 import { getRecentSessionIds } from "../lib/recentSessions";
 import { orderSessionsByRecent } from "../lib/orderSessionsByRecent";
@@ -39,6 +42,7 @@ interface Props {
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onCreateMySql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
+  onCreatePostgreSql: (input: PostgreSqlConnectionInput, secret?: string) => Promise<PostgreSqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -56,10 +60,15 @@ interface Props {
   onDeleteRedis: (id: string) => Promise<void>;
   onGetRedisSecret: (id: string) => Promise<string | null>;
   mysqlConnections: MySqlConnection[];
+  postgresqlConnections: PostgreSqlConnection[];
   onConnectMySql?: (id: string) => void;
   onDeleteMySql: (id: string) => Promise<void>;
   onGetMysqlSecret: (id: string) => Promise<string | null>;
   onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
+  onConnectPostgreSql?: (id: string) => void;
+  onDeletePostgreSql: (id: string) => Promise<void>;
+  onGetPostgreSqlSecret: (id: string) => Promise<string | null>;
+  onUpdatePostgreSql: (id: string, input: PostgreSqlConnectionInput, secret?: string) => Promise<void>;
   etcdConnections: EtcdConnection[];
   onConnectEtcd?: (id: string) => void;
   onCreateEtcd: (input: EtcdConnectionInput, secret?: string) => Promise<EtcdConnection | null>;
@@ -78,6 +87,7 @@ export default function SessionList({
   onCreateZk,
   onCreateRedis,
   onCreateMySql,
+  onCreatePostgreSql,
   onUpdate,
   onDelete,
   onTestConnect,
@@ -95,10 +105,15 @@ export default function SessionList({
   onDeleteRedis,
   onGetRedisSecret,
   mysqlConnections,
+  postgresqlConnections,
   onConnectMySql,
   onDeleteMySql,
   onGetMysqlSecret,
   onUpdateMysql,
+  onConnectPostgreSql,
+  onDeletePostgreSql,
+  onGetPostgreSqlSecret,
+  onUpdatePostgreSql,
   etcdConnections,
   onConnectEtcd,
   onCreateEtcd,
@@ -112,6 +127,7 @@ export default function SessionList({
   const [pendingDelete, setPendingDelete] = useState<Session | null>(null);
   const [pendingDeleteRedis, setPendingDeleteRedis] = useState<RedisConnection | null>(null);
   const [pendingDeleteMySql, setPendingDeleteMySql] = useState<MySqlConnection | null>(null);
+  const [pendingDeletePostgreSql, setPendingDeletePostgreSql] = useState<PostgreSqlConnection | null>(null);
   const [pendingDeleteEtcd, setPendingDeleteEtcd] = useState<EtcdConnection | null>(null);
 
   const { gridStyle, onResizeNameStart, onResizeHostStart } = useSessionListColumns();
@@ -187,6 +203,20 @@ export default function SessionList({
       );
     });
   }, [hostQuery, mysqlConnections]);
+  const displayedPostgreSqlConnections = useMemo(() => {
+    const q = hostQuery.trim().toLowerCase();
+    if (!q) return postgresqlConnections;
+    return postgresqlConnections.filter((conn) => {
+      return (
+        conn.name.toLowerCase().includes(q) ||
+        conn.host.toLowerCase().includes(q) ||
+        conn.username.toLowerCase().includes(q) ||
+        String(conn.port).includes(q) ||
+        (conn.database ?? "").toLowerCase().includes(q) ||
+        "postgresql".includes(q)
+      );
+    });
+  }, [hostQuery, postgresqlConnections]);
 
   const duplicateHost = async (session: Session) => {
     const copyName = `${session.name}-${tr("session.copySuffix")}`;
@@ -211,6 +241,10 @@ export default function SessionList({
     await onDeleteMySql(conn.id);
     setPendingDeleteMySql(null);
   };
+  const runDeletePostgreSql = async (conn: PostgreSqlConnection) => {
+    await onDeletePostgreSql(conn.id);
+    setPendingDeletePostgreSql(null);
+  };
   const runDeleteEtcd = async (conn: EtcdConnection) => {
     await onDeleteEtcd(conn.id);
     setPendingDeleteEtcd(null);
@@ -234,6 +268,27 @@ export default function SessionList({
   } = useMySqlConnectionEditor({
     onGetMysqlSecret,
     onUpdateMysql,
+    tr,
+  });
+  const {
+    postgresqlEditConnection,
+    postgresqlEditForm,
+    setPostgresqlEditForm,
+    postgresqlEditSecret,
+    setPostgresqlEditSecret,
+    postgresqlEditSecretVisible,
+    postgresqlEditSecretLoading,
+    setPostgresqlEditSecretVisible,
+    postgresqlEditTesting,
+    postgresqlEditSaving,
+    postgresqlEditResult,
+    openEditPostgreSql,
+    closeEditPostgreSql,
+    testEditPostgreSql,
+    submitEditPostgreSql,
+  } = usePostgreSqlConnectionEditor({
+    onGetPostgreSqlSecret,
+    onUpdatePostgreSql,
     tr,
   });
 
@@ -319,6 +374,7 @@ export default function SessionList({
     onCreateZk,
     onCreateRedis,
     onCreateMySql,
+    onCreatePostgreSql,
     onUpdate,
     onTestConnect,
     onTestZk,
@@ -327,6 +383,7 @@ export default function SessionList({
     onConnectZk,
     onConnectRedis,
     onConnectMySql,
+    onConnectPostgreSql,
     tr,
   });
 
@@ -405,6 +462,7 @@ export default function SessionList({
         displayedZkConnections={displayedZkConnections}
         displayedRedisConnections={displayedRedisConnections}
         displayedMySqlConnections={displayedMySqlConnections}
+        displayedPostgreSqlConnections={displayedPostgreSqlConnections}
         displayedEtcdConnections={displayedEtcdConnections}
         selectedId={selectedId}
         connectingSessionId={connectingSessionId}
@@ -416,6 +474,7 @@ export default function SessionList({
         onConnectZk={onConnectZk}
         onConnectRedis={onConnectRedis}
         onConnectMySql={onConnectMySql}
+        onConnectPostgreSql={onConnectPostgreSql}
         onConnectEtcd={onConnectEtcd}
         onOpenEditSession={openEdit}
         onDuplicateHost={(item) => void duplicateHost(item)}
@@ -430,6 +489,8 @@ export default function SessionList({
         onAskDeleteRedis={setPendingDeleteRedis}
         onOpenEditMySql={openEditMysql}
         onAskDeleteMySql={setPendingDeleteMySql}
+        onOpenEditPostgreSql={openEditPostgreSql}
+        onAskDeletePostgreSql={setPendingDeletePostgreSql}
         onOpenEditEtcd={(conn) => onConnectEtcd?.(conn.id)}
         onAskDeleteEtcd={setPendingDeleteEtcd}
       />
@@ -440,11 +501,13 @@ export default function SessionList({
         pendingDeleteMySql={pendingDeleteMySql}
         pendingDeleteZk={pendingDeleteZk}
         pendingDeleteEtcd={pendingDeleteEtcd}
+        pendingDeletePostgreSql={pendingDeletePostgreSql}
         onCancelDeleteSession={() => setPendingDelete(null)}
         onCancelDeleteRedis={() => setPendingDeleteRedis(null)}
         onCancelDeleteMySql={() => setPendingDeleteMySql(null)}
         onCancelDeleteZk={() => setPendingDeleteZk(null)}
         onCancelDeleteEtcd={() => setPendingDeleteEtcd(null)}
+        onCancelDeletePostgreSql={() => setPendingDeletePostgreSql(null)}
         onConfirmDeleteSession={() => {
           if (pendingDelete) void runDelete(pendingDelete);
         }}
@@ -459,6 +522,9 @@ export default function SessionList({
         }}
         onConfirmDeleteEtcd={() => {
           if (pendingDeleteEtcd) void runDeleteEtcd(pendingDeleteEtcd);
+        }}
+        onConfirmDeletePostgreSql={() => {
+          if (pendingDeletePostgreSql) void runDeletePostgreSql(pendingDeletePostgreSql);
         }}
         showCreateModal={showCreateModal}
         createForm={createForm}
@@ -530,6 +596,20 @@ export default function SessionList({
         onToggleMySqlEditSecretVisible={() => setMysqlEditSecretVisible((prev) => !prev)}
         onTestEditMySql={() => void testEditMysql()}
         onSubmitEditMySql={() => void submitEditMysql()}
+        postgresqlEditConnection={postgresqlEditConnection}
+        postgresqlEditForm={postgresqlEditForm}
+        postgresqlEditSecret={postgresqlEditSecret}
+        postgresqlEditSecretVisible={postgresqlEditSecretVisible}
+        postgresqlEditSecretLoading={postgresqlEditSecretLoading}
+        postgresqlEditTesting={postgresqlEditTesting}
+        postgresqlEditSaving={postgresqlEditSaving}
+        postgresqlEditResult={postgresqlEditResult}
+        onCloseEditPostgreSql={closeEditPostgreSql}
+        onChangePostgreSqlEditForm={setPostgresqlEditForm}
+        onChangePostgreSqlEditSecret={setPostgresqlEditSecret}
+        onTogglePostgreSqlEditSecretVisible={() => setPostgresqlEditSecretVisible((prev) => !prev)}
+        onTestEditPostgreSql={() => void testEditPostgreSql()}
+        onSubmitEditPostgreSql={() => void submitEditPostgreSql()}
       />
     </aside>
   );

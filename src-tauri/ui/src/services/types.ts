@@ -1,4 +1,4 @@
-export type Protocol = "ssh" | "telnet" | "zookeeper" | "redis" | "mysql";
+export type Protocol = "ssh" | "telnet" | "zookeeper" | "redis" | "mysql" | "postgresql";
 
 /** 终端标签与后端的链路状态（用于加载态、失败重试、断开提示） */
 export type TabLinkState = "connecting" | "ready" | "failed";
@@ -197,6 +197,45 @@ export interface MySqlColumnInfo {
 }
 
 export interface MySqlQueryResult {
+  columns: string[];
+  rows: Array<Array<string | null>>;
+  affected_rows: number;
+}
+
+export interface PostgreSqlConnection {
+  id: string;
+  environment?: string;
+  name: string;
+  host: string;
+  port: number;
+  username: string;
+  database?: string | null;
+}
+
+export interface PostgreSqlConnectionInput {
+  name: string;
+  host: string;
+  port?: number;
+  username: string;
+  database?: string | null;
+}
+
+export interface PostgreSqlTableInfo {
+  schema: string;
+  name: string;
+  table_type: string;
+}
+
+export interface PostgreSqlColumnInfo {
+  name: string;
+  column_type: string;
+  is_nullable: boolean;
+  column_key: string;
+  extra: string;
+  default_value?: string | null;
+}
+
+export interface PostgreSqlQueryResult {
   columns: string[];
   rows: Array<Array<string | null>>;
   affected_rows: number;

@@ -5,6 +5,8 @@ import type {
   HostReachability,
   MySqlConnection,
   MySqlConnectionInput,
+  PostgreSqlConnection,
+  PostgreSqlConnectionInput,
   RedisConnection,
   RedisConnectionInput,
   Session,
@@ -22,6 +24,7 @@ interface AppHomeSectionProps {
   zkConnections: ZookeeperConnection[];
   redisConnections: RedisConnection[];
   mysqlConnections: MySqlConnection[];
+  postgresqlConnections: PostgreSqlConnection[];
   connectingSessionId?: string | null;
   selectedId?: string;
   reachabilityMap: Record<string, HostReachability>;
@@ -35,6 +38,7 @@ interface AppHomeSectionProps {
   onCreateZk: (input: ZookeeperConnectionInput, secret?: string) => Promise<ZookeeperConnection | null>;
   onCreateRedis: (input: RedisConnectionInput, secret?: string) => Promise<RedisConnection | null>;
   onCreateMysql: (input: MySqlConnectionInput, secret?: string) => Promise<MySqlConnection | null>;
+  onCreatePostgreSql: (input: PostgreSqlConnectionInput, secret?: string) => Promise<PostgreSqlConnection | null>;
   onUpdate: (id: string, input: SessionInput, secret?: string) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onTestConnect: (input: SessionInput) => Promise<HostReachability>;
@@ -48,12 +52,16 @@ interface AppHomeSectionProps {
   redisConnections: RedisConnection[];
   onConnectRedis: (id: string) => void;
   onConnectMysql: (id: string) => void;
+  onConnectPostgreSql: (id: string) => void;
   onGetRedisSecret: (id: string) => Promise<string | null>;
   onUpdateRedis: (id: string, input: RedisConnectionInput, secret?: string) => Promise<void>;
   onDeleteRedis: (id: string) => Promise<void>;
   onDeleteMysql: (id: string) => Promise<void>;
   onGetMysqlSecret: (id: string) => Promise<string | null>;
   onUpdateMysql: (id: string, input: MySqlConnectionInput, secret?: string) => Promise<void>;
+  onDeletePostgreSql: (id: string) => Promise<void>;
+  onGetPostgreSqlSecret: (id: string) => Promise<string | null>;
+  onUpdatePostgreSql: (id: string, input: PostgreSqlConnectionInput, secret?: string) => Promise<void>;
   onConnectEtcd: (id: string) => void;
   onCreateEtcd: (input: EtcdConnectionInput, secret?: string) => Promise<EtcdConnection | null>;
   onDeleteEtcd: (id: string) => Promise<void>;
@@ -78,6 +86,7 @@ interface AppHomeSectionProps {
   onRenameEnvironment: (newName: string) => Promise<void>;
   onRefreshHostStatus: () => void;
   tr: TranslateFn;
+  onOpenUnifiedCreate?: () => void;
 }
 
 export function AppHomeSection(props: AppHomeSectionProps) {

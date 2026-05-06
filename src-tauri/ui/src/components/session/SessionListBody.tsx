@@ -1,11 +1,12 @@
 import type { KeyboardEvent } from "react";
-import type { EtcdConnection, HostReachability, MySqlConnection, RedisConnection, Session, ZookeeperConnection } from "../../services/types";
+import type { EtcdConnection, HostReachability, MySqlConnection, PostgreSqlConnection, RedisConnection, Session, ZookeeperConnection } from "../../services/types";
 import { MySqlConnectionRow } from "./MySqlConnectionRow";
 import type { TrFn } from "../../i18n-context";
 import { RedisConnectionRow } from "./RedisConnectionRow";
 import { SessionRow } from "./SessionRow";
 import { EtcdConnectionRow } from "./EtcdConnectionRow";
 import { ZkConnectionRow } from "./ZkConnectionRow";
+import { PostgreSqlConnectionRow } from "./PostgreSqlConnectionRow";
 
 interface Props {
   tr: TrFn;
@@ -14,6 +15,7 @@ interface Props {
   displayedZkConnections: ZookeeperConnection[];
   displayedRedisConnections: RedisConnection[];
   displayedMySqlConnections: MySqlConnection[];
+  displayedPostgreSqlConnections: PostgreSqlConnection[];
   displayedEtcdConnections: EtcdConnection[];
   selectedId?: string;
   connectingSessionId?: string | null;
@@ -25,6 +27,7 @@ interface Props {
   onConnectZk?: (id: string) => void;
   onConnectRedis?: (id: string) => void;
   onConnectMySql?: (id: string) => void;
+  onConnectPostgreSql?: (id: string) => void;
   onConnectEtcd?: (id: string) => void;
   onOpenEditSession: (session: Session) => void;
   onDuplicateHost: (session: Session) => void;
@@ -35,6 +38,8 @@ interface Props {
   onAskDeleteRedis: (conn: RedisConnection) => void;
   onOpenEditMySql: (conn: MySqlConnection) => void;
   onAskDeleteMySql: (conn: MySqlConnection) => void;
+  onOpenEditPostgreSql: (conn: PostgreSqlConnection) => void;
+  onAskDeletePostgreSql: (conn: PostgreSqlConnection) => void;
   onOpenEditEtcd: (conn: EtcdConnection) => void;
   onAskDeleteEtcd: (conn: EtcdConnection) => void;
 }
@@ -46,6 +51,7 @@ export function SessionListBody({
   displayedZkConnections,
   displayedRedisConnections,
   displayedMySqlConnections,
+  displayedPostgreSqlConnections,
   displayedEtcdConnections,
   selectedId,
   connectingSessionId,
@@ -57,6 +63,7 @@ export function SessionListBody({
   onConnectZk,
   onConnectRedis,
   onConnectMySql,
+  onConnectPostgreSql,
   onConnectEtcd,
   onOpenEditSession,
   onDuplicateHost,
@@ -67,6 +74,8 @@ export function SessionListBody({
   onAskDeleteRedis,
   onOpenEditMySql,
   onAskDeleteMySql,
+  onOpenEditPostgreSql,
+  onAskDeletePostgreSql,
   onOpenEditEtcd,
   onAskDeleteEtcd,
 }: Props) {
@@ -128,6 +137,16 @@ export function SessionListBody({
           onConnect={onConnectMySql}
           onEdit={onOpenEditMySql}
           onDelete={onAskDeleteMySql}
+        />
+      ))}
+      {displayedPostgreSqlConnections.map((conn) => (
+        <PostgreSqlConnectionRow
+          key={`postgresql-${conn.id}`}
+          conn={conn}
+          tr={tr}
+          onConnect={onConnectPostgreSql}
+          onEdit={onOpenEditPostgreSql}
+          onDelete={onAskDeletePostgreSql}
         />
       ))}
     </ul>

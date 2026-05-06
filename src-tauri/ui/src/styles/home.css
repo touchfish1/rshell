@@ -98,7 +98,8 @@
   gap: 4px;
 }
 
-.lang-switch .lang-active {
+.lang-switch .lang-active,
+.btn.lang-active {
   border-color: var(--accent);
   background: var(--accent-muted);
   color: var(--accent);

@@ -105,7 +105,8 @@ html[data-theme="light"] .pill-muted {
   color: #5c6678;
 }
 
-html[data-theme="light"] .lang-switch .lang-active {
+html[data-theme="light"] .lang-switch .lang-active,
+html[data-theme="light"] .btn.lang-active {
   border-color: rgba(37, 99, 235, 0.55);
   background: rgba(219, 234, 254, 0.95);
   color: #1e3a8a;

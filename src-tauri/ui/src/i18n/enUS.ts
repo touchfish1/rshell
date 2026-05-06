@@ -24,6 +24,7 @@ export const enUS: Dict = {
   "top.environmentRenameHint": "Input the new environment name",
   "top.current": "Current: {name}",
   "top.noHostSelected": "No host selected",
+  "top.addConnection": "Add Connection",
   "top.ariaLanguageSwitch": "Language switch",
   "home.hostList": "Hosts",
   "home.hostListHint":

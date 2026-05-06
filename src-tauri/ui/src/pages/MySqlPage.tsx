@@ -40,6 +40,8 @@ interface Props {
   onGetSecret: (id: string) => Promise<string | null>;
   onBack: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  onOpenUnifiedCreate?: () => void;
+  hideHeader?: boolean;
 }
 
 export default function MySqlPage({
@@ -55,6 +57,8 @@ export default function MySqlPage({
   onDelete,
   onBack,
   tr,
+  onOpenUnifiedCreate,
+  hideHeader = false,
 }: Props) {
   const selected = connections.find((c) => c.id === selectedId);
   const [, setColumns] = useState<MySqlColumnInfo[]>([]);
@@ -203,6 +207,7 @@ export default function MySqlPage({
 
   return (
     <section className="workspace mysql-page">
+      {hideHeader ? null : (
       <header className="topbar">
         <div className="topbar-title">
           <div className="topbar-title-text">
@@ -212,6 +217,11 @@ export default function MySqlPage({
         </div>
         <div className="actions">
           <button className="btn btn-ghost" onClick={onBack}>{tr("terminal.back")}</button>
+          {onOpenUnifiedCreate ? (
+            <button className="btn btn-ghost" onClick={onOpenUnifiedCreate}>
+              {tr("top.addConnection")}
+            </button>
+          ) : null}
           <button className="btn btn-ghost" onClick={openCreate}>{tr("mysql.page.addConnection")}</button>
           <button className="btn btn-ghost" onClick={openTopQueryTab} disabled={!selected}>
             {tr("mysql.page.newQuery")}
@@ -222,6 +232,7 @@ export default function MySqlPage({
           <span className="pill pill-muted">{busy ? tr("home.refreshStatusRunning") : status}</span>
         </div>
       </header>
+      )}
       {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
       {localError ? <ErrorBanner message={localError} onDismiss={() => setLocalError(null)} /> : null}
       <div className="terminal-layout" style={{ gridTemplateColumns: "280px 8px minmax(0, 1fr)" }}>

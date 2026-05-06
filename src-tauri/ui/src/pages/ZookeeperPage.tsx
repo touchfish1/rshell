@@ -21,6 +21,8 @@ interface Props {
   onGetSecret: (id: string) => Promise<string | null>;
   onBack: () => void;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
+  onOpenUnifiedCreate?: () => void;
+  hideHeader?: boolean;
 }
 
 type LoadState = "idle" | "loading" | "ready" | "error";
@@ -44,6 +46,8 @@ export default function ZookeeperPage({
   onGetSecret,
   onBack,
   tr,
+  onOpenUnifiedCreate,
+  hideHeader = false,
 }: Props) {
   const selected = useMemo(() => connections.find((c) => c.id === selectedId) ?? null, [connections, selectedId]);
   const [connected, setConnected] = useState(false);
@@ -169,6 +173,7 @@ export default function ZookeeperPage({
 
   return (
     <section className="workspace zk-page">
+      {hideHeader ? null : (
       <header className="topbar">
         <div className="topbar-title">
           <div className="topbar-title-text">
@@ -178,6 +183,11 @@ export default function ZookeeperPage({
         </div>
         <div className="actions">
           <ColorThemeToggle tr={tr} />
+          {onOpenUnifiedCreate ? (
+            <button className="btn btn-ghost" onClick={onOpenUnifiedCreate}>
+              {tr("top.addConnection")}
+            </button>
+          ) : null}
           <button className="btn btn-ghost" onClick={onBack}>
             {tr("terminal.back")}
           </button>
@@ -195,6 +205,7 @@ export default function ZookeeperPage({
           <span className="pill pill-muted">{status}</span>
         </div>
       </header>
+      )}
 
       {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
 

@@ -17,6 +17,7 @@ interface AppEtcdSectionProps {
   onGetSecret: (id: string) => Promise<string | null>;
   onBack: () => void;
   tr: TranslateFn;
+  onOpenUnifiedCreate?: () => void;
 }
 
 export function AppEtcdSection({
@@ -32,6 +33,7 @@ export function AppEtcdSection({
   onGetSecret,
   onBack,
   tr,
+  onOpenUnifiedCreate,
 }: AppEtcdSectionProps) {
   return (
     <EtcdPage
@@ -47,6 +49,8 @@ export function AppEtcdSection({
       onGetSecret={onGetSecret}
       onBack={onBack}
       tr={tr}
+      onOpenUnifiedCreate={onOpenUnifiedCreate}
+      hideHeader
     />
   );
 }
