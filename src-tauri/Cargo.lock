@@ -4291,7 +4291,7 @@ dependencies = [
 
 [[package]]
 name = "rshell"
-version = "0.1.35"
+version = "0.1.37"
 dependencies = [
  "async-trait",
  "base64 0.22.1",

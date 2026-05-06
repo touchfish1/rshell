@@ -80,7 +80,7 @@ export function useTerminalLifecycle({
     const fitAddon = fitAddonRef.current;
     if (!isActive || !terminal || !fitAddon) return;
     const resync = () => {
-      fitAddon.fit();
+      fitAndReserveBottom();
       if (terminal.rows > 0) terminal.refresh(0, terminal.rows - 1);
       terminal.scrollToBottom();
       terminal.focus();
@@ -133,9 +133,15 @@ export function useTerminalLifecycle({
       const height = parent.clientHeight;
       if (height > 0) pane.style.height = `${height}px`;
     };
+    const fitAndReserveBottom = () => {
+      fitAddon.fit();
+      if (terminal.rows > 3) {
+        terminal.resize(terminal.cols, terminal.rows - 1);
+      }
+    };
     const onWindowResize = () => {
       syncPaneHeight();
-      fitAddon.fit();
+      fitAndReserveBottom();
       if (!activeRef.current) return;
       const now = Date.now();
       const last = lastResizeRef.current;
@@ -152,7 +158,7 @@ export function useTerminalLifecycle({
 
     attachCustomKeyHandler(terminal, applyFontSize);
     terminal.focus();
-    fitAddon.fit();
+    fitAndReserveBottom();
 
     const onContext = (event: MouseEvent) => {
       event.preventDefault();

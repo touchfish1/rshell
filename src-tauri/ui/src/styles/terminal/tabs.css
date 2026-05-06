@@ -17,6 +17,7 @@
 .session-tab {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   border: none;
   border-radius: 8px;
   background: transparent;
@@ -41,6 +42,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  white-space: nowrap;
 }
 
 .session-tab-close {

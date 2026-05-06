@@ -33,5 +33,7 @@
 
 .terminal-main .terminal-pane .xterm-viewport {
   height: 100% !important;
+  overflow-x: hidden;
+  background-color: transparent;
 }
 
