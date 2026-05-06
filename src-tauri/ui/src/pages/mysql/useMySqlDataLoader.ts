@@ -79,6 +79,7 @@ export function useMySqlDataLoader({
     pageSize?: number
   ) => {
     if (!selected) return;
+    const resolvedPageSize = pageSize ?? tableDataMap[tabId]?.pageSize ?? PAGE_SIZE;
     try {
       await ensureConnected();
       const conditions = queryConditions ?? tableDataMap[tabId]?.conditions ?? [];
@@ -106,7 +107,6 @@ export function useMySqlDataLoader({
           }
         })
         .join(" AND ");
-      const resolvedPageSize = pageSize ?? tableDataMap[tabId]?.pageSize ?? PAGE_SIZE;
       const countQuery =
         `SELECT CAST(COUNT(*) AS CHAR) FROM \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(table)}\`` +
         (whereClause ? ` WHERE ${whereClause}` : "");
