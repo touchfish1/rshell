@@ -484,4 +484,5 @@ export type I18nKey =
   | "status.createdEtcd"
   | "status.updatedEtcd"
   | "status.deletedEtcd"
-  | "status.idle";
+  | "status.idle"
+  | "cmdBar.title";

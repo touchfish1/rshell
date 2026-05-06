@@ -85,6 +85,8 @@ export function useMySqlTabsManager({
         explaining: false,
         result: null,
         explainResult: null,
+        queryOffset: 0,
+        queryLimit: 200,
       },
     }));
   };

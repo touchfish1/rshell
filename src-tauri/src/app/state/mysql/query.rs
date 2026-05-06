@@ -9,8 +9,8 @@ impl AppState {
         &self,
         id: Uuid,
         sql: String,
-        _limit: Option<u64>,
-        _offset: Option<u64>,
+        limit: Option<u64>,
+        offset: Option<u64>,
         schema: Option<String>,
     ) -> Result<MySqlQueryResult, String> {
         let pool = self.ensure_mysql_pool(id).await?;
@@ -39,7 +39,17 @@ impl AppState {
             });
         }
         if trimmed.starts_with("select") || trimmed.starts_with("show") || trimmed.starts_with("desc") {
-            let rows = sqlx::query(&sql)
+            let final_sql = if let Some(limit_val) = limit {
+                if trimmed.contains("limit") {
+                    sql
+                } else {
+                    let offset_val = offset.unwrap_or(0);
+                    format!("{} LIMIT {} OFFSET {}", sql.trim(), limit_val, offset_val)
+                }
+            } else {
+                sql
+            };
+            let rows = sqlx::query(&final_sql)
                 .fetch_all(&mut *conn)
                 .await
                 .map_err(|e| e.to_string())?;

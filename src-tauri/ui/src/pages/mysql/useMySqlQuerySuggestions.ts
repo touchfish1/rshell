@@ -174,7 +174,7 @@ export function useMySqlQuerySuggestions({
     setQueryEditorMap((prev) => ({
       ...prev,
       [activeBrowseTab.id]: {
-        ...(prev[activeBrowseTab.id] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null }),
+        ...(prev[activeBrowseTab.id] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null, queryOffset: 0, queryLimit: 200 }),
         sql: value,
         cursor,
       },

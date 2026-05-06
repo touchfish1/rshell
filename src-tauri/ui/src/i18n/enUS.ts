@@ -495,4 +495,5 @@ export const enUS: Dict = {
   "status.updatedEtcd": "Updated Etcd connection: {name}",
   "status.deletedEtcd": "Etcd connection deleted",
   "status.idle": "Idle",
+  "cmdBar.title": "Command",
 };

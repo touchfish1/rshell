@@ -45,6 +45,7 @@ interface Props {
   onFormatSql: () => void;
   onExplainSql: () => void;
   onRunSql: () => void;
+  onChangeQueryOffset: (offset: number) => void;
   onSqlEditorChange: (value: string, cursor: number, textarea: HTMLTextAreaElement) => void;
   onSqlEditorClick: (value: string, cursor: number) => void;
   onSqlEditorKeyUp: (key: string, value: string, cursor: number, textarea: HTMLTextAreaElement) => void;
@@ -79,11 +80,15 @@ export function MySqlBrowsePane(props: Props) {
   const [tableSqlCopied, setTableSqlCopied] = useState(false);
   const [tableContextMenu, setTableContextMenu] = useState<{ x: number; y: number; table: string } | null>(null);
   const queryResultRows = activeQueryEditor?.result?.rows ?? [];
+  const queryBufferOffset = activeQueryEditor?.queryOffset ?? 0;
+  const queryLimit = activeQueryEditor?.queryLimit ?? 200;
   const queryResultTotal = queryResultRows.length;
   const queryResultPagedRows = useMemo(() => {
     const offset = queryResultPage * queryResultPageSize;
     return queryResultRows.slice(offset, offset + queryResultPageSize);
   }, [queryResultPage, queryResultPageSize, queryResultRows]);
+  // True if there are more rows beyond the current buffer
+  const mayHaveMoreRows = queryResultRows.length >= queryLimit;
 
   useEffect(() => {
     setQueryResultPage(0);
@@ -291,12 +296,22 @@ export function MySqlBrowsePane(props: Props) {
                   <>
                     <div className="mysql-data-table-scroll">
                       <div className="mysql-data-summary">
-                        {tr("mysql.page.queryResultSummary", {
-                          affected: activeQueryEditor.result.affected_rows,
-                          page: queryResultPage + 1,
-                          rows: queryResultPagedRows.length,
-                          pageSize: queryResultPageSize,
-                        })}
+                        {queryBufferOffset > 0
+                          ? tr("mysql.page.queryResultSummary", {
+                              affected: activeQueryEditor.result.affected_rows,
+                              page: queryBufferOffset / queryLimit + 1,
+                              rows: queryResultPagedRows.length,
+                              pageSize: queryResultPageSize,
+                            })
+                          : tr("mysql.page.queryResultSummary", {
+                              affected: activeQueryEditor.result.affected_rows,
+                              page: queryResultPage + 1,
+                              rows: queryResultPagedRows.length,
+                              pageSize: queryResultPageSize,
+                            })}
+                        {queryBufferOffset > 0
+                          ? ` (offset ${queryBufferOffset})`
+                          : ""}
                       </div>
                       <MySqlDataGrid columns={activeQueryEditor.result.columns} rows={queryResultPagedRows} />
                     </div>
@@ -318,13 +333,23 @@ export function MySqlBrowsePane(props: Props) {
                       </select>
                       <button
                         className="btn btn-ghost mysql-table-page-btn"
-                        disabled={queryResultPage <= 0}
-                        onClick={() => setQueryResultPage((prev) => Math.max(0, prev - 1))}
+                        disabled={queryResultPage <= 0 && queryBufferOffset <= 0}
+                        onClick={() => {
+                          if (queryResultPage > 0) {
+                            setQueryResultPage((prev) => prev - 1);
+                          } else if (queryBufferOffset > 0) {
+                            const prevOffset = Math.max(0, queryBufferOffset - queryLimit);
+                            setQueryResultPage(Math.ceil(queryLimit / queryResultPageSize) - 1);
+                            props.onChangeQueryOffset(prevOffset);
+                          }
+                        }}
                       >
                         {tr("mysql.page.prevPage")}
                       </button>
                       <span className="mysql-table-empty mysql-table-pagination-text">
-                        {queryResultPage + 1} / {Math.max(1, Math.ceil(queryResultTotal / queryResultPageSize))}
+                        {queryBufferOffset > 0
+                          ? `${queryBufferOffset + 1}-${queryBufferOffset + queryResultTotal}`
+                          : `${queryResultPage * queryResultPageSize + 1}-${queryResultPage * queryResultPageSize + queryResultPagedRows.length}`}
                       </span>
                       <input
                         className="mysql-field mysql-table-page-jump"
@@ -359,8 +384,15 @@ export function MySqlBrowsePane(props: Props) {
                       </button>
                       <button
                         className="btn btn-ghost mysql-table-page-btn"
-                        disabled={(queryResultPage + 1) * queryResultPageSize >= queryResultTotal}
-                        onClick={() => setQueryResultPage((prev) => prev + 1)}
+                        disabled={(queryResultPage + 1) * queryResultPageSize >= queryResultTotal && !mayHaveMoreRows}
+                        onClick={() => {
+                          if ((queryResultPage + 1) * queryResultPageSize < queryResultTotal) {
+                            setQueryResultPage((prev) => prev + 1);
+                          } else if (mayHaveMoreRows) {
+                            setQueryResultPage(0);
+                            props.onChangeQueryOffset(queryBufferOffset + queryLimit);
+                          }
+                        }}
                       >
                         {tr("mysql.page.nextPage")}
                       </button>

@@ -34,8 +34,12 @@ export type MySqlQueryEditorState = {
   explaining: boolean;
   result: import("../../services/types").MySqlQueryResult | null;
   explainResult: import("../../services/types").MySqlQueryResult | null;
+  queryOffset: number;
+  queryLimit: number;
   error?: string;
 };
+
+export const DEFAULT_QUERY_LIMIT = 200;
 
 export type MySqlDbContextMenuState = {
   x: number;

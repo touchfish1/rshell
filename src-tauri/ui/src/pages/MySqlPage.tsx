@@ -26,6 +26,7 @@ import { useMySqlConnectionForm } from "./mysql/useMySqlConnectionForm";
 import { useMySqlQuerySuggestions } from "./mysql/useMySqlQuerySuggestions";
 import { useMySqlTableFilters } from "./mysql/useMySqlTableFilters";
 import { useMySqlTabsManager } from "./mysql/useMySqlTabsManager";
+import { CommandStatusBar } from "../components/CommandStatusBar";
 
 interface Props {
   connections: MySqlConnection[];
@@ -78,9 +79,11 @@ export default function MySqlPage({
     tables,
     busy,
     tablesLoading,
+    currentCommand,
     loadTablesForSchema,
     loadTableData,
     runQueryEditor,
+    changeQueryOffset,
     explainQueryEditor,
     ensureSchemaTables,
     ensureTableColumns,
@@ -368,7 +371,7 @@ export default function MySqlPage({
                           setQueryEditorMap((prev) => ({
                             ...prev,
                             [activeBrowseTab.id]: {
-                                  ...(prev[activeBrowseTab.id] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null }),
+        ...(prev[activeBrowseTab.id] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null, queryOffset: 0, queryLimit: 200 }),
                               sql: formatSqlText(sql),
                             },
                           }));
@@ -378,6 +381,9 @@ export default function MySqlPage({
           }}
           onRunSql={() => {
             if (activeBrowseTab) void runQueryEditor(activeBrowseTab.id, activeBrowseTab.schema);
+          }}
+          onChangeQueryOffset={(offset) => {
+            if (activeBrowseTab) void changeQueryOffset(activeBrowseTab.id, activeBrowseTab.schema, offset);
           }}
           onSqlEditorChange={handleSqlEditorChange}
           onSqlEditorClick={handleSqlEditorClick}
@@ -414,6 +420,7 @@ export default function MySqlPage({
         setTestResult={setTestResult}
         onSave={saveModalForm}
       />
+      <CommandStatusBar command={currentCommand} label={tr("cmdBar.title")} />
       <MySqlContextMenus
         contextMenu={contextMenu}
         dbContextMenu={dbContextMenu}

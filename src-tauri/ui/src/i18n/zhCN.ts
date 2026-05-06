@@ -493,4 +493,5 @@ export const zhCN: Dict = {
   "status.updatedEtcd": "已更新 Etcd 连接：{name}",
   "status.deletedEtcd": "已删除 Etcd 连接",
   "status.idle": "空闲",
+  "cmdBar.title": "命令",
 };

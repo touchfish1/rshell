@@ -10,7 +10,7 @@ import {
 import type { I18nKey } from "../../i18n";
 import type { MySqlConnection, MySqlColumnInfo, MySqlTableInfo } from "../../services/types";
 import { escapeSqlIdentifier, escapeSqlValue } from "./sqlUtils";
-import { createEmptyCondition, type MySqlFilterCondition, type MySqlQueryEditorState, type MySqlTableDataState } from "./types";
+import { createEmptyCondition, DEFAULT_QUERY_LIMIT, type MySqlFilterCondition, type MySqlQueryEditorState, type MySqlTableDataState } from "./types";
 
 interface Params {
   selected: MySqlConnection | undefined;
@@ -48,6 +48,7 @@ export function useMySqlDataLoader({
   const [tablesLoading, setTablesLoading] = useState(false);
   const [schemaTablesCache, setSchemaTablesCache] = useState<Record<string, string[]>>({});
   const [tableColumnsCache, setTableColumnsCache] = useState<Record<string, string[]>>({});
+  const [currentCommand, setCurrentCommand] = useState<string | null>(null);
 
   const ensureConnected = useCallback(async () => {
     if (!selected) throw new Error(tr("mysql.error.noConnectionSelected"));
@@ -57,6 +58,7 @@ export function useMySqlDataLoader({
   const loadTablesForSchema = useCallback(async (schema: string) => {
     if (!selected) return;
     setTablesLoading(true);
+    setCurrentCommand(`SHOW TABLES FROM \`${escapeSqlIdentifier(schema)}\``);
     try {
       const nextTables = await mySqlListTables(selected.id, schema);
       setTables(nextTables);
@@ -67,6 +69,7 @@ export function useMySqlDataLoader({
       setLocalError(message);
     } finally {
       setTablesLoading(false);
+      setCurrentCommand(null);
     }
   }, [selected, setActiveTable, setColumns, setLocalError]);
 
@@ -117,7 +120,17 @@ export function useMySqlDataLoader({
         `SELECT * FROM \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(table)}\`` +
         (whereClause ? ` WHERE ${whereClause}` : "") +
         ` LIMIT ${resolvedPageSize} OFFSET ${page * resolvedPageSize}`;
+      setCurrentCommand(query);
       const data = await mySqlExecuteQuery(selected.id, query, resolvedPageSize, page * resolvedPageSize);
+      let columns = data.columns;
+      if (columns.length === 0 && table) {
+        try {
+          const columnInfos = await mySqlListColumns(selected.id, schema, table);
+          columns = columnInfos.map((c) => c.name);
+        } catch {
+          /* keep empty columns */
+        }
+      }
       setTableDataMap((prev) => ({
         ...prev,
         [tabId]: {
@@ -132,7 +145,7 @@ export function useMySqlDataLoader({
           }),
           loading: false,
           conditions: prev[tabId]?.conditions ?? queryConditions ?? [createEmptyCondition()],
-          columns: data.columns,
+          columns,
           rows: data.rows,
           page,
           pageSize: resolvedPageSize,
@@ -164,31 +177,43 @@ export function useMySqlDataLoader({
           error: message,
         },
       }));
+    } finally {
+      setCurrentCommand(null);
     }
   }, [ensureConnected, selected, setTableDataMap, tableDataMap]);
 
-  const runQueryEditor = useCallback(async (tabId: string, schema?: string) => {
+  const runQueryEditor = useCallback(async (tabId: string, schema?: string, offset?: number) => {
     if (!selected) return;
     const state = queryEditorMap[tabId];
     const sql = state?.sql?.trim();
     if (!sql) return;
+    const resolvedOffset = offset ?? 0;
+    const resolvedLimit = state?.queryLimit ?? DEFAULT_QUERY_LIMIT;
     setQueryEditorMap((prev) => ({
       ...prev,
       [tabId]: {
-        ...(prev[tabId] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null }),
+        ...(prev[tabId] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null, queryOffset: 0, queryLimit: DEFAULT_QUERY_LIMIT }),
         running: true,
         error: undefined,
+        queryOffset: resolvedOffset,
       },
     }));
     try {
       await ensureConnected();
-      const result = await mySqlExecuteQuery(selected.id, sql, 200, 0, schema);
+      setCurrentCommand(sql);
+      const result = await mySqlExecuteQuery(selected.id, sql, resolvedLimit, resolvedOffset, schema);
       setQueryEditorMap((prev) => ({ ...prev, [tabId]: { ...(prev[tabId] ?? state), running: false, result, error: undefined } }));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setQueryEditorMap((prev) => ({ ...prev, [tabId]: { ...(prev[tabId] ?? state), running: false, error: message } }));
+    } finally {
+      setCurrentCommand(null);
     }
   }, [ensureConnected, queryEditorMap, selected, setQueryEditorMap]);
+
+  const changeQueryOffset = useCallback(async (tabId: string, schema: string, newOffset: number) => {
+    await runQueryEditor(tabId, schema, newOffset);
+  }, [runQueryEditor]);
 
   const explainQueryEditor = useCallback(async (tabId: string, schema?: string) => {
     if (!selected) return;
@@ -198,18 +223,21 @@ export function useMySqlDataLoader({
     setQueryEditorMap((prev) => ({
       ...prev,
       [tabId]: {
-        ...(prev[tabId] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null }),
+        ...(prev[tabId] ?? { sql: "", cursor: 0, running: false, explaining: false, result: null, explainResult: null, queryOffset: 0, queryLimit: DEFAULT_QUERY_LIMIT }),
         explaining: true,
         error: undefined,
       },
     }));
     try {
       await ensureConnected();
+      setCurrentCommand(`EXPLAIN ${sql}`);
       const explainResult = await mySqlExecuteQuery(selected.id, `EXPLAIN ${sql}`, 200, 0, schema);
       setQueryEditorMap((prev) => ({ ...prev, [tabId]: { ...(prev[tabId] ?? state), explaining: false, explainResult, error: undefined } }));
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setQueryEditorMap((prev) => ({ ...prev, [tabId]: { ...(prev[tabId] ?? state), explaining: false, error: message } }));
+    } finally {
+      setCurrentCommand(null);
     }
   }, [ensureConnected, queryEditorMap, selected, setQueryEditorMap]);
 
@@ -246,6 +274,7 @@ export function useMySqlDataLoader({
     const targetConnection = connections.find((item) => item.id === targetId);
     setBusy(true);
     setLocalError(null);
+    setCurrentCommand("SHOW DATABASES / SHOW TABLES");
     try {
       await connectMySql(targetId);
       const dbs = await mySqlListDatabases(targetId);
@@ -266,6 +295,7 @@ export function useMySqlDataLoader({
     } finally {
       setTablesLoading(false);
       setBusy(false);
+      setCurrentCommand(null);
     }
   }, [activeSchema, connections, selected?.id, setActiveSchema, setActiveTable, setColumns, setLocalError]);
 
@@ -274,9 +304,11 @@ export function useMySqlDataLoader({
     tables,
     busy,
     tablesLoading,
+    currentCommand,
     loadTablesForSchema,
     loadTableData,
     runQueryEditor,
+    changeQueryOffset,
     explainQueryEditor,
     ensureSchemaTables,
     ensureTableColumns,
