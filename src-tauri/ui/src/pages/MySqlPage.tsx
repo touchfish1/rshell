@@ -244,6 +244,8 @@ export default function MySqlPage({
           selectedId={selectedId}
           databases={databases}
           activeSchema={activeSchema}
+          tables={tables}
+          tablesLoading={tablesLoading}
           tr={tr}
           onSelect={onSelect}
           onOpenConnection={(id) => {
@@ -264,6 +266,22 @@ export default function MySqlPage({
             void loadTablesForSchema(schema);
           }}
           onOpenDbContext={(x, y, schema) => setDbContextMenu({ x, y, schema })}
+          onSelectTable={(tableName) => {
+            setActiveTable(tableName);
+            if (!selected || !activeSchema) return;
+            void mySqlListColumns(selected.id, activeSchema, tableName).then(setColumns).catch((err) => {
+              const message = err instanceof Error ? err.message : String(err);
+              setLocalError(message);
+            });
+          }}
+          onOpenTableTab={(schema, table) => {
+            if (!schema) return;
+            addTableTab(schema, table);
+          }}
+          onOpenTableEdit={(schema, table) => {
+            if (!schema || !table) return;
+            addTableEditTab(schema, table);
+          }}
         />
         <div className="terminal-splitter redis-layout-splitter" />
         <MySqlBrowsePane

@@ -107,11 +107,11 @@
   gap: 4px;
   max-height: 160px;
   overflow: auto;
-  border: none;
-  border-radius: 10px;
-  background: rgba(12, 18, 30, 0.94);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
   padding: 4px;
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  box-shadow: var(--shadow-lg);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -168,7 +168,7 @@
 
 .workspace.mysql-page .mysql-data-view .mysql-data-grid th,
 .workspace.mysql-page .mysql-data-view .mysql-data-grid td {
-  border: 1px solid rgba(58, 69, 92, 0.72);
+  border: 1px solid var(--border-default);
   padding: 6px 8px;
   text-align: left;
   vertical-align: top;
@@ -212,7 +212,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 0 0;
-  background: linear-gradient(to top, rgba(10, 16, 28, 0.95), rgba(10, 16, 28, 0.75), transparent);
+  background: linear-gradient(to top, var(--bg-elevated), rgba(10, 16, 28, 0.75), transparent);
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-table-pagination-summary {
@@ -280,13 +280,13 @@
 
 /* 兜底：即使系统隐藏原生滚动条，也尽量让表格容器的滚动条可见 */
 .workspace.mysql-page .mysql-data-view .mysql-data-table-scroll {
-  scrollbar-width: auto;
+  scrollbar-width: thin;
   scrollbar-color: rgba(140, 160, 200, 0.65) rgba(10, 15, 24, 0.15);
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-data-table-scroll::-webkit-scrollbar {
-  height: 12px;
-  width: 12px;
+  height: 6px;
+  width: 6px;
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-data-table-scroll::-webkit-scrollbar-track {
@@ -296,7 +296,7 @@
 .workspace.mysql-page .mysql-data-view .mysql-data-table-scroll::-webkit-scrollbar-thumb {
   background: rgba(140, 160, 200, 0.72);
   border-radius: 10px;
-  border: 2px solid rgba(10, 15, 24, 0.22);
+  border: 1px solid rgba(10, 15, 24, 0.22);
 }
 
 .workspace.mysql-page .mysql-data-view .mysql-data-table-scroll::-webkit-scrollbar-thumb:hover {

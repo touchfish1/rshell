@@ -85,6 +85,35 @@ body {
   background: var(--bg-page);
 }
 
+/* ---- Thin scrollbars globally ---- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--text-muted) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-secondary);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 ::selection {
   background: var(--accent-muted);
   color: var(--text-primary);
