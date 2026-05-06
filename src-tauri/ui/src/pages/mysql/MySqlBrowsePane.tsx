@@ -52,6 +52,10 @@ interface Props {
   onSqlEditorKeyDown: (key: string) => void;
   onSqlEditorBlur: () => void;
   onApplySuggestion: (item: string) => void;
+  onCloseTab: (tabId: string) => void;
+  onCloseTabsLeft: (tabId: string) => void;
+  onCloseTabsRight: (tabId: string) => void;
+  onCloseOtherTabs: (tabId: string) => void;
 }
 
 export function MySqlBrowsePane(props: Props) {
@@ -79,6 +83,7 @@ export function MySqlBrowsePane(props: Props) {
   const [tableJumpPage, setTableJumpPage] = useState("");
   const [tableSqlCopied, setTableSqlCopied] = useState(false);
   const [tableContextMenu, setTableContextMenu] = useState<{ x: number; y: number; table: string } | null>(null);
+  const [tabContextMenu, setTabContextMenu] = useState<{ x: number; y: number; tabId: string } | null>(null);
   const queryResultRows = activeQueryEditor?.result?.rows ?? [];
   const queryBufferOffset = activeQueryEditor?.queryOffset ?? 0;
   const queryLimit = activeQueryEditor?.queryLimit ?? 200;
@@ -108,16 +113,56 @@ export function MySqlBrowsePane(props: Props) {
     return () => window.removeEventListener("click", close);
   }, [tableContextMenu]);
 
+  useEffect(() => {
+    if (!tabContextMenu) return;
+    const close = () => setTabContextMenu(null);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [tabContextMenu]);
+
   return (
     <div className="redis-browser-pane">
       <div className="redis-browser-toolbar mysql-browse-tabs">
         {browseTabs.length === 0 ? <div className="mysql-toolbar-label">{tr("mysql.page.tabHint")}</div> : null}
         {browseTabs.map((tab) => (
-          <button key={tab.id} className={`mysql-data-tab ${activeBrowseTabId === tab.id ? "is-selected" : ""}`} onClick={() => props.onSelectTab(tab)}>
-            {tab.title}
-          </button>
+          <div
+            key={tab.id}
+            className={`mysql-data-tab ${activeBrowseTabId === tab.id ? "is-selected" : ""}`}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setTabContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id });
+            }}
+          >
+            <button className="mysql-data-tab-main" onClick={() => props.onSelectTab(tab)}>
+              {tab.title}
+            </button>
+            <button
+              className="mysql-data-tab-close"
+              onClick={(e) => { e.stopPropagation(); props.onCloseTab(tab.id); }}
+              title={tr("session.close")}
+            >
+              ×
+            </button>
+          </div>
         ))}
       </div>
+      {tabContextMenu ? (
+        <div className="mysql-context-menu mysql-tab-context-menu" style={{ left: tabContextMenu.x, top: tabContextMenu.y }}>
+          <button className="mysql-context-item" onClick={() => { props.onCloseTab(tabContextMenu.tabId); setTabContextMenu(null); }}>
+            {tr("session.close")}
+          </button>
+          <button className="mysql-context-item" onClick={() => { props.onCloseTabsLeft(tabContextMenu.tabId); setTabContextMenu(null); }}>
+            {tr("mysql.page.closeTabsLeft")}
+          </button>
+          <button className="mysql-context-item" onClick={() => { props.onCloseTabsRight(tabContextMenu.tabId); setTabContextMenu(null); }}>
+            {tr("mysql.page.closeTabsRight")}
+          </button>
+          <button className="mysql-context-item" onClick={() => { props.onCloseOtherTabs(tabContextMenu.tabId); setTabContextMenu(null); }}>
+            {tr("mysql.page.closeOtherTabs")}
+          </button>
+        </div>
+      ) : null}
       <div className="redis-browser-body">
         <div>
           {activeBrowseTab?.kind === "table" ? (

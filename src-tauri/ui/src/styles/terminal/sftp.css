@@ -1,7 +1,7 @@
 .sftp-monitor-card {
   margin: 8px;
   border: 1px solid rgba(48, 56, 74, 0.72);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(15, 21, 31, 0.82);
   padding: 8px;
 }
@@ -19,7 +19,7 @@
   border: 1px solid rgba(48, 56, 74, 0.85);
   background: rgba(18, 24, 35, 0.75);
   color: #d7ddea;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 11px;
   padding: 4px 8px;
 }
@@ -110,7 +110,7 @@
   background: rgba(18, 24, 35, 0.75);
   border: 1px solid rgba(48, 56, 74, 0.85);
   color: #d7ddea;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 12px;
   padding: 5px 8px;
 }
@@ -290,7 +290,7 @@
 .sftp-editor-error {
   margin: 8px 14px 0;
   padding: 8px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 12px;
   line-height: 1.45;
 }
@@ -312,7 +312,7 @@
   flex: 1 1 auto;
   width: calc(100% - 28px);
   border: 1px solid var(--modal-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--modal-surface-muted);
   color: var(--modal-text);
   font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;

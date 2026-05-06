@@ -60,7 +60,7 @@
   margin: -4px -6px -4px 0;
   padding: 0;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--modal-text-muted);
   font-size: 20px;
@@ -120,7 +120,7 @@
 .placeholder-row {
   margin: 0;
   padding: 10px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--modal-border-inner);
   background: var(--modal-surface-muted);
   color: var(--modal-text-muted);
@@ -157,7 +157,7 @@
   border: 1px solid var(--modal-border);
   color: var(--modal-text);
   padding: 9px 11px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 13px;
 }
 
@@ -176,7 +176,7 @@
 .password-toggle-btn {
   width: 36px;
   height: 36px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--modal-border);
   background: var(--modal-surface-muted);
   color: var(--modal-text-muted);
@@ -254,7 +254,7 @@
 .cmdk-input {
   height: 38px;
   padding: 0 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--modal-border);
   background: var(--modal-surface-muted);
   color: var(--modal-text);
@@ -273,7 +273,7 @@
 
 .cmdk-list {
   border: 1px solid var(--modal-border-inner);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: rgba(0, 0, 0, 0.12);
   overflow: auto;
   min-height: 140px;
@@ -345,7 +345,7 @@
   align-items: center;
   justify-content: center;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--modal-border-inner);
   background: rgba(0, 0, 0, 0.18);
   color: var(--modal-text);

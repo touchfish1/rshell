@@ -108,6 +108,84 @@ export function useMySqlTabsManager({
     addQueryTab(schema);
   };
 
+  const closeBrowseTab = (tabId: string) => {
+    setBrowseTabs((prev) => {
+      const idx = prev.findIndex((t) => t.id === tabId);
+      if (idx < 0) return prev;
+      const next = prev.filter((t) => t.id !== tabId);
+      if (activeBrowseTabId === tabId && next.length > 0) {
+        const newIdx = Math.min(idx, next.length - 1);
+        const newTab = next[newIdx];
+        setActiveBrowseTabId(newTab.id);
+        setActiveSchema(newTab.schema);
+      } else if (next.length === 0) {
+        setActiveBrowseTabId(null);
+      }
+      setTableDataMap((prevMap) => {
+        const copy = { ...prevMap };
+        delete copy[tabId];
+        return copy;
+      });
+      setQueryEditorMap((prevMap) => {
+        const copy = { ...prevMap };
+        delete copy[tabId];
+        return copy;
+      });
+      return next;
+    });
+  };
+
+  const closeTabsLeft = (tabId: string) => {
+    setBrowseTabs((prev) => {
+      const idx = prev.findIndex((t) => t.id === tabId);
+      if (idx < 0) return prev;
+      const removed = prev.slice(0, idx);
+      const next = prev.slice(idx);
+      removed.forEach((t) => {
+        setTableDataMap((prevMap) => { const c = { ...prevMap }; delete c[t.id]; return c; });
+        setQueryEditorMap((prevMap) => { const c = { ...prevMap }; delete c[t.id]; return c; });
+      });
+      if (activeBrowseTabId && removed.some((t) => t.id === activeBrowseTabId)) {
+        setActiveBrowseTabId(tabId);
+        const tab = prev[idx];
+        setActiveSchema(tab.schema);
+      }
+      return next;
+    });
+  };
+
+  const closeTabsRight = (tabId: string) => {
+    setBrowseTabs((prev) => {
+      const idx = prev.findIndex((t) => t.id === tabId);
+      if (idx < 0) return prev;
+      const next = prev.slice(0, idx + 1);
+      const removed = prev.slice(idx + 1);
+      removed.forEach((t) => {
+        setTableDataMap((prevMap) => { const c = { ...prevMap }; delete c[t.id]; return c; });
+        setQueryEditorMap((prevMap) => { const c = { ...prevMap }; delete c[t.id]; return c; });
+      });
+      if (activeBrowseTabId && removed.some((t) => t.id === activeBrowseTabId)) {
+        setActiveBrowseTabId(tabId);
+      }
+      return next;
+    });
+  };
+
+  const closeOtherTabs = (tabId: string) => {
+    setBrowseTabs((prev) => {
+      const target = prev.find((t) => t.id === tabId);
+      if (!target) return prev;
+      const removed = prev.filter((t) => t.id !== tabId);
+      removed.forEach((t) => {
+        setTableDataMap((prevMap) => { const c = { ...prevMap }; delete c[t.id]; return c; });
+        setQueryEditorMap((prevMap) => { const c = { ...prevMap }; delete c[t.id]; return c; });
+      });
+      setActiveBrowseTabId(tabId);
+      setActiveSchema(target.schema);
+      return [target];
+    });
+  };
+
   const selectBrowseTab = (tab: MySqlBrowseTab) => {
     setActiveBrowseTabId(tab.id);
     setActiveSchema(tab.schema);
@@ -151,5 +229,9 @@ export function useMySqlTabsManager({
     addQueryTab,
     openTopQueryTab,
     selectBrowseTab,
+    closeBrowseTab,
+    closeTabsLeft,
+    closeTabsRight,
+    closeOtherTabs,
   };
 }

@@ -5,7 +5,7 @@
   background: rgba(48, 22, 30, 0.55);
   color: #f0c4cc;
   font-size: 13px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   line-height: 1.45;
 }
 
@@ -27,7 +27,7 @@
   color: #ffccd6;
   width: 28px;
   height: 28px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
@@ -41,7 +41,7 @@
   margin: 8px 12px 0;
   border: 1px solid #30384a;
   background: #0e131d;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 

@@ -123,7 +123,7 @@
   position: fixed;
   z-index: 80;
   border: 1px solid rgba(70, 82, 108, 0.85);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(11, 17, 27, 0.97);
   padding: 6px;
   min-width: 120px;
@@ -138,7 +138,7 @@
   color: #d9e4fb;
   text-align: left;
   font-size: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 6px 8px;
 }
 
@@ -181,7 +181,7 @@
 
 .zk-tree {
   border: 1px solid rgba(48, 56, 74, 0.72);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #0b1018;
   padding: 10px;
   overflow: auto;
@@ -189,7 +189,7 @@
 
 .zk-data {
   border: 1px solid rgba(48, 56, 74, 0.72);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #0b1018;
   padding: 12px;
   overflow: hidden;
@@ -221,7 +221,7 @@
 .zk-save-result {
   margin-top: 8px;
   padding: 8px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(74, 179, 126, 0.45);
   background: rgba(74, 179, 126, 0.12);
   color: #8be8b5;
@@ -234,7 +234,7 @@
   min-height: 0;
   width: 100%;
   border: 1px solid rgba(48, 56, 74, 0.85);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(18, 24, 35, 0.75);
   color: #d7ddea;
   font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
@@ -255,7 +255,7 @@
   align-items: center;
   gap: 6px;
   padding: 2px 4px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .zk-node-selected {
@@ -274,7 +274,7 @@
   background: transparent;
   color: #d7ddea;
   padding: 3px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -303,7 +303,7 @@
   min-height: 120px;
   margin-top: 8px;
   border: 1px solid rgba(48, 56, 74, 0.85);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(18, 24, 35, 0.75);
   overflow: hidden;
 }
@@ -398,7 +398,7 @@
   height: 34px;
   padding: 0 10px;
   border: 1px solid rgba(66, 77, 102, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(17, 24, 36, 0.9);
   color: #dbe4f5;
   font-size: 12px;
@@ -411,7 +411,7 @@
 .redis-typed-editor-set {
   padding: 2px;
   border: 1px solid rgba(48, 56, 74, 0.7);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: rgba(12, 18, 28, 0.72);
 }
 
@@ -422,7 +422,7 @@
   padding: 6px;
   max-height: 96px;
   overflow: auto;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(9, 14, 23, 0.72);
 }
 
@@ -492,7 +492,7 @@
 .redis-set-cancel-btn {
   height: 32px;
   padding: 0 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 12px;
 }
 
@@ -656,7 +656,7 @@
   height: 34px;
   padding: 0 10px;
   border: 1px solid rgba(66, 77, 102, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(17, 24, 36, 0.9);
   color: #dbe4f5;
   font-size: 12px;
@@ -672,7 +672,7 @@
   display: flex;
   flex-direction: column;
   border: 1px solid rgba(48, 56, 74, 0.72);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #0b1018;
   overflow: hidden;
 }
@@ -698,7 +698,7 @@
 
 .etcd-key-item {
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: #d7ddea;
   font-size: 12px;
@@ -727,7 +727,7 @@
 .etcd-value-panel {
   flex: 0 0 auto;
   border: 1px solid rgba(48, 56, 74, 0.72);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #0b1018;
   padding: 12px;
   display: flex;
@@ -772,7 +772,7 @@
   width: 100%;
   min-height: 120px;
   border: 1px solid rgba(48, 56, 74, 0.85);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(18, 24, 35, 0.75);
   color: #d7ddea;
   font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
@@ -791,7 +791,7 @@
 
 .etcd-save-result {
   padding: 6px 10px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   border: 1px solid rgba(74, 179, 126, 0.45);
   background: rgba(74, 179, 126, 0.12);
   color: #8be8b5;

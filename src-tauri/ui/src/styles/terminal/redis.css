@@ -19,7 +19,7 @@
   align-items: center;
   gap: 0;
   border: 1px solid rgba(66, 77, 102, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   overflow: hidden;
 }
 
@@ -65,7 +65,7 @@
   height: 34px;
   padding: 0 10px;
   border: 1px solid rgba(66, 77, 102, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(17, 24, 36, 0.9);
   color: #dbe4f5;
   font-size: 12px;

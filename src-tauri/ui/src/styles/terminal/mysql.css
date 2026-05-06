@@ -22,11 +22,11 @@
 
 .workspace.mysql-page .mysql-field {
   min-width: 0;
-  height: 38px;
+  height: 34px;
   padding: 0 12px;
   box-sizing: border-box;
   border: 1px solid rgba(66, 77, 102, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(17, 24, 36, 0.92);
   color: #dbe4f5;
   font-size: 13px;
@@ -181,7 +181,7 @@
 
 .workspace.mysql-page .mysql-sidebar-table-section {
   margin: 2px 0 4px 0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: rgba(8, 12, 22, 0.5);
   border: 1px solid rgba(50, 60, 85, 0.25);
   overflow: hidden;
@@ -261,9 +261,9 @@
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 1px;
   padding: 6px 10px;
-  border-bottom: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-default);
   background: var(--bg-elevated);
   overflow-x: auto;
   overflow-y: hidden;
@@ -277,7 +277,7 @@
   display: inline-flex;
   align-items: center;
   border: 1px solid rgba(59, 70, 94, 0.8);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(13, 19, 30, 0.82);
   color: #d0ddf4;
   font-size: 12px;
@@ -288,10 +288,15 @@
   display: inline-flex;
   align-items: center;
   border: none;
-  border-radius: 8px;
+  border-right: 1px solid var(--border-subtle);
+  border-radius: 0;
   background: transparent;
-  overflow: hidden;
+  cursor: default;
   transition: background 120ms ease;
+}
+
+.workspace.mysql-page .mysql-data-tab:last-child {
+  border-right: none;
 }
 
 .workspace.mysql-page .mysql-data-tab:hover {
@@ -299,7 +304,12 @@
 }
 
 .workspace.mysql-page .mysql-data-tab.is-selected {
-  background: rgba(35, 47, 66, 0.62);
+  background: var(--accent-muted);
+  box-shadow: inset 0 -2px 0 var(--accent);
+}
+
+.workspace.mysql-page .mysql-data-tab.is-selected .mysql-data-tab-main {
+  color: var(--accent);
 }
 
 .workspace.mysql-page .mysql-data-tab-main {
@@ -328,8 +338,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  margin-right: 4px;
+  border-radius: var(--radius-sm);
+  margin-right: 2px;
   transition: color 120ms ease, background 120ms ease;
 }
 
@@ -393,7 +403,7 @@
   width: 100%;
   text-align: left;
   border: 1px solid rgba(58, 69, 92, 0.74);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: rgba(13, 19, 30, 0.78);
   color: #d7e2f8;
   font-size: 11px;

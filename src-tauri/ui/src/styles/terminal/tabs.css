@@ -19,7 +19,7 @@
   align-items: center;
   flex-shrink: 0;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: transparent;
   transition: background 120ms ease;
 }
@@ -29,7 +29,13 @@
 }
 
 .session-tab.active {
-  background: rgba(35, 47, 66, 0.62);
+  background: var(--accent-muted);
+  box-shadow: inset 0 -2px 0 var(--accent);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.session-tab.active .session-tab-main {
+  color: var(--accent);
 }
 
 .session-tab-main {

@@ -107,8 +107,8 @@ html[data-theme="light"] .pill-muted {
 
 html[data-theme="light"] .lang-switch .lang-active,
 html[data-theme="light"] .btn.lang-active {
-  border-color: rgba(37, 99, 235, 0.55);
-  background: rgba(219, 234, 254, 0.95);
+  border-color: rgba(13, 148, 136, 0.55);
+  background: rgba(13, 148, 136, 0.12);
   color: #1e3a8a;
 }
 
@@ -129,7 +129,7 @@ html[data-theme="light"] .empty-steps {
 html[data-theme="light"] .empty-icon {
   border-color: #c5cedd;
   background: rgba(255, 255, 255, 0.9);
-  color: #2563eb;
+  color: var(--accent);
 }
 
 html[data-theme="light"] .audit-item-head {
@@ -205,7 +205,7 @@ html[data-theme="light"] .session-line:hover .session-main {
 }
 
 html[data-theme="light"] .session-line.active .session-main {
-  background: rgba(219, 234, 254, 0.75);
+  background: rgba(13, 148, 136, 0.09);
 }
 
 html[data-theme="light"] .session-col.name {
@@ -296,7 +296,7 @@ html[data-theme="light"] .session-tab:hover {
 }
 
 html[data-theme="light"] .session-tab.active {
-  background: rgba(219, 234, 254, 0.85);
+  background: var(--accent-muted);
 }
 
 html[data-theme="light"] .session-tab-main {
@@ -363,8 +363,8 @@ html[data-theme="light"] .terminal-hosts button {
 }
 
 html[data-theme="light"] .terminal-hosts button.active {
-  border-color: rgba(37, 99, 235, 0.55);
-  background: rgba(219, 234, 254, 0.9);
+  border-color: rgba(13, 148, 136, 0.55);
+  background: rgba(13, 148, 136, 0.11);
 }
 
 html[data-theme="light"] .sftp-monitor-card {
@@ -411,7 +411,7 @@ html[data-theme="light"] .sftp-toolbar button {
 }
 
 html[data-theme="light"] .sftp-bc-part {
-  color: #2563eb;
+  color: var(--accent);
 }
 
 html[data-theme="light"] .sftp-bc-part:hover {
@@ -431,11 +431,11 @@ html[data-theme="light"] .sftp-file {
 html[data-theme="light"] .sftp-dir:hover:not(:disabled),
 html[data-theme="light"] .sftp-file:hover:not(:disabled) {
   background: #f1f5f9;
-  border-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(13, 148, 136, 0.2);
 }
 
 html[data-theme="light"] .sftp-kind-icon.folder {
-  color: #1d4ed8;
+  color: var(--accent-hover);
 }
 
 html[data-theme="light"] .sftp-kind-icon.file {
@@ -457,7 +457,7 @@ html[data-theme="light"] .sftp-upload-hint {
 }
 
 html[data-theme="light"] .sftp-drop-hint {
-  color: #1d4ed8;
+  color: var(--accent-hover);
 }
 
 html[data-theme="light"] .sftp-empty {
@@ -577,7 +577,7 @@ html[data-theme="light"] .zk-conn-line:hover .zk-conn-main {
 }
 
 html[data-theme="light"] .zk-conn-line.active .zk-conn-main {
-  background: rgba(219, 234, 254, 0.8);
+  background: var(--accent-muted);
 }
 
 html[data-theme="light"] .zk-browser-header {
@@ -601,8 +601,8 @@ html[data-theme="light"] .workspace.redis-page .zk-browser-header input:hover {
 }
 
 html[data-theme="light"] .workspace.redis-page .zk-browser-header input:focus {
-  border-color: rgba(37, 99, 235, 0.6);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  border-color: rgba(13, 148, 136, 0.6);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-field {
@@ -621,8 +621,8 @@ html[data-theme="light"] .workspace.mysql-page .mysql-field:hover {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-field:focus {
-  border-color: rgba(37, 99, 235, 0.6);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  border-color: rgba(13, 148, 136, 0.6);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-select {
@@ -652,8 +652,8 @@ html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-table-pag
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-select:focus,
 html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-table-page-size:focus {
-  border-color: rgba(37, 99, 235, 0.62) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+  border-color: rgba(13, 148, 136, 0.62) !important;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15) !important;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-select option,
@@ -677,9 +677,9 @@ html[data-theme="light"] .workspace.mysql-page .mysql-connection-card:hover {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-connection-card.is-selected {
-  border-color: rgba(37, 99, 235, 0.62);
-  background: rgba(219, 234, 254, 0.75);
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.14);
+  border-color: rgba(13, 148, 136, 0.62);
+  background: rgba(13, 148, 136, 0.09);
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.14);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-connection-name {
@@ -701,8 +701,8 @@ html[data-theme="light"] .workspace.mysql-page .mysql-db-node {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-db-node.is-selected {
-  border-color: rgba(37, 99, 235, 0.62);
-  background: rgba(219, 234, 254, 0.78);
+  border-color: rgba(13, 148, 136, 0.62);
+  background: rgba(13, 148, 136, 0.08);
   color: #163060;
 }
 
@@ -724,8 +724,8 @@ html[data-theme="light"] .workspace.mysql-page .mysql-table-item:hover {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-table-item.is-selected {
-  border-color: rgba(37, 99, 235, 0.62);
-  background: rgba(219, 234, 254, 0.78);
+  border-color: rgba(13, 148, 136, 0.62);
+  background: rgba(13, 148, 136, 0.08);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-table-empty {
@@ -750,7 +750,7 @@ html[data-theme="light"] .workspace.mysql-page .mysql-data-tab:hover {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab.is-selected {
-  background: rgba(219, 234, 254, 0.85);
+  background: var(--accent-muted);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab-close {
@@ -808,14 +808,14 @@ html[data-theme="light"] .workspace.mysql-page .mysql-query-toolbar .btn:hover {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-query-toolbar .btn:not(.btn-ghost) {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--accent);
+  border-color: var(--accent);
   color: #ffffff;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-query-toolbar .btn:not(.btn-ghost):hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-grid th,
@@ -860,7 +860,7 @@ html[data-theme="light"] .workspace.mysql-page .mysql-last-sql {
 
 html[data-theme="light"] .workspace.mysql-page .mysql-last-sql:hover {
   background: #e8f1ff;
-  border-color: rgba(37, 99, 235, 0.52);
+  border-color: rgba(13, 148, 136, 0.52);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-last-sql-label {
@@ -883,8 +883,8 @@ html[data-theme="light"] .workspace.mysql-page .mysql-table-design-tabbar .btn {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-table-design-tabbar .btn.is-active {
-  background: rgba(219, 234, 254, 0.85);
-  border-color: rgba(37, 99, 235, 0.58);
+  background: var(--accent-muted);
+  border-color: rgba(13, 148, 136, 0.58);
   color: #173e73;
 }
 
@@ -922,8 +922,8 @@ html[data-theme="light"] .mysql-context-item {
 }
 
 html[data-theme="light"] .mysql-context-item:hover {
-  border-color: rgba(37, 99, 235, 0.42);
-  background: rgba(219, 234, 254, 0.72);
+  border-color: rgba(13, 148, 136, 0.42);
+  background: rgba(13, 148, 136, 0.08);
 }
 
 html[data-theme="light"] .mysql-context-item.danger {
@@ -958,7 +958,7 @@ html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-row {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-row:hover {
-  background: rgba(219, 234, 254, 0.4);
+  background: rgba(13, 148, 136, 0.05);
   color: #1a2d4e;
 }
 
@@ -967,8 +967,8 @@ html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-status {
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-db-node:hover {
-  background: rgba(219, 234, 254, 0.5);
-  border-left-color: rgba(37, 99, 235, 0.25);
+  background: rgba(13, 148, 136, 0.06);
+  border-left-color: rgba(13, 148, 136, 0.25);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab-main {
@@ -985,7 +985,7 @@ html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-sql-sugge
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-sql-suggest-item:hover {
-  background: rgba(219, 234, 254, 0.72);
+  background: rgba(13, 148, 136, 0.08);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-view .mysql-sql-suggest-item.is-active {
@@ -999,7 +999,7 @@ html[data-theme="light"] .zk-data {
 }
 
 html[data-theme="light"] .zk-node-selected {
-  background: rgba(219, 234, 254, 0.8);
+  background: var(--accent-muted);
 }
 
 html[data-theme="light"] .zk-node-name {
@@ -1075,7 +1075,7 @@ html[data-theme="light"] .command-status-bar {
 }
 
 html[data-theme="light"] .command-status-text {
-  color: #2563eb;
+  color: var(--accent);
 }
 
 html[data-theme="light"] .redis-typed-editor input {
@@ -1103,8 +1103,8 @@ html[data-theme="light"] .redis-set-chip {
 }
 
 html[data-theme="light"] .redis-set-chip.active {
-  border-color: rgba(37, 99, 235, 0.55);
-  background: rgba(219, 234, 254, 0.92);
+  border-color: rgba(13, 148, 136, 0.55);
+  background: rgba(13, 148, 136, 0.12);
 }
 
 html[data-theme="light"] .redis-set-chip-main {
@@ -1117,7 +1117,7 @@ html[data-theme="light"] .redis-set-chip-remove {
 }
 
 html[data-theme="light"] .redis-set-chip-remove:hover {
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(13, 148, 136, 0.12);
   color: #1e3a8a;
 }
 

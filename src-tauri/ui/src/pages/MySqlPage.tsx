@@ -113,6 +113,10 @@ export default function MySqlPage({
     addQueryTab,
     openTopQueryTab,
     selectBrowseTab,
+    closeBrowseTab,
+    closeTabsLeft,
+    closeTabsRight,
+    closeOtherTabs,
   } = useMySqlTabsManager({
     activeSchema,
     selectedDatabase: selected?.database ?? undefined,
@@ -292,6 +296,10 @@ export default function MySqlPage({
           activeTable={activeTable}
           selectedConnectionId={selected?.id}
           tables={tables}
+          onCloseTab={closeBrowseTab}
+          onCloseTabsLeft={closeTabsLeft}
+          onCloseTabsRight={closeTabsRight}
+          onCloseOtherTabs={closeOtherTabs}
           tablesLoading={tablesLoading}
           tableDataMap={tableDataMap}
           queryEditorMap={queryEditorMap}

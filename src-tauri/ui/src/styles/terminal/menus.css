@@ -4,7 +4,7 @@
   min-width: 128px;
   background: #0d131d;
   border: 1px solid rgba(55, 66, 90, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 4px;
   display: grid;
   gap: 4px;
@@ -16,7 +16,7 @@
   font-size: 12px;
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: #cfd8ea;
 }
@@ -43,7 +43,7 @@
   min-width: 138px;
   background: #0d131d;
   border: 1px solid rgba(55, 66, 90, 0.95);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 4px;
   display: grid;
   gap: 4px;
@@ -55,7 +55,7 @@
   font-size: 12px;
   padding: 6px 8px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: #cfd8ea;
 }
@@ -71,7 +71,7 @@
   min-width: 148px;
   background: var(--modal-surface);
   border: 1px solid var(--modal-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px;
   display: grid;
   gap: 2px;
@@ -104,7 +104,7 @@
   min-width: 132px;
   background: var(--modal-surface);
   border: 1px solid var(--modal-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px;
   box-shadow: var(--modal-shadow);
 }
