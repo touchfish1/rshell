@@ -42,6 +42,7 @@ export function useTerminalLifecycle({
   const onResizeRef = useRef(onResize);
   const registerWriterRef = useRef(registerWriter);
   const colorThemeRef = useRef(colorTheme);
+  const onContextMenuRef = useRef(onContextMenu);
   const lastResizeRef = useRef<{ cols: number; rows: number; at: number }>({ cols: 0, rows: 0, at: 0 });
 
   useEffect(() => {
@@ -62,6 +63,9 @@ export function useTerminalLifecycle({
   useEffect(() => {
     colorThemeRef.current = colorTheme;
   }, [colorTheme]);
+  useEffect(() => {
+    onContextMenuRef.current = onContextMenu;
+  }, [onContextMenu]);
 
   useEffect(() => {
     const terminal = terminalRef.current;
@@ -152,7 +156,7 @@ export function useTerminalLifecycle({
 
     const onContext = (event: MouseEvent) => {
       event.preventDefault();
-      onContextMenu(event.clientX, event.clientY);
+      onContextMenuRef.current(event.clientX, event.clientY);
     };
     terminal.element?.addEventListener("contextmenu", onContext);
 
@@ -213,7 +217,7 @@ export function useTerminalLifecycle({
       fitAddonRef.current = null;
       terminal.dispose();
     };
-  }, [attachCustomKeyHandler, onContextMenu]);
+  }, [attachCustomKeyHandler]);
 
   return { containerRef, terminalRef };
 }
