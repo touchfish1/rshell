@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { I18nKey } from "../i18n";
 
 interface Props {
@@ -8,6 +9,14 @@ interface Props {
 }
 
 export function CloseConfirmModal({ sessionCount, tr, onConfirm, onCancel }: Props) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onCancel(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onCancel]);
+
   return (
     <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="close-confirm-title" onClick={onCancel}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>

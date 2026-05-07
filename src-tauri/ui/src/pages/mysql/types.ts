@@ -25,6 +25,7 @@ export type MySqlTableDataState = {
   totalRows: number;
   lastSql?: string;
   error?: string;
+  columnInfos?: import("../../services/types").MySqlColumnInfo[];
 };
 
 export type MySqlQueryEditorState = {
@@ -65,6 +66,30 @@ export const FILTER_OPERATORS: Array<{ value: MySqlFilterOperator; label: string
   { value: "lt", label: "<" },
   { value: "le", label: "<=" },
 ];
+
+export type ColumnDraft = {
+  id: string;
+  name: string;
+  type: string;
+  nullable: boolean;
+  defaultValue: string;
+  extra: string;
+  comment: string;
+  isNew: boolean;
+  markedDrop: boolean;
+  original?: Omit<ColumnDraft, "id" | "isNew" | "markedDrop" | "original">;
+};
+
+export type IndexDraft = {
+  id: string;
+  name: string;
+  kind: "PRIMARY" | "UNIQUE" | "INDEX";
+  columns: string;
+  method: string;
+  isNew: boolean;
+  markedDrop: boolean;
+  original?: Omit<IndexDraft, "id" | "isNew" | "markedDrop" | "original">;
+};
 
 export function createEmptyCondition(): MySqlFilterCondition {
   return {

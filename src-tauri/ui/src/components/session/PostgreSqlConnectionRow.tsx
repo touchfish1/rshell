@@ -12,7 +12,7 @@ interface Props {
 export function PostgreSqlConnectionRow({ conn, tr, onConnect, onEdit, onDelete }: Props) {
   return (
     <li className="session-line">
-      <button className="session-main" onClick={() => onConnect?.(conn.id)} title="PostgreSQL">
+      <button className="session-main" onClick={() => onConnect?.(conn.id)} title={tr("protocol.postgresql")}>
         <span className="session-col name">
           <span className="os-icon">PG</span>
           <span className="session-name-text">{conn.name}</span>

@@ -9,10 +9,11 @@ import { AppRedisSection } from "./app/AppRedisSection";
 import { AppEtcdSection } from "./app/AppEtcdSection";
 import { AppMySqlSection } from "./app/AppMySqlSection";
 import { useAppShell } from "./hooks/useAppShell";
-import { CommandPaletteModal, type CommandPaletteItem } from "./components/CommandPaletteModal";
+import { CommandPaletteModal } from "./components/CommandPaletteModal";
+import { SettingsModal } from "./components/SettingsModal";
 import { HostCreateModal } from "./components/session/HostCreateModal";
 import { useSessionListForms } from "./components/session/useSessionListForms";
-import { ColorThemeToggle } from "./components/ColorThemeToggle";
+import { useCommandPaletteItems } from "./hooks/useCommandPaletteItems";
 import { useEffect, useMemo, useState } from "react";
 
 export default function App() {
@@ -116,6 +117,7 @@ export default function App() {
   } = useAppShell();
 
   const [cmdkOpen, setCmdkOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const unifiedForms = useSessionListForms({
     onCreate: create,
@@ -159,153 +161,25 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  const cmdkItems = useMemo<CommandPaletteItem[]>(() => {
-    const items: CommandPaletteItem[] = [];
-
-    items.push({
-      id: "nav:home",
-      label: "返回首页",
-      keywords: ["home", "首页", "返回"],
-      run: () => setCurrentPage("home"),
-    });
-    items.push({
-      id: "nav:terminal",
-      label: "打开终端页",
-      keywords: ["terminal", "终端", "host"],
-      run: () => setCurrentPage("terminal"),
-    });
-    items.push({
-      id: "nav:zookeeper",
-      label: "打开 Zookeeper",
-      keywords: ["zk", "zookeeper", "zoo", "zookeeper页"],
-      run: () => setCurrentPage("zookeeper"),
-    });
-    items.push({
-      id: "nav:redis",
-      label: "打开 Redis",
-      keywords: ["redis", "cache", "kv", "redis页"],
-      run: () => setCurrentPage("redis"),
-    });
-    items.push({
-      id: "nav:mysql",
-      label: "打开 MySQL",
-      keywords: ["mysql", "sql", "database", "mysql页"],
-      run: () => setCurrentPage("mysql"),
-    });
-    items.push({
-      id: "nav:etcd",
-      label: "打开 Etcd",
-      keywords: ["etcd", "kv", "key-value", "etcd页"],
-      run: () => setCurrentPage("etcd"),
-    });
-
-    if (currentPage === "home") {
-      items.push({
-        id: "home:refreshReachability",
-        label: "刷新主机状态",
-        keywords: ["刷新", "状态", "ping", "reachability"],
-        disabled: refreshBusy,
-        hint: refreshBusy ? "检测中…" : undefined,
-        run: () => refreshReachability(),
-      });
-      items.push({
-        id: "home:audit",
-        label: "打开审计日志",
-        keywords: ["audit", "日志", "审计"],
-        run: () => {
-          setAuditOpen(true);
-          void loadAudits();
-        },
-      });
-    }
-
-    if (currentPage === "terminal") {
-      items.push({
-        id: "terminal:disconnect",
-        label: "断开当前会话",
-        keywords: ["disconnect", "断开", "close"],
-        disabled: !activeTabId,
-        run: () => {
-          if (activeTabId) disconnect(activeTabId);
-        },
-      });
-      items.push({
-        id: "terminal:closeTab",
-        label: "关闭当前标签",
-        keywords: ["tab", "close", "关闭标签"],
-        disabled: !activeTabId,
-        run: () => {
-          if (activeTabId) closeTab(activeTabId);
-        },
-      });
-      items.push({
-        id: "terminal:retry",
-        label: "重试连接（当前标签）",
-        keywords: ["retry", "重试", "reconnect"],
-        disabled: !activeTabId,
-        run: () => {
-          if (activeTabId) retryConnect(activeTabId);
-        },
-      });
-      items.push({
-        id: "terminal:sftpReload",
-        label: "刷新 SFTP 列表",
-        keywords: ["sftp", "refresh", "刷新文件"],
-        disabled: !activeTabId,
-        run: () => {
-          if (!activeTabId) return;
-          const tab = tabs.find((t) => t.id === activeTabId);
-          if (!tab) return;
-          void loadSftp(activeTabId, tab.sessionId, sftpProps.path);
-        },
-      });
-    }
-
-    if (currentPage === "redis") {
-      items.push({
-        id: "redis:disconnect",
-        label: "断开 Redis 当前连接",
-        keywords: ["redis", "disconnect", "断开"],
-        disabled: !selectedRedisId,
-        run: () => {
-          if (!selectedRedisId) return;
-          // RedisPage 内也有断开按钮，这里回到首页级别只做页面切换触发用户手动断开
-          setCurrentPage("redis");
-        },
-      });
-    }
-
-    // 常用：连接选中主机（无论在哪个页都可用）
-    items.push({
-      id: "host:connectSelected",
-      label: "连接选中主机（新建标签）",
-      keywords: ["connect", "连接", "ssh", "telnet"],
-      disabled: !selectedId,
-      run: async () => {
-        if (!selectedId) return;
-        await connect(selectedId);
-      },
-    });
-
-    return items;
-  }, [
-    activeTabId,
-    closeTab,
-    connect,
+  const { cmdkItems } = useCommandPaletteItems({
+    tr,
     currentPage,
-    disconnect,
-    loadAudits,
-    loadSftp,
+    setCurrentPage,
     refreshBusy,
     refreshReachability,
-    retryConnect,
-    sftpProps.path,
-    selectedId,
-    selectedRedisId,
     setAuditOpen,
-    setCurrentPage,
+    loadAudits,
+    activeTabId,
+    disconnect,
+    closeTab,
+    retryConnect,
     tabs,
-  ]);
+    loadSftp,
+    sftpPath: sftpProps.path,
+    selectedRedisId,
+    selectedId,
+    connect,
+  });
 
   const openedConnectionTypeOptions = useMemo(() => {
     const options: Array<{ value: "terminal" | "zookeeper" | "redis" | "mysql" | "etcd"; label: string }> = [];
@@ -313,7 +187,7 @@ export default function App() {
     if (zkConnections.length > 0) options.push({ value: "zookeeper", label: tr("home.zookeeper") });
     if (redisConnections.length > 0) options.push({ value: "redis", label: tr("home.redis") });
     if (mysqlConnections.length > 0) options.push({ value: "mysql", label: tr("home.mysql") });
-    if (etcdConnections.length > 0) options.push({ value: "etcd", label: "Etcd" });
+    if (etcdConnections.length > 0) options.push({ value: "etcd", label: tr("home.etcd") });
     if (options.length === 0) {
       options.push({ value: "terminal", label: tr("terminal.workspace") });
     }
@@ -347,7 +221,9 @@ export default function App() {
               </div>
             </div>
             <div className="actions">
-              <ColorThemeToggle tr={tr} />
+              <button className="btn btn-ghost settings-gear-btn" onClick={() => setSettingsOpen(true)} title={tr("settings.title")}>
+                ⚙
+              </button>
               <div className="lang-switch" role="group" aria-label={tr("top.ariaLanguageSwitch")}>
                 <button
                   className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
@@ -374,7 +250,7 @@ export default function App() {
               </button>
               <select
                 className="btn btn-ghost"
-                aria-label="opened connection type switch"
+                aria-label={tr("top.ariaConnectionTypeSwitch")}
                 value={subpageSelectValue}
                 onChange={(event) => setCurrentPage(event.target.value as "terminal" | "zookeeper" | "redis" | "mysql" | "etcd")}
               >
@@ -639,6 +515,13 @@ export default function App() {
           onSubmitAndConnect={() => void unifiedForms.submitCreate(true)}
         />
         <CommandPaletteModal open={cmdkOpen} tr={tr} items={cmdkItems} onClose={() => setCmdkOpen(false)} />
+        <SettingsModal
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          tr={tr}
+          lang={lang}
+          onSwitchLang={switchLang}
+        />
       </main>
     </I18nProvider>
   );

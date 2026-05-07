@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { EtcdConnection, EtcdConnectionInput } from "../../services/types";
 import type { I18nKey } from "../../i18n";
 
@@ -32,6 +33,14 @@ export function EtcdConnectionEditModal({
 }: Props) {
   if (!connection) return null;
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const canSubmit = form.name.trim() && form.endpoints.trim() && !saving;
 
   return (
@@ -43,7 +52,12 @@ export function EtcdConnectionEditModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            if (canSubmit) onSubmit();
+          }
+        }}>
           <label>
             {tr("etcd.form.name")}
             <input
@@ -80,7 +94,7 @@ export function EtcdConnectionEditModal({
                 disabled={secretLoading}
                 title={secretVisible ? tr("form.toggleHidePassword") : tr("form.toggleShowPassword")}
               >
-                {secretVisible ? "Hide" : "Show"}
+                {secretVisible ? tr("form.toggleHidePassword") : tr("form.toggleShowPassword")}
               </button>
             </div>
           </label>

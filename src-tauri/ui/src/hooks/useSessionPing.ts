@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { testHostReachability } from "../services/bridge";
 import type { HostReachability, Session } from "../services/types";
+import { getAllSettings } from "../lib/appSettings";
 
 type RunPingOpts = { cancelledRef?: { current: boolean }; manual?: boolean };
 
@@ -82,9 +83,10 @@ export function useSessionPing(opts: { currentPage: "home" | "terminal" | "zooke
     }
 
     void runPing({ cancelledRef });
+    const intervalMs = (getAllSettings().pingInterval || 10) * 1000;
     const timer = window.setInterval(() => {
       void runPing({ cancelledRef });
-    }, 10000);
+    }, intervalMs);
     return () => {
       cancelledRef.current = true;
       window.clearInterval(timer);

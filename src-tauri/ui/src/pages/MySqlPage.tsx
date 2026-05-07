@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ErrorBanner } from "../components/ErrorBanner";
-import { disconnectMySql, mySqlListColumns } from "../services/bridge";
+import { disconnectMySql, mySqlExecuteQuery, mySqlListColumns } from "../services/bridge";
 import type { I18nKey } from "../i18n";
 import type {
   MySqlColumnInfo,
@@ -11,12 +11,10 @@ import { MySqlBrowsePane } from "./mysql/MySqlBrowsePane";
 import { MySqlConnectionModal } from "./mysql/MySqlConnectionModal";
 import { MySqlContextMenus } from "./mysql/MySqlContextMenus";
 import { MySqlSidebar } from "./mysql/MySqlSidebar";
-import { formatSqlText } from "./mysql/sqlUtils";
+import { escapeSqlIdentifier, escapeSqlValue, formatSqlText } from "./mysql/sqlUtils";
 import {
   createEmptyCondition,
   FILTER_OPERATORS,
-  type MySqlBrowseTab,
-  type MySqlDbContextMenuState,
   type MySqlQueryEditorState,
   type MySqlTableDataState,
   type SqlSuggestionState,
@@ -67,7 +65,7 @@ export default function MySqlPage({
   const [activeTable, setActiveTable] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; connId: string } | null>(null);
-  const [dbContextMenu, setDbContextMenu] = useState<MySqlDbContextMenuState | null>(null);
+  const [sidebarFeedback, setSidebarFeedback] = useState<string | null>(null);
   const [tableDataMap, setTableDataMap] = useState<Record<string, MySqlTableDataState>>({});
   const [queryEditorMap, setQueryEditorMap] = useState<Record<string, MySqlQueryEditorState>>({});
   const [querySuggestions, setQuerySuggestions] = useState<SqlSuggestionState | null>(null);
@@ -111,6 +109,7 @@ export default function MySqlPage({
     addTableTab,
     addTableEditTab,
     addQueryTab,
+    addQueryTabWithSql,
     openTopQueryTab,
     selectBrowseTab,
     closeBrowseTab,
@@ -206,11 +205,19 @@ export default function MySqlPage({
   }, [contextMenu]);
 
   useEffect(() => {
-    if (!dbContextMenu) return;
-    const close = () => setDbContextMenu(null);
-    window.addEventListener("click", close);
-    return () => window.removeEventListener("click", close);
-  }, [dbContextMenu]);
+    if (!sidebarFeedback) return;
+    const timer = window.setTimeout(() => setSidebarFeedback(null), 2000);
+    return () => window.clearTimeout(timer);
+  }, [sidebarFeedback]);
+
+  // auto-connect when a MySQL connection is selected from the home page
+  useEffect(() => {
+    if (!selectedId) return;
+    setActiveSchema("");
+    setActiveTable("");
+    void loadSchema(selectedId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
 
   return (
     <section className="workspace mysql-page">
@@ -243,6 +250,7 @@ export default function MySqlPage({
       {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
       {localError ? <ErrorBanner message={localError} onDismiss={() => setLocalError(null)} /> : null}
       <div className="terminal-layout" style={{ gridTemplateColumns: "280px 8px minmax(0, 1fr)" }}>
+        <div style={{ position: "relative" }}>
         <MySqlSidebar
           connections={connections}
           selectedId={selectedId}
@@ -250,6 +258,7 @@ export default function MySqlPage({
           activeSchema={activeSchema}
           tables={tables}
           tablesLoading={tablesLoading}
+          activeTable={activeTable}
           tr={tr}
           onSelect={onSelect}
           onOpenConnection={(id) => {
@@ -269,7 +278,6 @@ export default function MySqlPage({
             addDatabaseTab(schema);
             void loadTablesForSchema(schema);
           }}
-          onOpenDbContext={(x, y, schema) => setDbContextMenu({ x, y, schema })}
           onSelectTable={(tableName) => {
             setActiveTable(tableName);
             if (!selected || !activeSchema) return;
@@ -286,8 +294,68 @@ export default function MySqlPage({
             if (!schema || !table) return;
             addTableEditTab(schema, table);
           }}
+          onImportDdl={async (schema, table) => {
+            if (!selected) return;
+            try {
+              const sql = `SHOW CREATE TABLE \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(table)}\``;
+              const result = await mySqlExecuteQuery(selected.id, sql);
+              const ddl = result.rows[0]?.[1] ?? "";
+              if (!ddl) throw new Error("Empty DDL result");
+              await navigator.clipboard.writeText(ddl);
+              setSidebarFeedback(tr("mysql.page.ddlCopied"));
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              setLocalError(message);
+            }
+          }}
+          onExportInserts={async (schema, table) => {
+            if (!selected) return;
+            try {
+              const result = await mySqlExecuteQuery(selected.id, `SELECT * FROM \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(table)}\``, 5000);
+              const columns = result.columns;
+              const rows = result.rows;
+              const inserts = rows.map((row) => {
+                const colList = columns.map((c) => `\`${escapeSqlIdentifier(c)}\``).join(", ");
+                const valList = row.map((v) => v === null ? "NULL" : `'${escapeSqlValue(v)}'`).join(", ");
+                return `INSERT INTO \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(table)}\` (${colList}) VALUES (${valList});`;
+              }).join("\n");
+              await navigator.clipboard.writeText(inserts);
+              setSidebarFeedback(tr("mysql.page.insExported", { count: rows.length }));
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              setLocalError(message);
+            }
+          }}
+          onOpenQueryWithSql={(schema, sql) => {
+            addQueryTabWithSql(schema, sql);
+          }}
+          onImportDbDdl={async (schema) => {
+            if (!selected) return;
+            try {
+              const ddls: string[] = [];
+              for (const t of tables) {
+                const result = await mySqlExecuteQuery(selected.id, `SHOW CREATE TABLE \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(t.name)}\``);
+                if (result.rows[0]?.[1]) ddls.push(result.rows[0][1]);
+              }
+              const allDdl = ddls.join("\n\n");
+              await navigator.clipboard.writeText(allDdl);
+              setSidebarFeedback(tr("mysql.page.ddlCopied"));
+            } catch (err) {
+              const message = err instanceof Error ? err.message : String(err);
+              setLocalError(message);
+            }
+          }}
+          onImportDbDml={(schema) => {
+            const sqls = tables.map((t) => `SELECT * FROM \`${escapeSqlIdentifier(schema)}\`.\`${escapeSqlIdentifier(t.name)}\` LIMIT 1000;`).join("\n");
+            addQueryTabWithSql(schema, sqls);
+          }}
         />
+          {sidebarFeedback ? (
+            <div className="mysql-sidebar-feedback" key={sidebarFeedback}>{sidebarFeedback}</div>
+          ) : null}
+        </div>
         <div className="terminal-splitter redis-layout-splitter" />
+        {selected ? (
         <MySqlBrowsePane
           browseTabs={browseTabs}
           activeBrowseTabId={activeBrowseTabId}
@@ -429,6 +497,12 @@ export default function MySqlPage({
             if (activeBrowseTab) applySuggestionItem(querySuggestions, activeBrowseTab.id, item);
           }}
         />
+        ) : (
+          <div className="empty-state">
+            <div className="empty-title">{tr("mysql.page.title")}</div>
+            <div className="empty-subtitle">{tr("mysql.page.noSelection")}</div>
+          </div>
+        )}
                       </div>
       <MySqlConnectionModal
         open={formOpen}
@@ -447,20 +521,19 @@ export default function MySqlPage({
         onSave={saveModalForm}
       />
       <CommandStatusBar command={currentCommand} label={tr("cmdBar.title")} />
-      <MySqlContextMenus
-        contextMenu={contextMenu}
-        dbContextMenu={dbContextMenu}
-        connections={connections}
-        tr={tr}
-        onCloseContext={() => setContextMenu(null)}
-        onCloseDbContext={() => setDbContextMenu(null)}
-        onSelect={onSelect}
-        onDelete={(id) => void onDelete(id)}
-        onEdit={(nextForm) => {
-          openEdit(nextForm);
-        }}
-        onCreateQuery={(schema) => addQueryTab(schema)}
-      />
+      {contextMenu ? (
+        <MySqlContextMenus
+          contextMenu={contextMenu}
+          connections={connections}
+          tr={tr}
+          onCloseContext={() => setContextMenu(null)}
+          onSelect={onSelect}
+          onDelete={(id) => void onDelete(id)}
+          onEdit={(nextForm) => {
+            openEdit(nextForm);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

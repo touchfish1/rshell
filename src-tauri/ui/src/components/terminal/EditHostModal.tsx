@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import type { Protocol, Session, SessionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 
@@ -13,6 +14,13 @@ interface Props {
 
 export function EditHostModal({ host, form, secret, onClose, onChangeForm, onChangeSecret, onSave }: Props) {
   const { tr } = useI18n();
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
   if (!host) return null;
 
   return (
@@ -24,7 +32,12 @@ export function EditHostModal({ host, form, secret, onClose, onChangeForm, onCha
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (host) void onSave(host.id, form, secret.trim() ? secret : undefined).then(onClose);
+          }
+        }}>
           <div className="session-form">
             <input placeholder={tr("form.name")} value={form.name} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
             <select
@@ -34,8 +47,8 @@ export function EditHostModal({ host, form, secret, onClose, onChangeForm, onCha
                 onChangeForm({ ...form, protocol, port: protocol === "ssh" ? 22 : 23 });
               }}
             >
-              <option value="ssh">SSH</option>
-              <option value="telnet">Telnet</option>
+              <option value="ssh">{tr("protocol.ssh")}</option>
+              <option value="telnet">{tr("protocol.telnet")}</option>
             </select>
             <input placeholder={tr("form.host")} value={form.host} onChange={(e) => onChangeForm({ ...form, host: e.target.value })} />
             <input

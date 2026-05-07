@@ -1,4 +1,6 @@
 import React from "react";
+import type { I18nKey } from "../i18n";
+import { t, type Lang } from "../i18n/runtime";
 
 type Props = {
   children: React.ReactNode;
@@ -27,6 +29,8 @@ export class ErrorBoundary extends React.Component<Props, State> {
     if (!error) return this.props.children;
 
     const details = [error.stack || String(error), info?.componentStack].filter(Boolean).join("\n\n");
+    const lang: Lang = (() => { try { const v = localStorage.getItem("rshell.lang"); return v === "zh-CN" || v === "en-US" ? v : "zh-CN"; } catch { return "zh-CN"; } })();
+    const tr = (key: I18nKey, vars?: Record<string, string | number>) => t(lang, key, vars);
 
     return (
       <div
@@ -38,9 +42,9 @@ export class ErrorBoundary extends React.Component<Props, State> {
           fontFamily: "Consolas, ui-monospace, SFMono-Regular, Menlo, Monaco, monospace",
         }}
       >
-        <h2 style={{ margin: "0 0 12px", fontFamily: "Segoe UI, system-ui, sans-serif" }}>页面渲染出错</h2>
+        <h2 style={{ margin: "0 0 12px", fontFamily: "Segoe UI, system-ui, sans-serif" }}>{tr("error.renderTitle")}</h2>
         <p style={{ margin: "0 0 12px", color: "#9aa3b2", fontFamily: "Segoe UI, system-ui, sans-serif" }}>
-          这通常是前端运行时异常导致的空白页。请把下面的错误信息复制给我。
+          {tr("error.renderInstruction")}
         </p>
         <pre
           style={{

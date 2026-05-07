@@ -1,5 +1,7 @@
+import { useEffect, useState } from "react";
 import type { EtcdConnectionInput } from "../../services/types";
 import type { I18nKey } from "../../i18n";
+import { PasswordVisibilityToggle } from "../session/PasswordVisibilityToggle";
 
 interface Props {
   open: boolean;
@@ -24,7 +26,17 @@ export function EtcdConnectionCreateModal({
   onSubmit,
   tr,
 }: Props) {
+  const [secretVisible, setSecretVisible] = useState(false);
+
   if (!open) return null;
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   const canSubmit = form.name.trim() && form.endpoints.trim() && !saving;
 
@@ -37,7 +49,12 @@ export function EtcdConnectionCreateModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            if (canSubmit) onSubmit();
+          }
+        }}>
           <label>
             {tr("etcd.form.name")}
             <input
@@ -59,12 +76,21 @@ export function EtcdConnectionCreateModal({
           </label>
           <label>
             {tr("etcd.form.secretOptional")}
-            <input
-              type="password"
-              className="form-input"
-              value={secret}
-              onChange={(e) => onChangeSecret(e.target.value)}
-            />
+            <div className="password-input-wrap">
+              <input
+                type={secretVisible ? "text" : "password"}
+                className="form-input"
+                value={secret}
+                onChange={(e) => onChangeSecret(e.target.value)}
+              />
+              <PasswordVisibilityToggle
+                visible={secretVisible}
+                loading={false}
+                showTitle={tr("form.toggleShowPassword")}
+                hideTitle={tr("form.toggleHidePassword")}
+                onClick={() => setSecretVisible((v) => !v)}
+              />
+            </div>
           </label>
         </div>
         <div className="modal-actions">

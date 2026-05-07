@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Protocol, SessionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
+import { PasswordVisibilityToggle } from "./PasswordVisibilityToggle";
+import { ConfirmDialog } from "../ConfirmDialog";
 
 interface Props {
   open: boolean;
@@ -43,6 +45,8 @@ export function HostCreateModal({
     secret: false,
   });
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [secretVisible, setSecretVisible] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const hostError = !form.host.trim() ? tr("modal.requiredField", { field: tr("form.host") }) : "";
   const portError = !Number.isInteger(form.port) || form.port < 1 || form.port > 65535 ? tr("modal.portInvalid") : "";
@@ -77,13 +81,21 @@ export function HostCreateModal({
       onClose();
       return;
     }
-    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
-    if (ok) onClose();
+    setConfirmClose(true);
   };
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   if (!open) return null;
 
   return (
+    <>
     <div className="modal-backdrop" onClick={requestClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr("modal.newHost")}>
         <div className="modal-header">
@@ -92,7 +104,13 @@ export function HostCreateModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            setSubmitAttempted(true);
+            if (canSubmit) onSubmit();
+          }
+        }}>
           <div className="session-form">
             <input
               placeholder={tr("form.name")}
@@ -117,12 +135,12 @@ export function HostCreateModal({
                 });
               }}
             >
-              <option value="ssh">SSH</option>
-              <option value="telnet">Telnet</option>
-              <option value="zookeeper">Zookeeper</option>
-              <option value="redis">Redis</option>
-              <option value="mysql">MySQL</option>
-              <option value="postgresql">PostgreSQL</option>
+              <option value="ssh">{tr("protocol.ssh")}</option>
+              <option value="telnet">{tr("protocol.telnet")}</option>
+              <option value="zookeeper">{tr("protocol.zookeeper")}</option>
+              <option value="redis">{tr("protocol.redis")}</option>
+              <option value="mysql">{tr("protocol.mysql")}</option>
+              <option value="postgresql">{tr("protocol.postgresql")}</option>
             </select>
             <input
               ref={hostInputRef}
@@ -163,14 +181,23 @@ export function HostCreateModal({
                 ) : null}
               </>
             ) : null}
-            <input
-              placeholder={form.protocol === "ssh" ? tr("form.sshPasswordSaved") : tr("form.secretOptional")}
-              type="password"
-              value={secret}
-              disabled={saving}
-              onBlur={() => setTouched((prev) => ({ ...prev, secret: true }))}
-              onChange={(e) => onChangeSecret(e.target.value)}
-            />
+            <div className="password-input-wrap">
+              <input
+                placeholder={form.protocol === "ssh" ? tr("form.sshPasswordSaved") : tr("form.secretOptional")}
+                type={secretVisible ? "text" : "password"}
+                value={secret}
+                disabled={saving}
+                onBlur={() => setTouched((prev) => ({ ...prev, secret: true }))}
+                onChange={(e) => onChangeSecret(e.target.value)}
+              />
+              <PasswordVisibilityToggle
+                visible={secretVisible}
+                loading={false}
+                showTitle={tr("form.toggleShowPassword")}
+                hideTitle={tr("form.toggleHidePassword")}
+                onClick={() => setSecretVisible((v) => !v)}
+              />
+            </div>
             {shouldShowError(touched.secret, secretError) ? <div className="modal-inline-notice modal-inline-notice-error">{secretError}</div> : null}
             {shouldWarnUntested ? (
               <div className="modal-inline-notice modal-inline-notice-warning">{tr("modal.saveWithoutTestHint")}</div>
@@ -217,5 +244,15 @@ export function HostCreateModal({
         </div>
       </div>
     </div>
+      <ConfirmDialog
+        open={confirmClose}
+        title={tr("modal.unsavedCloseTitle")}
+        message={tr("modal.unsavedCloseMessage")}
+        confirmLabel={tr("modal.confirmClose")}
+        cancelLabel={tr("modal.cancel")}
+        onConfirm={() => { setConfirmClose(false); onClose(); }}
+        onCancel={() => setConfirmClose(false)}
+      />
+    </>
   );
 }

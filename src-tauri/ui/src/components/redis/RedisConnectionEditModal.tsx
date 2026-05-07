@@ -43,6 +43,14 @@ export function RedisConnectionEditModal({
     setSubmitAttempted(false);
   }, [connection?.id]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const addressError = !form.address.trim()
     ? tr("modal.requiredField", { field: tr("redis.form.address") })
     : "";
@@ -70,7 +78,13 @@ export function RedisConnectionEditModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            setSubmitAttempted(true);
+            if (canSubmit) onSubmit();
+          }
+        }}>
           <div className="session-form">
             <input
               placeholder={tr("form.name")}
@@ -133,7 +147,7 @@ export function RedisConnectionEditModal({
               if (!canSubmit) return;
               onSubmit();
             }}
-            disabled={!canSubmit}
+            disabled={saving}
           >
             {saving ? tr("modal.saving") : tr("modal.save")}
           </button>

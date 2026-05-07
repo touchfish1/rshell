@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import SessionList from "../components/SessionList";
 import AuditLogModal from "../components/AuditLogModal";
-import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { EnvironmentModal } from "../components/EnvironmentModal";
+import { HomePageTopBar } from "../components/HomePageTopBar";
 import type {
   EtcdConnection,
   EtcdConnectionInput,
@@ -121,6 +122,7 @@ export default function HomePage({
   postgresqlConnections,
   onConnectRedis,
   onConnectMysql,
+  onConnectPostgreSql,
   onGetRedisSecret,
   onUpdateRedis,
   onDeleteRedis,
@@ -128,7 +130,6 @@ export default function HomePage({
   onGetMysqlSecret,
   onUpdateMysql,
   onCreatePostgreSql,
-  onConnectPostgreSql,
   onDeletePostgreSql,
   onGetPostgreSqlSecret,
   onUpdatePostgreSql,
@@ -165,8 +166,6 @@ export default function HomePage({
   const [hostQuery, setHostQuery] = useState("");
   const [appVersion, setAppVersion] = useState("");
   const [environmentModalOpen, setEnvironmentModalOpen] = useState(false);
-  const [environmentInput, setEnvironmentInput] = useState("");
-  const [selectedEnvironment, setSelectedEnvironment] = useState(currentEnvironment);
   const normalizedHostQuery = hostQuery.trim().toLowerCase();
   const filteredSessions = normalizedHostQuery
     ? sessions.filter((session) => {
@@ -185,94 +184,25 @@ export default function HomePage({
       .catch(() => undefined);
   }, []);
 
-  useEffect(() => {
-    if (!environmentModalOpen) return;
-    setEnvironmentInput(currentEnvironment);
-    setSelectedEnvironment(currentEnvironment);
-  }, [environmentModalOpen, currentEnvironment]);
-
-  useEffect(() => {
-    if (!environmentModalOpen) return;
-    const onKeydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setEnvironmentModalOpen(false);
-      }
-    };
-    window.addEventListener("keydown", onKeydown);
-    return () => window.removeEventListener("keydown", onKeydown);
-  }, [environmentModalOpen]);
-
   return (
     <section className="workspace home-page">
-      <header className="topbar">
-        <div className="topbar-title">
-          <div className="app-badge" aria-hidden="true">
-            r
-          </div>
-          <div className="topbar-title-text">
-            <div className="topbar-title-line">
-              rshell
-              {appVersion ? (
-                <span className="topbar-app-version" title={tr("home.appVersionTitle")}>
-                  v{appVersion}
-                </span>
-              ) : null}
-            </div>
-            <div className="topbar-subtitle">{tr("top.subtitle")}</div>
-          </div>
-        </div>
-        <div className="actions">
-          <ColorThemeToggle tr={tr} />
-          <div className="lang-switch" role="group" aria-label={tr("top.ariaLanguageSwitch")}>
-            <button
-              className={`btn btn-ghost ${lang === "zh-CN" ? "lang-active" : ""}`}
-              onClick={() => onSwitchLang("zh-CN")}
-              title={tr("lang.switchToZh")}
-              aria-pressed={lang === "zh-CN"}
-            >
-              {tr("lang.zh")}
-            </button>
-            <button
-              className={`btn btn-ghost ${lang === "en-US" ? "lang-active" : ""}`}
-              onClick={() => onSwitchLang("en-US")}
-              title={tr("lang.switchToEn")}
-              aria-pressed={lang === "en-US"}
-            >
-              {tr("lang.en")}
-            </button>
-          </div>
-          <button
-            className="btn"
-            onClick={() => void onConnect(selectedSearchSession?.id)}
-            disabled={!canQuickConnect}
-            title={selectedSearchSession ? tr("session.connectTitle", { name: selectedSearchSession.name }) : tr("top.noHostSelected")}
-          >
-            {connectingSessionId === selectedSearchSession?.id ? tr("session.connectingAction") : tr("session.connect")}
-          </button>
-          <button className="btn btn-ghost" onClick={() => void onOnlineUpgrade()} disabled={upgradeChecking}>
-            {upgradeChecking ? tr("top.upgradeChecking") : tr("top.upgrade")}
-          </button>
-          {onOpenUnifiedCreate ? (
-            <button className="btn btn-ghost lang-active" onClick={onOpenUnifiedCreate}>
-              {tr("top.addConnection")}
-            </button>
-          ) : null}
-          <button className="btn btn-ghost" onClick={onOpenAudit}>
-            {tr("home.audit")}
-          </button>
-          <span className={connected ? "pill pill-ok" : "pill"} aria-live="polite">
-            {connected ? tr("top.online") : tr("top.offline")}
-          </span>
-          <button
-            className="btn btn-ghost"
-            disabled={environmentBusy}
-            onClick={() => setEnvironmentModalOpen(true)}
-            title={tr("top.environment")}
-          >
-            {tr("top.environmentCurrent", { name: currentEnvironment })}
-          </button>
-        </div>
-      </header>
+      <HomePageTopBar
+        lang={lang}
+        appVersion={appVersion}
+        connectingSessionId={connectingSessionId}
+        selectedSearchSession={selectedSearchSession}
+        connected={connected}
+        upgradeChecking={upgradeChecking}
+        environmentBusy={environmentBusy}
+        currentEnvironment={currentEnvironment}
+        tr={tr}
+        onSwitchLang={onSwitchLang}
+        onConnect={() => { if (canQuickConnect) void onConnect(selectedSearchSession?.id); }}
+        onOnlineUpgrade={onOnlineUpgrade}
+        onOpenUnifiedCreate={onOpenUnifiedCreate}
+        onOpenAudit={onOpenAudit}
+        onOpenEnvironment={() => setEnvironmentModalOpen(true)}
+      />
 
       {error ? <ErrorBanner message={error} onDismiss={onDismissError} /> : null}
 
@@ -373,82 +303,17 @@ export default function HomePage({
       </div>
 
       <footer>{status}</footer>
-      {environmentModalOpen ? (
-        <div className="modal-backdrop" onClick={() => setEnvironmentModalOpen(false)}>
-          <div className="modal-card env-modal-card" onClick={(event) => event.stopPropagation()}>
-            <div className="modal-header">
-              <h4>{tr("top.environment")}</h4>
-              <button
-                type="button"
-                className="modal-close"
-                onClick={() => setEnvironmentModalOpen(false)}
-                title={tr("modal.close")}
-              >
-                ×
-              </button>
-            </div>
-            <div className="modal-form env-modal-form">
-              <div className="modal-inline-notice">
-                {tr("top.environmentCurrent", { name: currentEnvironment })}
-              </div>
-              <select
-                className="env-modal-select"
-                value={selectedEnvironment}
-                onChange={(event) => setSelectedEnvironment(event.target.value)}
-                disabled={environmentBusy}
-              >
-                {environments.map((environment) => (
-                  <option key={environment} value={environment}>
-                    {environment}
-                  </option>
-                ))}
-              </select>
-              <input
-                className="env-modal-input"
-                value={environmentInput}
-                onChange={(event) => setEnvironmentInput(event.target.value)}
-                placeholder={tr("top.environmentInputPlaceholder")}
-                disabled={environmentBusy}
-              />
-            </div>
-            <div className="modal-actions">
-              <button className="btn btn-ghost" onClick={() => setEnvironmentModalOpen(false)} disabled={environmentBusy}>
-                {tr("modal.cancel")}
-              </button>
-              <button
-                className="btn btn-ghost"
-                disabled={environmentBusy || !selectedEnvironment}
-                onClick={async () => {
-                  await onSwitchEnvironment(selectedEnvironment);
-                  setEnvironmentModalOpen(false);
-                }}
-              >
-                {tr("top.environmentSwitch")}
-              </button>
-              <button
-                className="btn btn-ghost"
-                disabled={environmentBusy || !environmentInput.trim()}
-                onClick={async () => {
-                  await onCreateEnvironment(environmentInput.trim());
-                  setEnvironmentModalOpen(false);
-                }}
-              >
-                {tr("top.environmentCreate")}
-              </button>
-              <button
-                className="btn"
-                disabled={environmentBusy || !environmentInput.trim()}
-                onClick={async () => {
-                  await onRenameEnvironment(environmentInput.trim());
-                  setEnvironmentModalOpen(false);
-                }}
-              >
-                {tr("top.environmentRename")}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <EnvironmentModal
+        open={environmentModalOpen}
+        currentEnvironment={currentEnvironment}
+        environments={environments}
+        environmentBusy={environmentBusy}
+        tr={tr}
+        onSwitchEnvironment={onSwitchEnvironment}
+        onCreateEnvironment={onCreateEnvironment}
+        onRenameEnvironment={onRenameEnvironment}
+        onClose={() => setEnvironmentModalOpen(false)}
+      />
       <AuditLogModal
         open={auditOpen}
         loading={auditLoading}

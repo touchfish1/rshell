@@ -2,6 +2,7 @@ import type { I18nKey } from "../../i18n";
 import type { RedisConnectionInput } from "../../services/types";
 import { useEffect, useMemo, useState } from "react";
 import { PasswordVisibilityToggle } from "../../components/session/PasswordVisibilityToggle";
+import { ConfirmDialog } from "../../components/ConfirmDialog";
 
 interface Props {
   open: boolean;
@@ -53,6 +54,7 @@ export function RedisConnectionModal({
   onSubmit,
 }: Props) {
   const [initialSnapshot, setInitialSnapshot] = useState<{ name: string; host: string; port: number | ""; db: number; secret: string } | null>(null);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -75,22 +77,35 @@ export function RedisConnectionModal({
       secret !== initialSnapshot.secret
     );
   }, [form.name, host, port, form.db, secret, initialSnapshot]);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   if (!open) return null;
   const requestClose = () => {
     if (!confirmOnClose || !hasDirty || saving || testing) {
       onClose();
       return;
     }
-    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
-    if (ok) onClose();
+    setConfirmClose(true);
   };
   return (
+    <>
     <div className="modal-backdrop" onClick={requestClose}>
       <div className="modal-card redis-resizable-modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={title}>
         <div className="modal-header">
           <h4>{title}</h4>
         </div>
-        <div className="session-form">
+        <div className="session-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            onSubmit();
+          }
+        }}>
           <input placeholder={tr("form.name")} value={form.name} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
           <input placeholder={tr("form.host")} value={host} onChange={(e) => onChangeHost(e.target.value)} />
           <input
@@ -135,6 +150,16 @@ export function RedisConnectionModal({
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmClose}
+        title={tr("modal.unsavedCloseTitle")}
+        message={tr("modal.unsavedCloseMessage")}
+        confirmLabel={tr("modal.confirmClose")}
+        cancelLabel={tr("modal.cancel")}
+        onConfirm={() => { setConfirmClose(false); onClose(); }}
+        onCancel={() => setConfirmClose(false)}
+      />
     </div>
+    </>
   );
 }

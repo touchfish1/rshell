@@ -3,13 +3,13 @@ import type { HostMetrics, Protocol, Session, SessionInput, SftpEntry, SftpTextR
 import type { I18nKey } from "../i18n";
 import { EditHostModal } from "../components/terminal/EditHostModal";
 import { ShortcutHelpModal } from "../components/terminal/ShortcutHelpModal";
-import { TerminalFontControls } from "../components/TerminalFontControls";
 import { HostsPanel } from "../components/terminal/HostsPanel";
 import { SessionTabs } from "../components/terminal/SessionTabs";
 import { SftpPanel } from "../components/terminal/SftpPanel";
 import { useSplitPanels } from "../hooks/useSplitPanels";
-import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { ErrorBanner } from "../components/ErrorBanner";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { getAllSettings } from "../lib/appSettings";
 import { useTerminalMetrics } from "./terminal/useTerminalMetrics";
 import { useTerminalShortcuts } from "./terminal/useTerminalShortcuts";
 
@@ -109,6 +109,21 @@ export default function TerminalPage({
   });
   const [editSecret, setEditSecret] = useState("");
   const [shortcutHelpOpen, setShortcutHelpOpen] = useState(false);
+  const [disconnectConfirmId, setDisconnectConfirmId] = useState<string | null>(null);
+
+  // Tab close with optional confirmation
+  const wrappedCloseTab = (id: string) => {
+    if (!getAllSettings().confirmTabClose) {
+      onCloseTab(id);
+      return;
+    }
+    const tab = tabs.find((t) => t.id === id);
+    if (!tab || !connectedIds.includes(tab.sessionId)) {
+      onCloseTab(id);
+      return;
+    }
+    setDisconnectConfirmId(id);
+  };
   const activeTab = tabs.find((t) => t.id === activeTabId);
   const activeSession = sessions.find((s) => s.id === activeTab?.sessionId);
   const { monitorSupported, monitorMetrics, monitorError, monitorChecking, monitorCheckedAt, refreshMetrics } =
@@ -144,22 +159,20 @@ export default function TerminalPage({
       <header className="terminal-top">
         <h2>{activeSession?.name ?? tr("terminal.workspace")}</h2>
         <div className="actions">
-          <ColorThemeToggle tr={tr} />
-          <TerminalFontControls tr={tr} />
-          <button type="button" className="btn btn-ghost" title="New connection" onClick={onOpenCreate}>
-            + New
+          <button type="button" className="btn btn-ghost" title={tr("top.addConnection")} onClick={onOpenCreate}>
+            {tr("top.addConnection")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onNavigateZk}>
-            ZK
+            {tr("home.zookeeper")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onNavigateRedis}>
-            Redis
+            {tr("home.redis")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onNavigateMysql}>
-            MySQL
+            {tr("home.mysql")}
           </button>
           <button type="button" className="btn btn-ghost" onClick={onNavigateEtcd}>
-            Etcd
+            {tr("etcd.page.title")}
           </button>
           <button
             type="button"
@@ -185,7 +198,7 @@ export default function TerminalPage({
         menu={tabMenu}
         onSetMenu={setTabMenu}
         onSwitchTab={onSwitchTab}
-        onCloseTab={onCloseTab}
+        onCloseTab={wrappedCloseTab}
         onDuplicateTab={onDuplicateTab}
         onCloseTabsToLeft={onCloseTabsToLeft}
         onCloseTabsToRight={onCloseTabsToRight}
@@ -281,6 +294,19 @@ export default function TerminalPage({
         onSave={onUpdateHost}
       />
       <ShortcutHelpModal open={shortcutHelpOpen} onClose={() => setShortcutHelpOpen(false)} tr={tr} />
+      <ConfirmDialog
+        open={disconnectConfirmId !== null}
+        title={tr("terminal.disconnect")}
+        message={tr("terminal.disconnectConfirm")}
+        confirmLabel={tr("session.close")}
+        cancelLabel={tr("modal.cancel")}
+        onConfirm={() => {
+          const id = disconnectConfirmId;
+          setDisconnectConfirmId(null);
+          if (id) onCloseTab(id);
+        }}
+        onCancel={() => setDisconnectConfirmId(null)}
+      />
       <footer>{status}</footer>
     </section>
   );

@@ -56,25 +56,25 @@ export function RedisTypedEditor({
             <div className="redis-typed-row" key={`hash-${index}`}>
               <input
                 value={entry.field}
-                placeholder="field"
+                placeholder={tr("redis.page.hashFieldPlaceholder")}
                 onChange={(e) =>
                   onChangeHashEntries((prev) => prev.map((item, i) => (i === index ? { ...item, field: e.target.value } : item)))
                 }
               />
               <input
                 value={entry.value}
-                placeholder="value"
+                placeholder={tr("redis.page.hashValuePlaceholder")}
                 onChange={(e) =>
                   onChangeHashEntries((prev) => prev.map((item, i) => (i === index ? { ...item, value: e.target.value } : item)))
                 }
               />
               <button className="btn btn-ghost" onClick={() => onChangeHashEntries((prev) => prev.filter((_, i) => i !== index))}>
-                删除
+                {tr("redis.page.delete")}
               </button>
             </div>
           ))}
           <button className="btn btn-ghost" onClick={() => onChangeHashEntries((prev) => [...prev, { field: "", value: "" }])}>
-            新增 field
+            {tr("redis.page.addField")}
           </button>
         </div>
       );
@@ -85,16 +85,16 @@ export function RedisTypedEditor({
             <div className="redis-typed-row" key={`list-${index}`}>
               <input
                 value={item}
-                placeholder={`index ${index}`}
+                placeholder={tr("redis.page.listIndexPlaceholder", { index })}
                 onChange={(e) => onChangeListItems((prev) => prev.map((v, i) => (i === index ? e.target.value : v)))}
               />
               <button className="btn btn-ghost" onClick={() => onChangeListItems((prev) => prev.filter((_, i) => i !== index))}>
-                删除
+                {tr("redis.page.delete")}
               </button>
             </div>
           ))}
           <button className="btn btn-ghost" onClick={() => onChangeListItems((prev) => [...prev, ""])}>
-            新增 item
+            {tr("redis.page.addItem")}
           </button>
         </div>
       );
@@ -116,7 +116,7 @@ export function RedisTypedEditor({
                 </button>
                 <button
                   className="redis-set-chip-remove"
-                  title="删除 member"
+                  title={tr("redis.page.deleteMember")}
                   onClick={() =>
                     onChangeSetMembers((prev) => {
                       const next = prev.filter((_, i) => i !== index);
@@ -138,7 +138,7 @@ export function RedisTypedEditor({
           <div className="redis-set-editor-bar">
             <input
               value={setDraft}
-              placeholder={setEditIndex == null ? "输入 member 后新增" : "编辑当前 member"}
+              placeholder={setEditIndex == null ? tr("redis.page.setInputAddPlaceholder") : tr("redis.page.setInputEditPlaceholder")}
               onChange={(e) => onChangeSetDraft(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key !== "Enter") return;
@@ -168,7 +168,7 @@ export function RedisTypedEditor({
                 onChangeSetDraft("");
               }}
             >
-              {setEditIndex == null ? "新增 member" : "应用修改"}
+              {setEditIndex == null ? tr("redis.page.addMember") : tr("redis.page.applyEdit")}
             </button>
             {setEditIndex != null ? (
               <button
@@ -178,7 +178,7 @@ export function RedisTypedEditor({
                   onChangeSetDraft("");
                 }}
               >
-                取消
+                {tr("modal.cancel")}
               </button>
             ) : null}
           </div>
@@ -192,25 +192,25 @@ export function RedisTypedEditor({
               <input
                 type="number"
                 value={entry.score}
-                placeholder="score"
+                placeholder={tr("redis.page.zsetScorePlaceholder")}
                 onChange={(e) =>
                   onChangeZsetEntries((prev) => prev.map((item, i) => (i === index ? { ...item, score: Number(e.target.value) } : item)))
                 }
               />
               <input
                 value={entry.member}
-                placeholder="member"
+                placeholder={tr("redis.page.zsetMemberPlaceholder")}
                 onChange={(e) =>
                   onChangeZsetEntries((prev) => prev.map((item, i) => (i === index ? { ...item, member: e.target.value } : item)))
                 }
               />
               <button className="btn btn-ghost" onClick={() => onChangeZsetEntries((prev) => prev.filter((_, i) => i !== index))}>
-                删除
+                {tr("redis.page.delete")}
               </button>
             </div>
           ))}
           <button className="btn btn-ghost" onClick={() => onChangeZsetEntries((prev) => [...prev, { score: 0, member: "" }])}>
-            新增 member
+            {tr("redis.page.addMember")}
           </button>
         </div>
       );

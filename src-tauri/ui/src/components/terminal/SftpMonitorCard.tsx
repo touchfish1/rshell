@@ -47,7 +47,7 @@ export function SftpMonitorCard({
             aria-label={tr("sftp.copyIp")}
             onClick={onCopyHostIp}
           >
-            {copied ? "✅" : "📋"}
+            {copied ? "✓" : "⧉"}
           </button>
         ) : null}
         {copied ? <span className="copy-success-text">{tr("sftp.copied")}</span> : null}

@@ -43,6 +43,14 @@ export function MySqlConnectionEditModal({
     setSubmitAttempted(false);
   }, [connection?.id]);
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   const hostError = !form.host.trim() ? tr("modal.requiredField", { field: tr("form.host") }) : "";
   const usernameError = !form.username.trim() ? tr("modal.requiredField", { field: tr("form.username") }) : "";
   const port = form.port ?? 3306;
@@ -69,7 +77,13 @@ export function MySqlConnectionEditModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            setSubmitAttempted(true);
+            if (canSubmit) onSubmit();
+          }
+        }}>
           <div className="session-form">
             <input placeholder={tr("form.name")} value={form.name} disabled={saving} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
             <input placeholder={tr("form.host")} value={form.host} disabled={saving} onChange={(e) => onChangeForm({ ...form, host: e.target.value })} />

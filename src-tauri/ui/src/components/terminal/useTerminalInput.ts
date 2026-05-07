@@ -1,15 +1,20 @@
 import { useCallback } from "react";
 import type { Terminal } from "xterm";
 import { adjustTerminalFontSize, TERMINAL_FONT_DEFAULT } from "../../lib/terminalFontSize";
+import { getAllSettings } from "../../lib/appSettings";
 
 export function useTerminalInput() {
   const pasteFromClipboard = useCallback((terminal: Terminal) => {
     void navigator.clipboard
       .readText()
       .then((text) => {
-        if (text.length > 0) {
-          terminal.paste(text);
+        if (text.length === 0) return;
+        const s = getAllSettings();
+        if (s.confirmPaste && text.includes("\n")) {
+          const lines = text.split("\n").length;
+          if (!window.confirm("Paste " + lines + " lines?")) return;
         }
+        terminal.paste(text);
       })
       .catch(() => {});
   }, []);

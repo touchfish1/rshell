@@ -63,6 +63,8 @@ export function escapeSqlValue(raw: string): string {
   return raw.replace(/\\/g, "\\\\").replace(/'/g, "''");
 }
 
+export const nextId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
 export function formatSqlText(raw: string): string {
   return raw
     .replace(/\s+/g, " ")

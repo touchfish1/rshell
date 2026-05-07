@@ -59,6 +59,7 @@
   border: none;
   background: transparent;
   text-align: left;
+  transition: background var(--ease-fast);
   padding: 10px 12px;
   color: #d7ddea;
   display: grid;
@@ -118,38 +119,6 @@
   background: #0b1018;
 }
 
-
-.mysql-context-menu {
-  position: fixed;
-  z-index: 80;
-  border: 1px solid rgba(70, 82, 108, 0.85);
-  border-radius: var(--radius-md);
-  background: rgba(11, 17, 27, 0.97);
-  padding: 6px;
-  min-width: 120px;
-  display: grid;
-  gap: 4px;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-}
-
-.mysql-context-item {
-  border: 1px solid transparent;
-  background: transparent;
-  color: #d9e4fb;
-  text-align: left;
-  font-size: 12px;
-  border-radius: var(--radius-sm);
-  padding: 6px 8px;
-}
-
-.mysql-context-item:hover {
-  border-color: var(--accent-ring);
-  background: rgba(40, 57, 87, 0.45);
-}
-
-.mysql-context-item.danger {
-  color: #ffb3bf;
-}
 
 .zk-browser-body {
   flex: 1 1 auto;
@@ -272,6 +241,7 @@
   text-align: left;
   border: none;
   background: transparent;
+  transition: background var(--ease-fast);
   color: #d7ddea;
   padding: 3px 6px;
   border-radius: var(--radius-sm);
@@ -281,7 +251,8 @@
   white-space: nowrap;
 }
 
-.zk-node-name:hover {
+.zk-node-name:hover,
+.zk-node-name:focus-visible {
   background: rgba(30, 45, 67, 0.55);
 }
 
@@ -586,6 +557,7 @@
   border: none;
   background: transparent;
   text-align: left;
+  transition: background var(--ease-fast);
   padding: 10px 12px;
   color: #d7ddea;
   display: grid;
@@ -700,7 +672,8 @@
   padding: 6px 10px;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  color: #d7ddea;
+  transition: background var(--ease-fast);
+  color: var(--text-primary);
   font-size: 12px;
   font-family: "Cascadia Mono", "Consolas", ui-monospace, monospace;
   overflow: hidden;
@@ -708,7 +681,8 @@
   white-space: nowrap;
 }
 
-.etcd-key-item:hover {
+.etcd-key-item:hover,
+.etcd-key-item:focus-visible {
   background: rgba(31, 42, 58, 0.45);
 }
 

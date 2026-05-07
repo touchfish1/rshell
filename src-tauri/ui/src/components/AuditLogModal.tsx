@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { I18nKey } from "../i18n";
 import type { AuditRecord } from "../services/types";
 
@@ -178,10 +178,18 @@ export default function AuditLogModal({ open, loading, records, tr, onClose, onR
     }
   };
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={onClose}>
       <div className="modal-card audit-modal-card" onClick={(event) => event.stopPropagation()}>
         <div className="modal-header">
           <h4>{tr("home.auditTitle")}</h4>

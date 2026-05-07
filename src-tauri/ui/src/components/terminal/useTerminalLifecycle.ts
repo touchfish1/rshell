@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import { getTerminalFontFamily } from "../../lib/terminalFontFamily";
+import { getAllSettings, getTerminalCustomColors, getAnsiColors } from "../../lib/appSettings";
 import { getXtermITheme } from "../../lib/xtermThemes";
 import {
   adjustTerminalFontSize,
@@ -114,17 +115,28 @@ export function useTerminalLifecycle({
     const container = containerRef.current;
     if (!container) return;
 
+    const baseTheme = getXtermITheme(colorThemeRef.current);
+    const customColors = getTerminalCustomColors();
+    const settings = getAllSettings();
+    const ansiColors = getAnsiColors();
     const terminal = new Terminal({
-      cursorBlink: true,
+      cursorBlink: settings.terminalCursorBlink,
+      cursorStyle: settings.terminalCursorStyle,
+      cursorWidth: settings.terminalCursorWidth,
+      scrollback: settings.terminalScrollback,
+      lineHeight: settings.terminalLineHeight,
+      letterSpacing: settings.terminalLetterSpacing,
+      bellStyle: settings.terminalBellStyle,
       fontSize: getTerminalFontSize(),
       fontFamily: getTerminalFontFamily(),
-      theme: getXtermITheme(colorThemeRef.current),
+      theme: { ...baseTheme, ...(ansiColors ?? {}), foreground: customColors.foreground, background: customColors.background, cursor: customColors.cursor, cursorAccent: customColors.background },
     });
     const fitAddon = new FitAddon();
     terminalRef.current = terminal;
     fitAddonRef.current = fitAddon;
     terminal.loadAddon(fitAddon);
     terminal.open(container);
+    if (container) container.style.opacity = String(settings.terminalOpacity / 100);
 
     const syncPaneHeight = () => {
       const pane = containerRef.current;
@@ -166,6 +178,16 @@ export function useTerminalLifecycle({
     };
     terminal.element?.addEventListener("contextmenu", onContext);
 
+    const onAutoCopy = () => {
+      const s = getAllSettings();
+      if (!s.autoCopySelection) return;
+      const sel = terminal.getSelection();
+      if (sel && navigator.clipboard) {
+        navigator.clipboard.writeText(sel).catch(() => {});
+      }
+    };
+    terminal.element?.addEventListener("mouseup", onAutoCopy);
+
     const onWheelZoom = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
@@ -198,12 +220,31 @@ export function useTerminalLifecycle({
     });
 
     const applyAppearance = () => {
-      terminal.options.theme = getXtermITheme(colorThemeRef.current);
+      const base = getXtermITheme(colorThemeRef.current);
+      const custom = getTerminalCustomColors();
+      const s = getAllSettings();
+      const ansi = getAnsiColors();
+      terminal.options.theme = {
+        ...base,
+        ...(ansi ?? {}),
+        foreground: custom.foreground,
+        background: custom.background,
+        cursor: custom.cursor,
+        cursorAccent: custom.background,
+      };
       terminal.options.fontFamily = getTerminalFontFamily();
+      terminal.options.cursorStyle = s.terminalCursorStyle;
+      terminal.options.cursorBlink = s.terminalCursorBlink;
+      terminal.options.cursorWidth = s.terminalCursorWidth;
+      terminal.options.lineHeight = s.terminalLineHeight;
+      terminal.options.letterSpacing = s.terminalLetterSpacing;
+      terminal.options.bellStyle = s.terminalBellStyle;
+      if (container) container.style.opacity = String(s.terminalOpacity / 100);
       if (terminal.rows > 0) terminal.refresh(0, terminal.rows - 1);
     };
 
     window.addEventListener("rshell-terminal-font-changed", applyAppearance);
+    window.addEventListener("rshell-settings-changed", applyAppearance);
     window.addEventListener("resize", onWindowResize);
     onWindowResize();
     const resizeObserver = new ResizeObserver(() => onWindowResize());
@@ -213,8 +254,10 @@ export function useTerminalLifecycle({
 
     return () => {
       window.removeEventListener("rshell-terminal-font-changed", applyAppearance);
+      window.removeEventListener("rshell-settings-changed", applyAppearance);
       window.removeEventListener("resize", onWindowResize);
       terminal.element?.removeEventListener("contextmenu", onContext);
+      terminal.element?.removeEventListener("mouseup", onAutoCopy);
       terminal.element?.removeEventListener("wheel", onWheelZoom);
       resizeObserver.disconnect();
       delayedFits.forEach((id) => window.clearTimeout(id));

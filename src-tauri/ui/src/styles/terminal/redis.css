@@ -18,7 +18,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  border: 1px solid rgba(66, 77, 102, 0.95);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
   overflow: hidden;
 }
@@ -30,7 +30,7 @@
 }
 
 .workspace.redis-page .topbar .actions .lang-switch .btn + .btn {
-  border-left: 1px solid rgba(66, 77, 102, 0.95);
+  border-left: 1px solid var(--border-default);
 }
 
 .workspace.redis-page .topbar .actions .lang-switch .lang-active {
@@ -64,22 +64,22 @@
   min-width: 0;
   height: 34px;
   padding: 0 10px;
-  border: 1px solid rgba(66, 77, 102, 0.95);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: rgba(17, 24, 36, 0.9);
-  color: #dbe4f5;
+  background: var(--bg-surface);
+  color: var(--text-primary);
   font-size: 12px;
   line-height: 1;
   transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
 }
 
 .workspace.redis-page .zk-browser-header input::placeholder {
-  color: #7f8ea8;
+  color: var(--text-muted);
 }
 
 .workspace.redis-page .zk-browser-header input:hover {
-  border-color: rgba(98, 116, 149, 0.95);
-  background: rgba(21, 30, 44, 0.92);
+  border-color: var(--border-accent);
+  background: var(--bg-hover);
 }
 
 .workspace.redis-page .zk-browser-header input:focus {

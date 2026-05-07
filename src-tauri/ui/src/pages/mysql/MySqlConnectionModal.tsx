@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { testMySqlConnection } from "../../services/bridge";
 import type { I18nKey } from "../../i18n";
 import type { MySqlConnectionInput } from "../../services/types";
+import { PasswordVisibilityToggle } from "../../components/session/PasswordVisibilityToggle";
 
 interface Props {
   open: boolean;
@@ -34,21 +36,45 @@ export function MySqlConnectionModal({
   setTestResult,
   onSave,
 }: Props) {
+  const [secretVisible, setSecretVisible] = useState(false);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop">
+    <div className="modal-backdrop" role="dialog" aria-modal="true">
       <div className="modal-card">
         <div className="modal-header">
           <h4>{tr("mysql.page.addConnection")}</h4>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            void onSave();
+          }
+        }}>
           <input className="mysql-field mysql-modal-input" value={form.name} onChange={(e) => onChangeForm((p) => ({ ...p, name: e.target.value }))} placeholder={tr("form.name")} />
           <input className="mysql-field mysql-modal-input" value={form.host} onChange={(e) => onChangeForm((p) => ({ ...p, host: e.target.value }))} placeholder={tr("form.host")} />
           <input className="mysql-field mysql-modal-input" type="number" value={form.port ?? 3306} onChange={(e) => onChangeForm((p) => ({ ...p, port: Number(e.target.value) }))} placeholder={tr("form.port")} />
           <input className="mysql-field mysql-modal-input" value={form.username} onChange={(e) => onChangeForm((p) => ({ ...p, username: e.target.value }))} placeholder={tr("form.username")} />
           <input className="mysql-field mysql-modal-input" value={form.database ?? ""} onChange={(e) => onChangeForm((p) => ({ ...p, database: e.target.value }))} placeholder={tr("mysql.form.database")} />
-          <input className="mysql-field mysql-modal-input" type="password" autoComplete="new-password" value={secret} onChange={(e) => onChangeSecret(e.target.value)} placeholder={tr("form.secretOptional")} />
+          <div className="password-input-wrap">
+            <input className="mysql-field mysql-modal-input" type={secretVisible ? "text" : "password"} autoComplete="new-password" value={secret} onChange={(e) => onChangeSecret(e.target.value)} placeholder={tr("form.secretOptional")} />
+            <PasswordVisibilityToggle
+              visible={secretVisible}
+              loading={false}
+              showTitle={tr("form.toggleShowPassword")}
+              hideTitle={tr("form.toggleHidePassword")}
+              onClick={() => setSecretVisible((v) => !v)}
+            />
+          </div>
           {testResult ? <div className="modal-inline-notice">{testResult}</div> : null}
         </div>
         <div className="modal-actions">

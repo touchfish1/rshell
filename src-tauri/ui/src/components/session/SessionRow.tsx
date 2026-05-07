@@ -93,7 +93,7 @@ export function SessionRow({
             }}
             onClick={copyIp}
           >
-            {copied ? "✅" : "📋"}
+            {copied ? "✓" : "⧉"}
           </button>
           {copied ? <span className="copy-success-text">{tr("session.copied")}</span> : null}
         </span>

@@ -103,6 +103,30 @@ export function useMySqlTabsManager({
     setActiveBrowseTabId(tab.id);
   };
 
+  const addQueryTabWithSql = (schema: string, sql: string) => {
+    const tab: MySqlBrowseTab = {
+      id: `query:${schema}:${Date.now()}`,
+      kind: "query",
+      schema,
+      title: tr("mysql.page.queryTabTitle", { schema }),
+    };
+    setBrowseTabs((prev) => [...prev, tab]);
+    setActiveBrowseTabId(tab.id);
+    setQueryEditorMap((prev) => ({
+      ...prev,
+      [tab.id]: {
+        sql,
+        cursor: sql.length,
+        running: false,
+        explaining: false,
+        result: null,
+        explainResult: null,
+        queryOffset: 0,
+        queryLimit: 200,
+      },
+    }));
+  };
+
   const openTopQueryTab = () => {
     const schema = activeSchema || selectedDatabase || databases[0] || "default";
     addQueryTab(schema);
@@ -227,6 +251,7 @@ export function useMySqlTabsManager({
     addTableTab,
     addTableEditTab,
     addQueryTab,
+    addQueryTabWithSql,
     openTopQueryTab,
     selectBrowseTab,
     closeBrowseTab,

@@ -1,6 +1,6 @@
 function EyeOpenIcon() {
   return (
-    <svg className="password-toggle-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+    <svg className="password-toggle-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden={true}>
       <path
         fill="none"
         stroke="currentColor"
@@ -16,7 +16,7 @@ function EyeOpenIcon() {
 
 function EyeClosedIcon() {
   return (
-    <svg className="password-toggle-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden>
+    <svg className="password-toggle-svg" viewBox="0 0 24 24" width="18" height="18" aria-hidden={true}>
       <path
         fill="none"
         stroke="currentColor"
@@ -49,7 +49,7 @@ export function PasswordVisibilityToggle({ visible, loading, showTitle, hideTitl
       aria-label={visible ? hideTitle : showTitle}
     >
       {loading ? (
-        <span className="password-toggle-loading" aria-hidden>
+        <span className="password-toggle-loading" aria-hidden={true}>
           …
         </span>
       ) : visible ? (

@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { disconnectSession } from "../services/bridge";
+import { getAllSettings } from "../lib/appSettings";
 
 export function useQuitConfirm(connectedIds: string[]) {
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
@@ -8,7 +9,8 @@ export function useQuitConfirm(connectedIds: string[]) {
   connectedIdsRef.current = connectedIds;
 
   const requestQuitOrDestroy = useCallback(() => {
-    if (connectedIdsRef.current.length === 0) {
+    const settings = getAllSettings();
+    if (connectedIdsRef.current.length === 0 || !settings.confirmBeforeClose) {
       void getCurrentWindow()
         .destroy()
         .catch(() => {});

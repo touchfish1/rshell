@@ -12,7 +12,7 @@ interface Props {
 export function EtcdConnectionRow({ conn, tr, onConnect, onEdit, onDelete }: Props) {
   return (
     <li className="session-line">
-      <button className="session-main" onClick={() => onConnect?.(conn.id)} title="Etcd">
+      <button className="session-main" onClick={() => onConnect?.(conn.id)} title={tr("protocol.etcd")}>
         <span className="session-col name">
           <span className="os-icon">ET</span>
           <span className="session-name-text">{conn.name}</span>

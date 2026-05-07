@@ -12,6 +12,7 @@ import { EtcdConnectionList } from "../components/etcd/EtcdConnectionList";
 import { ErrorBanner } from "../components/ErrorBanner";
 import { ColorThemeToggle } from "../components/ColorThemeToggle";
 import { CommandStatusBar } from "../components/CommandStatusBar";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import type { I18nKey } from "../i18n";
 
 interface Props {
@@ -58,6 +59,7 @@ export default function EtcdPage({
   const [saving, setSaving] = useState(false);
   const [saveResult, setSaveResult] = useState<string | null>(null);
   const [currentCommand, setCurrentCommand] = useState<string | null>(null);
+  const [deleteConfirmKey, setDeleteConfirmKey] = useState<string | null>(null);
 
   useEffect(() => {
     setConnected(false);
@@ -143,10 +145,13 @@ export default function EtcdPage({
 
   const deleteSelectedKey = async () => {
     if (!selected || !selectedKey) return;
-    const confirmed = window.confirm(tr("etcd.page.deleteConfirm", { key: selectedKey }));
-    if (!confirmed) return;
-
-    setCurrentCommand(`ETCD DELETE ${selectedKey}`);
+    setDeleteConfirmKey(selectedKey);
+  };
+  const handleDeleteConfirm = async () => {
+    if (!selected || !deleteConfirmKey) return;
+    const targetKey = deleteConfirmKey;
+    setDeleteConfirmKey(null);
+    setCurrentCommand(`ETCD DELETE ${targetKey}`);
     try {
       await ensureConnected();
       await etcdDeleteKey(selected.id, selectedKey);
@@ -292,13 +297,24 @@ export default function EtcdPage({
               ) : null}
             </div>
           ) : (
-            <div className="etcd-placeholder">
-              <p>{tr("etcd.page.hint")}</p>
+            <div className="empty-state">
+              <div className="empty-title">{tr("etcd.page.title")}</div>
+              <div className="empty-subtitle">{tr("etcd.page.hint")}</div>
             </div>
           )}
         </div>
       </div>
       <CommandStatusBar command={currentCommand} label={tr("cmdBar.title")} />
+      <ConfirmDialog
+        open={deleteConfirmKey !== null}
+        title={tr("etcd.page.deleteKey")}
+        message={deleteConfirmKey ? tr("etcd.page.deleteConfirm", { key: deleteConfirmKey }) : ""}
+        confirmLabel={tr("session.delete")}
+        cancelLabel={tr("modal.cancel")}
+        danger
+        onConfirm={() => void handleDeleteConfirm()}
+        onCancel={() => setDeleteConfirmKey(null)}
+      />
     </section>
   );
 }

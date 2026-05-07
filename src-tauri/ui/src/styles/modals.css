@@ -85,6 +85,8 @@
   font-size: 14px;
   line-height: 1.55;
   color: var(--modal-text-muted);
+  overflow: auto;
+  min-height: 0;
 }
 
 .modal-body--preline {
@@ -161,8 +163,7 @@
   font-size: 13px;
 }
 
-.session-form input::placeholder,
-.session-form select {
+.session-form input::placeholder {
   color: var(--modal-text-muted);
 }
 
@@ -305,6 +306,7 @@
 }
 
 .cmdk-item:hover:not(:disabled),
+.cmdk-item:focus-visible:not(:disabled),
 .cmdk-item.active {
   background: var(--accent-muted);
 }

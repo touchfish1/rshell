@@ -18,15 +18,10 @@ import {
   redisScanKeys,
   redisSetKeyData,
   redisSetTtl,
-  testRedisConnection,
 } from "../../services/bridge";
-import { buildRedisKeyTree, formatRedisAddress, normalizeRedisMatchPattern, parseRedisAddress } from "./redisTree";
-
-const defaultForm: RedisConnectionInput = {
-  name: "",
-  address: "127.0.0.1:6379",
-  db: 0,
-};
+import { buildRedisKeyTree, normalizeRedisMatchPattern } from "./redisTree";
+import { useRedisResizeHandlers } from "./useRedisResizeHandlers";
+import { useRedisConnectionForms } from "./useRedisConnectionForms";
 
 interface Params {
   connections: RedisConnection[];
@@ -61,37 +56,37 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
   const [saveResult, setSaveResult] = useState<string | null>(null);
   const [commandLogs, setCommandLogs] = useState<string[]>([]);
   const [currentCommand, setCurrentCommand] = useState<string | null>(null);
-  const [connPanelWidth, setConnPanelWidth] = useState(320);
-  const [resizingConnPanel, setResizingConnPanel] = useState(false);
-  const [commandPanelHeight, setCommandPanelHeight] = useState(156);
-  const [resizingCommandPanel, setResizingCommandPanel] = useState(false);
-  const [zkDataWidth, setZkDataWidth] = useState(460);
-  const [resizingDataPane, setResizingDataPane] = useState(false);
-  const terminalLayoutRef = useRef<HTMLDivElement | null>(null);
-  const redisPageRef = useRef<HTMLElement | null>(null);
-  const browserBodyRef = useRef<HTMLDivElement | null>(null);
 
-  const [createOpen, setCreateOpen] = useState(false);
-  const [createForm, setCreateForm] = useState<RedisConnectionInput>(defaultForm);
-  const [createSecret, setCreateSecret] = useState("");
-  const [createHost, setCreateHost] = useState("");
-  const [createPort, setCreatePort] = useState<number | "">(6379);
-  const [createSecretVisible, setCreateSecretVisible] = useState(false);
-  const [createSaving, setCreateSaving] = useState(false);
-  const [createSaveResult, setCreateSaveResult] = useState<string | null>(null);
-  const [createTesting, setCreateTesting] = useState(false);
-  const [createTestResult, setCreateTestResult] = useState<string | null>(null);
+  const {
+    connPanelWidth, setConnPanelWidth,
+    resizingConnPanel, setResizingConnPanel,
+    commandPanelHeight, setCommandPanelHeight,
+    resizingCommandPanel, setResizingCommandPanel,
+    zkDataWidth, setZkDataWidth,
+    resizingDataPane, setResizingDataPane,
+    terminalLayoutRef, redisPageRef, browserBodyRef,
+  } = useRedisResizeHandlers();
 
-  const [editOpen, setEditOpen] = useState(false);
-  const [editForm, setEditForm] = useState<RedisConnectionInput>(defaultForm);
-  const [editSecret, setEditSecret] = useState("");
-  const [editHost, setEditHost] = useState("");
-  const [editPort, setEditPort] = useState<number | "">(6379);
-  const [editSecretVisible, setEditSecretVisible] = useState(false);
-  const [editSaving, setEditSaving] = useState(false);
-  const [editSaveResult, setEditSaveResult] = useState<string | null>(null);
-  const [editTesting, setEditTesting] = useState(false);
-  const [editTestResult, setEditTestResult] = useState<string | null>(null);
+  const {
+    createOpen, setCreateOpen,
+    createForm, setCreateForm,
+    createSecret, setCreateSecret,
+    createHost, setCreateHost,
+    createPort, setCreatePort,
+    createSecretVisible, setCreateSecretVisible,
+    createSaving, createSaveResult,
+    createTesting, createTestResult,
+    editOpen, setEditOpen,
+    editForm, setEditForm,
+    editSecret, setEditSecret,
+    editHost, setEditHost,
+    editPort, setEditPort,
+    editSecretVisible, setEditSecretVisible,
+    editSaving, editSaveResult,
+    editTesting, editTestResult,
+    testCreateConnection, testEditConnection,
+    saveCreateConnection, saveEditConnection,
+  } = useRedisConnectionForms({ selected, tr, onCreate, onUpdate, onGetSecret });
 
   const [dbSwitchOpen, setDbSwitchOpen] = useState(false);
   const [dbSwitchConn, setDbSwitchConn] = useState<RedisConnection | null>(null);
@@ -128,100 +123,6 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
   const keyTree = useMemo(() => buildRedisKeyTree(keys, groupDelimiter), [groupDelimiter, keys]);
 
   const toggleGroup = (id: string) => setExpandedGroups((prev) => ({ ...prev, [id]: !prev[id] }));
-
-  useEffect(() => {
-    if (!createOpen) {
-      setCreateTesting(false);
-      setCreateTestResult(null);
-      setCreateSaving(false);
-      setCreateSaveResult(null);
-      setCreateSecretVisible(false);
-    }
-  }, [createOpen]);
-
-  useEffect(() => {
-    if (!editOpen || !selected) return;
-    setEditForm({ name: selected.name, address: selected.address, db: selected.db });
-    const parsed = parseRedisAddress(selected.address);
-    setEditHost(parsed.host);
-    setEditPort(parsed.port ?? 6379);
-    void onGetSecret(selected.id).then((secret) => setEditSecret(secret ?? ""));
-  }, [editOpen, onGetSecret, selected]);
-
-  useEffect(() => {
-    if (!editOpen) {
-      setEditTesting(false);
-      setEditTestResult(null);
-      setEditSaving(false);
-      setEditSaveResult(null);
-      setEditSecretVisible(false);
-    }
-  }, [editOpen]);
-
-  const testCreateConnection = async () => {
-    setCreateTesting(true);
-    setCreateTestResult(null);
-    try {
-      const address = formatRedisAddress(createHost, createPort === "" ? null : createPort);
-      await testRedisConnection(address, createForm.db, createSecret || undefined);
-      setCreateTestResult(tr("modal.testSuccess"));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setCreateTestResult(tr("modal.testFailed", { message }));
-    } finally {
-      setCreateTesting(false);
-    }
-  };
-
-  const testEditConnection = async () => {
-    setEditTesting(true);
-    setEditTestResult(null);
-    try {
-      const address = formatRedisAddress(editHost, editPort === "" ? null : editPort);
-      await testRedisConnection(address, editForm.db, editSecret || undefined);
-      setEditTestResult(tr("modal.testSuccess"));
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setEditTestResult(tr("modal.testFailed", { message }));
-    } finally {
-      setEditTesting(false);
-    }
-  };
-
-  const saveCreateConnection = async () => {
-    setCreateSaving(true);
-    setCreateSaveResult(null);
-    try {
-      const address = formatRedisAddress(createHost, createPort === "" ? null : createPort);
-      const created = await onCreate({ ...createForm, address }, createSecret || undefined);
-      if (!created) {
-        setCreateSaveResult(tr("error.createRedisFailed", { message: "unknown error" }));
-        return;
-      }
-      setCreateOpen(false);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setCreateSaveResult(tr("error.createRedisFailed", { message }));
-    } finally {
-      setCreateSaving(false);
-    }
-  };
-
-  const saveEditConnection = async () => {
-    if (!selected) return;
-    setEditSaving(true);
-    setEditSaveResult(null);
-    try {
-      const address = formatRedisAddress(editHost, editPort === "" ? null : editPort);
-      await onUpdate(selected.id, { ...editForm, address }, editSecret || undefined);
-      setEditOpen(false);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setEditSaveResult(tr("error.updateRedisFailed", { message }));
-    } finally {
-      setEditSaving(false);
-    }
-  };
 
   const ensureConnected = async () => {
     if (!selected) throw new Error(tr("redis.error.noConnectionSelected"));
@@ -523,70 +424,6 @@ export function useRedisPageState({ connections, selectedId, tr, onSelect, onCre
     void loadKeys(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected?.id, keysLoaded, scanLoading]);
-
-  useEffect(() => {
-    if (!resizingDataPane) return;
-    const onMouseMove = (event: MouseEvent) => {
-      const root = browserBodyRef.current;
-      if (!root) return;
-      const rect = root.getBoundingClientRect();
-      const minTree = 260;
-      const minData = 320;
-      const nextDataWidth = rect.right - event.clientX;
-      const maxData = Math.max(minData, rect.width - minTree - 8);
-      const clamped = Math.max(minData, Math.min(nextDataWidth, maxData));
-      setZkDataWidth(Math.round(clamped));
-    };
-    const onMouseUp = () => setResizingDataPane(false);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [resizingDataPane]);
-
-  useEffect(() => {
-    if (!resizingConnPanel) return;
-    const onMouseMove = (event: MouseEvent) => {
-      const root = terminalLayoutRef.current;
-      if (!root) return;
-      const rect = root.getBoundingClientRect();
-      const next = event.clientX - rect.left;
-      const min = 240;
-      const max = Math.max(360, rect.width * 0.46);
-      const clamped = Math.max(min, Math.min(max, next));
-      setConnPanelWidth(Math.round(clamped));
-    };
-    const onMouseUp = () => setResizingConnPanel(false);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [resizingConnPanel]);
-
-  useEffect(() => {
-    if (!resizingCommandPanel) return;
-    const onMouseMove = (event: MouseEvent) => {
-      const root = redisPageRef.current;
-      if (!root) return;
-      const rect = root.getBoundingClientRect();
-      const next = rect.bottom - event.clientY;
-      const min = 120;
-      const max = Math.max(260, rect.height * 0.45);
-      const clamped = Math.max(min, Math.min(max, next));
-      setCommandPanelHeight(Math.round(clamped));
-    };
-    const onMouseUp = () => setResizingCommandPanel(false);
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-  }, [resizingCommandPanel]);
 
   const disconnectActive = async () => {
     if (!selected) return;

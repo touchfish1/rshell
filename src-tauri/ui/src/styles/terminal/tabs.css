@@ -3,13 +3,14 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border-bottom: 1px solid rgba(43, 49, 64, 0.7);
-  background: #0b1018;
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface);
   overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .session-tab-empty {
-  color: #8992a6;
+  color: var(--text-secondary);
   font-size: 12px;
   padding: 4px 2px;
 }
@@ -24,8 +25,9 @@
   transition: background 120ms ease;
 }
 
-.session-tab:hover {
-  background: rgba(28, 36, 50, 0.45);
+.session-tab:hover,
+.session-tab:focus-visible {
+  background: var(--bg-hover);
 }
 
 .session-tab.active {
@@ -41,7 +43,7 @@
 .session-tab-main {
   border: none;
   background: transparent;
-  color: #d6ddec;
+  color: var(--text-primary);
   padding: 6px 10px;
   font-size: 13px;
   font-weight: 500;
@@ -55,7 +57,7 @@
   border: none;
   border-left: none;
   background: transparent;
-  color: #9aa5bb;
+  color: var(--text-secondary);
   width: 24px;
   height: 24px;
   font-size: 13px;
@@ -64,8 +66,8 @@
 }
 
 .session-tab-close:hover {
-  color: #d6e0f4;
-  background: rgba(47, 58, 78, 0.5);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .session-dot {
@@ -76,21 +78,21 @@
 }
 
 .session-dot.on {
-  background: #5fd3a0;
+  background: var(--success);
 }
 
 .session-dot.off {
-  background: #728099;
+  background: var(--text-muted);
 }
 
 .session-dot.pending {
-  background: #e8b44c;
+  background: var(--warning);
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
   animation: session-dot-pulse 1.1s ease-in-out infinite;
 }
 
 .session-dot.err {
-  background: #e85d6c;
+  background: var(--danger);
 }
 
 @keyframes session-dot-pulse {

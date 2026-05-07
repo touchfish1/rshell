@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ZookeeperConnection, ZookeeperConnectionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
+import { ConfirmDialog } from "../ConfirmDialog";
 
 interface Props {
   connection: ZookeeperConnection | null;
@@ -38,10 +39,19 @@ export function ZkConnectionEditModal({
   const { tr } = useI18n();
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [initialSecret, setInitialSecret] = useState("");
+  const [confirmClose, setConfirmClose] = useState(false);
 
   useEffect(() => {
     setSubmitAttempted(false);
   }, [connection?.id]);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
   useEffect(() => {
     if (!connection) return;
     setInitialSecret(secret);
@@ -76,11 +86,11 @@ export function ZkConnectionEditModal({
       onClose();
       return;
     }
-    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
-    if (ok) onClose();
+    setConfirmClose(true);
   };
 
   return (
+    <>
     <div className="modal-backdrop" onClick={requestClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr("zk.modal.editConnection")}>
         <div className="modal-header">
@@ -89,7 +99,13 @@ export function ZkConnectionEditModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey && !saving) {
+            e.preventDefault();
+            setSubmitAttempted(true);
+            if (canSubmit) onSubmit();
+          }
+        }}>
           <div className="session-form">
             <input
               placeholder={tr("zk.form.name")}
@@ -144,13 +160,23 @@ export function ZkConnectionEditModal({
               if (!canSubmit) return;
               onSubmit();
             }}
-            disabled={!canSubmit}
+            disabled={saving}
           >
             {saving ? tr("modal.saving") : tr("modal.save")}
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmClose}
+        title={tr("modal.unsavedCloseTitle")}
+        message={tr("modal.unsavedCloseMessage")}
+        confirmLabel={tr("modal.confirmClose")}
+        cancelLabel={tr("modal.cancel")}
+        onConfirm={() => { setConfirmClose(false); onClose(); }}
+        onCancel={() => setConfirmClose(false)}
+      />
     </div>
+    </>
   );
 }
 

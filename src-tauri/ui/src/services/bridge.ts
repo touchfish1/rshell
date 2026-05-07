@@ -1,544 +1,121 @@
 /**
  * 前端与 Tauri 后端的薄封装：`invoke` 各命令、`listen` 审计事件，类型与 `types.ts` 对齐。
+ *
+ * 按领域拆分为 bridge/ 子模块，此文件为统一导出入口。
+ * 新增函数请放入对应子模块，再从此文件导出。
  */
-import { invoke } from "@tauri-apps/api/core";
-import { listen } from "@tauri-apps/api/event";
-import type {
-  AuditRecord,
-  EtcdConnection,
-  EtcdConnectionInput,
-  EtcdKeyValue,
-  HostMetrics,
-  HostReachability,
-  Protocol,
-  Session,
-  SessionInput,
-  SftpEntry,
-  SftpTextReadResult,
-  ZkNodeData,
-  ZookeeperConnection,
-  ZookeeperConnectionInput,
-  RedisConnection,
-  RedisConnectionInput,
-  RedisDatabaseInfo,
-  RedisKeyData,
-  RedisKeyRef,
-  RedisScanResult,
-  RedisValueData,
-  RedisValueUpdate,
-  MySqlColumnInfo,
-  MySqlConnection,
-  MySqlConnectionInput,
-  MySqlQueryResult,
-  MySqlTableInfo,
-  PostgreSqlColumnInfo,
-  PostgreSqlConnection,
-  PostgreSqlConnectionInput,
-  PostgreSqlQueryResult,
-  PostgreSqlTableInfo,
-} from "./types";
-
-export async function listSessions(): Promise<Session[]> {
-  return invoke("list_sessions");
-}
-
-export async function createSession(input: SessionInput, secret?: string): Promise<Session> {
-  return invoke("create_session", { input, secret });
-}
-
-export async function updateSession(id: string, input: SessionInput, secret?: string): Promise<Session> {
-  return invoke("update_session", { id, input, secret });
-}
-
-export async function deleteSession(id: string): Promise<void> {
-  await invoke("delete_session", { id });
-}
-
-export async function hasSessionSecret(id: string): Promise<boolean> {
-  return invoke("has_session_secret", { id });
-}
-
-export async function getSessionSecret(id: string): Promise<string | null> {
-  return invoke("get_session_secret", { id });
-}
-
-export async function connectSession(id: string, secret?: string): Promise<void> {
-  await invoke("connect_session", { id, secret });
-}
-
-export async function pullOutput(id: string): Promise<string | null> {
-  return invoke("pull_output", { id });
-}
-
-export async function disconnectSession(id: string): Promise<void> {
-  await invoke("disconnect_session", { id });
-}
-
-export async function sendInput(id: string, input: string): Promise<void> {
-  await invoke("send_input", { id, input });
-}
-
-export async function resizeTerminal(id: string, cols: number, rows: number): Promise<void> {
-  await invoke("resize_terminal", { id, cols, rows });
-}
-
-export async function listSftpDir(id: string, path?: string): Promise<SftpEntry[]> {
-  return invoke("list_sftp_dir", { id, path });
-}
-
-export async function downloadSftpFile(id: string, remotePath: string): Promise<string> {
-  return invoke("download_sftp_file", { id, remotePath });
-}
-
-export async function readSftpTextFile(id: string, remotePath: string): Promise<SftpTextReadResult> {
-  return invoke("read_sftp_text_file", { id, remotePath });
-}
-
-export async function saveSftpTextFile(id: string, remotePath: string, content: string): Promise<void> {
-  await invoke("save_sftp_text_file", { id, remotePath, content });
-}
-
-export async function uploadSftpFile(
-  id: string,
-  remoteDir: string,
-  fileName: string,
-  contentBase64: string
-): Promise<void> {
-  await invoke("upload_sftp_file", { id, remoteDir, fileName, contentBase64 });
-}
-
-export async function openInFileManager(path: string): Promise<void> {
-  await invoke("open_in_file_manager", { path });
-}
-
-export async function openExternalUrl(url: string): Promise<void> {
-  await invoke("open_external_url", { url });
-}
-
-export async function testHostReachability(
-  host: string,
-  port: number,
-  timeoutMs = 2000,
-  protocol?: Protocol
-): Promise<HostReachability> {
-  const raw = await invoke<{ online: boolean; latency_ms: number | null }>("test_host_reachability", {
-    host,
-    port,
-    timeout_ms: timeoutMs,
-    protocol: protocol ?? null,
-  });
-  return {
-    online: raw.online === true,
-    latency_ms: raw.latency_ms ?? null,
-  };
-}
-
-export async function getHostMetrics(id: string): Promise<HostMetrics> {
-  return invoke("get_host_metrics", { id });
-}
-
-export async function listAudits(limit = 300): Promise<AuditRecord[]> {
-  return invoke("list_audits", { limit });
-}
-
-export function onTerminalOutput(handler: (payload: { sessionId: string; data: string }) => void) {
-  return listen<{ sessionId: string; data: string }>("terminal-output", (event) => {
-    handler(event.payload);
-  });
-}
-
-export function onDebugLog(
-  handler: (payload: { sessionId: string; stage: string; message: string }) => void
-) {
-  return listen<{ sessionId: string; stage: string; message: string }>("debug-log", (event) => {
-    handler(event.payload);
-  });
-}
-
-export async function listZookeeperConnections(): Promise<ZookeeperConnection[]> {
-  return invoke("list_zookeeper_connections");
-}
-
-export async function createZookeeperConnection(
-  input: ZookeeperConnectionInput,
-  secret?: string
-): Promise<ZookeeperConnection> {
-  return invoke("create_zookeeper_connection", { input, secret });
-}
-
-export async function updateZookeeperConnection(
-  id: string,
-  input: ZookeeperConnectionInput,
-  secret?: string
-): Promise<ZookeeperConnection> {
-  return invoke("update_zookeeper_connection", { id, input, secret });
-}
-
-export async function deleteZookeeperConnection(id: string): Promise<void> {
-  await invoke("delete_zookeeper_connection", { id });
-}
-
-export async function hasZookeeperSecret(id: string): Promise<boolean> {
-  return invoke("has_zookeeper_secret", { id });
-}
-
-export async function getZookeeperSecret(id: string): Promise<string | null> {
-  return invoke("get_zookeeper_secret", { id });
-}
-
-export async function connectZookeeper(id: string, secret?: string): Promise<void> {
-  await invoke("connect_zookeeper", { id, secret });
-}
-
-export async function testZookeeperConnection(
-  connectString: string,
-  sessionTimeoutMs?: number,
-  secret?: string
-): Promise<void> {
-  await invoke("test_zookeeper_connection", {
-    // Tauri command args are camelCase-mapped from Rust snake_case params.
-    connectString,
-    sessionTimeoutMs: sessionTimeoutMs ?? null,
-    secret: secret ?? null,
-  });
-}
-
-export async function disconnectZookeeper(id: string): Promise<void> {
-  await invoke("disconnect_zookeeper", { id });
-}
-
-export async function zkListChildren(id: string, path: string): Promise<string[]> {
-  return invoke("zk_list_children", { id, path });
-}
-
-export async function zkGetData(id: string, path: string): Promise<ZkNodeData> {
-  return invoke("zk_get_data", { id, path });
-}
-
-export async function zkSetData(id: string, path: string, dataUtf8: string): Promise<void> {
-  await invoke("zk_set_data", { id, path, dataUtf8 });
-}
-
-export async function listRedisConnections(): Promise<RedisConnection[]> {
-  return invoke("list_redis_connections");
-}
-
-export async function createRedisConnection(
-  input: RedisConnectionInput,
-  secret?: string
-): Promise<RedisConnection> {
-  return invoke("create_redis_connection", { input, secret });
-}
-
-export async function updateRedisConnection(
-  id: string,
-  input: RedisConnectionInput,
-  secret?: string
-): Promise<RedisConnection> {
-  return invoke("update_redis_connection", { id, input, secret });
-}
-
-export async function deleteRedisConnection(id: string): Promise<void> {
-  await invoke("delete_redis_connection", { id });
-}
-
-export async function getRedisSecret(id: string): Promise<string | null> {
-  return invoke("get_redis_secret", { id });
-}
-
-export async function connectRedis(id: string, secret?: string): Promise<void> {
-  await invoke("connect_redis", { id, secret });
-}
-
-export async function testRedisConnection(address: string, db?: number, secret?: string): Promise<void> {
-  await invoke("test_redis_connection", {
-    address,
-    db: db ?? null,
-    secret: secret ?? null,
-  });
-}
-
-export async function disconnectRedis(id: string): Promise<void> {
-  await invoke("disconnect_redis", { id });
-}
-
-export async function redisListKeys(id: string, pattern?: string): Promise<string[]> {
-  return invoke("redis_list_keys", { id, pattern: pattern ?? null });
-}
-
-export async function redisGetValue(id: string, keyBase64: string): Promise<RedisValueData> {
-  return invoke("redis_get_value", { id, keyBase64 });
-}
-
-export async function redisSetValue(id: string, keyBase64: string, value: string): Promise<void> {
-  await invoke("redis_set_value", { id, keyBase64, value });
-}
-
-export async function redisScanKeys(
-  id: string,
-  cursor = 0,
-  pattern?: string,
-  count = 50
-): Promise<RedisScanResult> {
-  return invoke("redis_scan_keys", {
-    id,
-    cursor,
-    pattern: pattern ?? null,
-    count,
-  });
-}
-
-export async function redisListDatabases(id: string): Promise<RedisDatabaseInfo[]> {
-  return invoke("redis_list_databases", { id });
-}
-
-export async function redisGetKeyData(id: string, keyBase64: string): Promise<RedisKeyData> {
-  return invoke("redis_get_key_data", { id, keyBase64 });
-}
-
-export async function redisSetKeyData(id: string, keyBase64: string, payload: RedisValueUpdate): Promise<void> {
-  await invoke("redis_set_key_data", { id, keyBase64, payload });
-}
-
-export async function redisSetTtl(id: string, keyBase64: string, ttlSeconds?: number): Promise<void> {
-  await invoke("redis_set_ttl", { id, keyBase64, ttlSeconds: ttlSeconds ?? null });
-}
-
-export async function listMySqlConnections(): Promise<MySqlConnection[]> {
-  return invoke("list_mysql_connections");
-}
-
-export async function createMySqlConnection(input: MySqlConnectionInput, secret?: string): Promise<MySqlConnection> {
-  return invoke("create_mysql_connection", { input, secret });
-}
-
-export async function updateMySqlConnection(
-  id: string,
-  input: MySqlConnectionInput,
-  secret?: string
-): Promise<MySqlConnection> {
-  return invoke("update_mysql_connection", { id, input, secret });
-}
-
-export async function deleteMySqlConnection(id: string): Promise<void> {
-  await invoke("delete_mysql_connection", { id });
-}
-
-export async function getMySqlSecret(id: string): Promise<string | null> {
-  return invoke("get_mysql_secret", { id });
-}
-
-export async function connectMySql(id: string, secret?: string): Promise<void> {
-  await invoke("connect_mysql", { id, secret });
-}
-
-export async function testMySqlConnection(
-  host: string,
-  port: number,
-  username: string,
-  database?: string,
-  secret?: string
-): Promise<void> {
-  await invoke("test_mysql_connection", {
-    host,
-    port,
-    username,
-    database: database ?? null,
-    secret: secret ?? null,
-  });
-}
-
-export async function disconnectMySql(id: string): Promise<void> {
-  await invoke("disconnect_mysql", { id });
-}
-
-export async function mySqlListDatabases(id: string): Promise<string[]> {
-  return invoke("mysql_list_databases", { id });
-}
-
-export async function mySqlListTables(id: string, schema: string): Promise<MySqlTableInfo[]> {
-  return invoke("mysql_list_tables", { id, schema });
-}
-
-export async function mySqlListColumns(id: string, schema: string, table: string): Promise<MySqlColumnInfo[]> {
-  return invoke("mysql_list_columns", { id, schema, table });
-}
-
-export async function mySqlExecuteQuery(
-  id: string,
-  sql: string,
-  limit = 200,
-  offset = 0,
-  schema?: string
-): Promise<MySqlQueryResult> {
-  return invoke("mysql_execute_query", { id, sql, limit, offset, schema: schema ?? null });
-}
-
-export async function mySqlExplainQuery(id: string, sql: string): Promise<MySqlQueryResult> {
-  return invoke("mysql_explain_query", { id, sql });
-}
-
-export async function mySqlAlterTableAddColumn(
-  id: string,
-  schema: string,
-  table: string,
-  columnName: string,
-  columnType: string
-): Promise<void> {
-  await invoke("mysql_alter_table_add_column", {
-    id,
-    schema,
-    table,
-    columnName,
-    columnType,
-  });
-}
-
-export async function listPostgreSqlConnections(): Promise<PostgreSqlConnection[]> {
-  return invoke("list_postgresql_connections");
-}
-
-export async function createPostgreSqlConnection(
-  input: PostgreSqlConnectionInput,
-  secret?: string
-): Promise<PostgreSqlConnection> {
-  return invoke("create_postgresql_connection", { input, secret });
-}
-
-export async function updatePostgreSqlConnection(
-  id: string,
-  input: PostgreSqlConnectionInput,
-  secret?: string
-): Promise<PostgreSqlConnection> {
-  return invoke("update_postgresql_connection", { id, input, secret });
-}
-
-export async function deletePostgreSqlConnection(id: string): Promise<void> {
-  await invoke("delete_postgresql_connection", { id });
-}
-
-export async function getPostgreSqlSecret(id: string): Promise<string | null> {
-  return invoke("get_postgresql_secret", { id });
-}
-
-export async function connectPostgreSql(id: string, secret?: string): Promise<void> {
-  await invoke("connect_postgresql", { id, secret });
-}
-
-export async function testPostgreSqlConnection(
-  host: string,
-  port: number,
-  username: string,
-  database?: string,
-  secret?: string
-): Promise<void> {
-  await invoke("test_postgresql_connection", {
-    host,
-    port,
-    username,
-    database: database ?? null,
-    secret: secret ?? null,
-  });
-}
-
-export async function disconnectPostgreSql(id: string): Promise<void> {
-  await invoke("disconnect_postgresql", { id });
-}
-
-export async function postgreSqlListDatabases(id: string): Promise<string[]> {
-  return invoke("postgresql_list_databases", { id });
-}
-
-export async function postgreSqlListTables(id: string, schema: string): Promise<PostgreSqlTableInfo[]> {
-  return invoke("postgresql_list_tables", { id, schema });
-}
-
-export async function postgreSqlListColumns(
-  id: string,
-  schema: string,
-  table: string
-): Promise<PostgreSqlColumnInfo[]> {
-  return invoke("postgresql_list_columns", { id, schema, table });
-}
-
-export async function postgreSqlExecuteQuery(
-  id: string,
-  sql: string,
-  limit = 200,
-  offset = 0,
-  schema?: string
-): Promise<PostgreSqlQueryResult> {
-  return invoke("postgresql_execute_query", { id, sql, limit, offset, schema: schema ?? null });
-}
-
-export async function postgreSqlExplainQuery(id: string, sql: string): Promise<PostgreSqlQueryResult> {
-  return invoke("postgresql_explain_query", { id, sql });
-}
-
-export async function listEnvironments(): Promise<string[]> {
-  return invoke("list_environments");
-}
-
-export async function getCurrentEnvironment(): Promise<string> {
-  return invoke("get_current_environment");
-}
-
-export async function createEnvironment(name: string): Promise<string[]> {
-  return invoke("create_environment", { name });
-}
-
-export async function renameCurrentEnvironment(newName: string): Promise<string> {
-  return invoke("rename_current_environment", { newName });
-}
-
-export async function switchEnvironment(name: string): Promise<string> {
-  return invoke("switch_environment", { name });
-}
-
-export async function listEtcdConnections(): Promise<EtcdConnection[]> {
-  return invoke("list_etcd_connections");
-}
-
-export async function createEtcdConnection(input: EtcdConnectionInput, secret?: string): Promise<EtcdConnection> {
-  return invoke("create_etcd_connection", { input, secret });
-}
-
-export async function updateEtcdConnection(id: string, input: EtcdConnectionInput, secret?: string): Promise<EtcdConnection> {
-  return invoke("update_etcd_connection", { id, input, secret });
-}
-
-export async function deleteEtcdConnection(id: string): Promise<void> {
-  await invoke("delete_etcd_connection", { id });
-}
-
-export async function hasEtcdSecret(id: string): Promise<boolean> {
-  return invoke("has_etcd_secret", { id });
-}
-
-export async function getEtcdSecret(id: string): Promise<string | null> {
-  return invoke("get_etcd_secret", { id });
-}
-
-export async function connectEtcd(id: string, secret?: string): Promise<void> {
-  await invoke("connect_etcd", { id, secret });
-}
-
-export async function disconnectEtcd(id: string): Promise<void> {
-  await invoke("disconnect_etcd", { id });
-}
-
-export async function etcdListKeys(id: string, prefix: string): Promise<string[]> {
-  return invoke("etcd_list_keys", { id, prefix });
-}
-
-export async function etcdGetValue(id: string, key: string): Promise<EtcdKeyValue | null> {
-  return invoke("etcd_get_value", { id, key });
-}
-
-export async function etcdSetValue(id: string, key: string, value: string): Promise<void> {
-  await invoke("etcd_set_value", { id, key, value });
-}
-
-export async function etcdDeleteKey(id: string, key: string): Promise<void> {
-  await invoke("etcd_delete_key", { id, key });
-}
+export {
+  listSessions,
+  createSession,
+  updateSession,
+  deleteSession,
+  hasSessionSecret,
+  getSessionSecret,
+  connectSession,
+  pullOutput,
+  disconnectSession,
+  sendInput,
+  resizeTerminal,
+  listSftpDir,
+  downloadSftpFile,
+  readSftpTextFile,
+  saveSftpTextFile,
+  uploadSftpFile,
+  openInFileManager,
+  openExternalUrl,
+  testHostReachability,
+  getHostMetrics,
+  listAudits,
+  onTerminalOutput,
+  onDebugLog,
+} from "./bridge/session";
+
+export {
+  listZookeeperConnections,
+  createZookeeperConnection,
+  updateZookeeperConnection,
+  deleteZookeeperConnection,
+  hasZookeeperSecret,
+  getZookeeperSecret,
+  connectZookeeper,
+  testZookeeperConnection,
+  disconnectZookeeper,
+  zkListChildren,
+  zkGetData,
+  zkSetData,
+} from "./bridge/zookeeper";
+
+export {
+  listRedisConnections,
+  createRedisConnection,
+  updateRedisConnection,
+  deleteRedisConnection,
+  getRedisSecret,
+  connectRedis,
+  testRedisConnection,
+  disconnectRedis,
+  redisListKeys,
+  redisGetValue,
+  redisSetValue,
+  redisScanKeys,
+  redisListDatabases,
+  redisGetKeyData,
+  redisSetKeyData,
+  redisSetTtl,
+} from "./bridge/redis";
+
+export {
+  listMySqlConnections,
+  createMySqlConnection,
+  updateMySqlConnection,
+  deleteMySqlConnection,
+  getMySqlSecret,
+  connectMySql,
+  testMySqlConnection,
+  disconnectMySql,
+  mySqlListDatabases,
+  mySqlListTables,
+  mySqlListColumns,
+  mySqlExecuteQuery,
+  mySqlExplainQuery,
+  mySqlAlterTableAddColumn,
+} from "./bridge/mysql";
+
+export {
+  listPostgreSqlConnections,
+  createPostgreSqlConnection,
+  updatePostgreSqlConnection,
+  deletePostgreSqlConnection,
+  getPostgreSqlSecret,
+  connectPostgreSql,
+  testPostgreSqlConnection,
+  disconnectPostgreSql,
+  postgreSqlListDatabases,
+  postgreSqlListTables,
+  postgreSqlListColumns,
+  postgreSqlExecuteQuery,
+  postgreSqlExplainQuery,
+} from "./bridge/postgresql";
+
+export {
+  listEnvironments,
+  getCurrentEnvironment,
+  createEnvironment,
+  renameCurrentEnvironment,
+  switchEnvironment,
+} from "./bridge/environment";
+
+export {
+  listEtcdConnections,
+  createEtcdConnection,
+  updateEtcdConnection,
+  deleteEtcdConnection,
+  hasEtcdSecret,
+  getEtcdSecret,
+  connectEtcd,
+  disconnectEtcd,
+  etcdListKeys,
+  etcdGetValue,
+  etcdSetValue,
+  etcdDeleteKey,
+} from "./bridge/etcd";

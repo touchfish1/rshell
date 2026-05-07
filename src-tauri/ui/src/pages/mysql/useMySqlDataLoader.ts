@@ -123,12 +123,15 @@ export function useMySqlDataLoader({
       setCurrentCommand(query);
       const data = await mySqlExecuteQuery(selected.id, query, resolvedPageSize, page * resolvedPageSize);
       let columns = data.columns;
-      if (columns.length === 0 && table) {
+      let columnInfos: MySqlColumnInfo[] = [];
+      if (table) {
         try {
-          const columnInfos = await mySqlListColumns(selected.id, schema, table);
-          columns = columnInfos.map((c) => c.name);
+          columnInfos = await mySqlListColumns(selected.id, schema, table);
+          if (columns.length === 0) {
+            columns = columnInfos.map((c) => c.name);
+          }
         } catch {
-          /* keep empty columns */
+          /* column info is optional */
         }
       }
       setTableDataMap((prev) => ({
@@ -152,6 +155,7 @@ export function useMySqlDataLoader({
           totalRows,
           lastSql: query,
           error: undefined,
+          columnInfos,
         },
       }));
     } catch (err) {

@@ -1,54 +1,17 @@
-.session-tab-context-menu {
-  position: fixed;
-  z-index: 70;
-  min-width: 128px;
-  background: #0d131d;
-  border: 1px solid rgba(55, 66, 90, 0.95);
-  border-radius: var(--radius-md);
-  padding: 4px;
-  display: grid;
-  gap: 4px;
-}
-
-.session-tab-context-menu button {
-  width: 100%;
-  text-align: left;
-  font-size: 12px;
-  padding: 6px 8px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: #cfd8ea;
-}
-
-.session-tab-context-menu button:hover {
-  border-color: rgba(56, 65, 86, 0.9);
-  background: rgba(28, 37, 52, 0.7);
-}
-
-.session-tab-context-menu button:disabled {
-  color: #707d95;
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.session-tab-context-menu button:disabled:hover {
-  border-color: transparent;
-  background: transparent;
-}
-
+.session-tab-context-menu,
 .host-context-menu {
   position: fixed;
   z-index: 70;
-  min-width: 138px;
-  background: #0d131d;
-  border: 1px solid rgba(55, 66, 90, 0.95);
+  min-width: 128px;
+  background: var(--modal-surface);
+  border: 1px solid var(--modal-border);
   border-radius: var(--radius-md);
   padding: 4px;
   display: grid;
   gap: 4px;
 }
 
+.session-tab-context-menu button,
 .host-context-menu button {
   width: 100%;
   text-align: left;
@@ -57,12 +20,26 @@
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: #cfd8ea;
+  color: var(--modal-text);
 }
 
+.session-tab-context-menu button:hover,
 .host-context-menu button:hover {
-  border-color: rgba(56, 65, 86, 0.9);
-  background: rgba(28, 37, 52, 0.7);
+  background: var(--modal-surface-muted);
+  border-color: transparent;
+}
+
+.session-tab-context-menu button:disabled,
+.host-context-menu button:disabled {
+  color: var(--modal-text-muted);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.session-tab-context-menu button:disabled:hover,
+.host-context-menu button:disabled:hover {
+  border-color: transparent;
+  background: transparent;
 }
 
 .terminal-context-menu {

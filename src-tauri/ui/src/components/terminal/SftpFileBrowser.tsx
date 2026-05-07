@@ -120,7 +120,7 @@ export function SftpFileBrowser({
               <li className="sftp-row">
                 <button className="sftp-dir sftp-parent" onClick={onSftpUp} title={tr("sftp.backToParent")}>
                   <span className="sftp-col-name">
-                    <span className="sftp-kind-icon folder">📁</span>
+                    <span className="sftp-kind-icon folder">▸</span>
                     <span className="sftp-name-text">..</span>
                   </span>
                   <span className="sftp-col-size">-</span>
@@ -148,7 +148,7 @@ export function SftpFileBrowser({
                   title={entry.path}
                 >
                   <span className="sftp-col-name">
-                    <span className={`sftp-kind-icon ${entry.is_dir ? "folder" : "file"}`}>{entry.is_dir ? "📁" : "📄"}</span>
+                    <span className={`sftp-kind-icon ${entry.is_dir ? "folder" : "file"}`}>{entry.is_dir ? "▸" : "·"}</span>
                     <span className="sftp-name-text">{getDisplayName(entry)}</span>
                   </span>
                   <span className="sftp-col-size">{entry.is_dir ? "-" : formatSize(entry.size)}</span>

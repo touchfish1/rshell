@@ -83,6 +83,7 @@ body {
   margin: 0;
   color: var(--text-primary);
   background: var(--bg-page);
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ---- Thin scrollbars globally ---- */
@@ -129,6 +130,7 @@ body {
 
 /* ---- Focus ring (accent, not blue) ---- */
 
+button:focus-visible,
 .btn:focus-visible,
 .session-list button:focus-visible,
 .session-form input:focus-visible,
@@ -223,6 +225,16 @@ textarea:focus-visible {
   border-color: var(--border-default);
   background: var(--bg-hover);
   color: var(--text-primary);
+}
+
+.btn-ghost:active:not(:disabled) {
+  background: var(--bg-active);
+  color: var(--text-primary);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ---- Theme controls ---- */

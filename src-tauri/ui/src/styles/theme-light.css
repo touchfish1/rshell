@@ -932,21 +932,27 @@ html[data-theme="light"] .mysql-context-item.danger {
 
 /* —— MySQL 侧边栏表区域 —— */
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-section {
-  background: rgba(240, 246, 255, 0.85);
-  border-color: #c8d4e8;
+  background: rgba(240, 246, 255, 0.9);
+  border-color: #bccbe0;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-search-wrap {
   border-bottom-color: #d5dce8;
-  background: rgba(248, 250, 252, 0.9);
+  background: rgba(245, 248, 252, 0.95);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-search-wrap:focus-within {
+  background: rgba(240, 246, 255, 0.98);
+  border-bottom-color: rgba(13, 148, 136, 0.35);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-search-icon {
-  color: #8899bb;
+  color: #7a8fb1;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-search-input {
-  color: #1f2a44;
+  color: #1a2a44;
+  font-size: 12px;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-search-input::placeholder {
@@ -955,20 +961,46 @@ html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-search-input::plac
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-row {
   color: #4a6085;
+  border-left-color: transparent;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-row:hover {
-  background: rgba(13, 148, 136, 0.05);
+  background: rgba(13, 148, 136, 0.06);
   color: #1a2d4e;
+  border-left-color: rgba(13, 148, 136, 0.2);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-row.is-selected {
+  background: rgba(13, 148, 136, 0.08);
+  color: #0f2847;
+  border-left-color: rgba(13, 148, 136, 0.55);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-status {
   color: #6f85ab;
+  font-size: 11px;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-filter-hint {
+  color: #889bb8;
+  border-bottom-color: #dde3ec;
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-db-node:hover {
-  background: rgba(13, 148, 136, 0.06);
+  background: rgba(13, 148, 136, 0.07);
   border-left-color: rgba(13, 148, 136, 0.25);
+  color: #163060;
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-db-node.is-selected {
+  background: rgba(13, 148, 136, 0.1);
+  border-left-color: rgba(13, 148, 136, 0.6);
+  color: #0f2847;
+  box-shadow: inset 2px 0 0 0 rgba(13, 148, 136, 0.5);
+}
+
+html[data-theme="light"] .workspace.mysql-page .mysql-sidebar-table-name {
+  font-family: var(--font-mono, Consolas, monospace);
 }
 
 html[data-theme="light"] .workspace.mysql-page .mysql-data-tab-main {
@@ -1129,4 +1161,115 @@ html[data-theme="light"] .redis-set-editor-bar input {
 html[data-theme="light"] .redis-set-cancel-btn {
   border-color: #c5cedd;
   color: #334155;
+}
+
+/* ===== Etcd page styles (light overrides) ===== */
+
+html[data-theme="light"] .etcd-page .session-list {
+  border-right-color: #d5dce8;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .etcd-conn-line {
+  border-bottom-color: #e2e8f0;
+}
+
+html[data-theme="light"] .etcd-conn-main {
+  color: #1e293b;
+}
+
+html[data-theme="light"] .etcd-conn-name {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .etcd-conn-endpoints {
+  color: #475569;
+}
+
+html[data-theme="light"] .etcd-conn-line:hover .etcd-conn-main {
+  background: #f1f5f9;
+}
+
+html[data-theme="light"] .etcd-conn-line.active .etcd-conn-main {
+  background: var(--accent-muted);
+}
+
+html[data-theme="light"] .etcd-prefix-input {
+  border-color: #c5cedd;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .etcd-prefix-input::placeholder {
+  color: #6b7280;
+}
+
+html[data-theme="light"] .etcd-prefix-input:hover {
+  border-color: #aebad0;
+  background: #f8fafc;
+}
+
+html[data-theme="light"] .etcd-prefix-input:focus {
+  border-color: rgba(13, 148, 136, 0.6);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
+}
+
+html[data-theme="light"] .etcd-keys-panel {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .etcd-keys-header {
+  border-bottom-color: #d5dce8;
+  color: #475569;
+}
+
+html[data-theme="light"] .etcd-key-item {
+  color: #1e293b;
+}
+
+html[data-theme="light"] .etcd-key-item:hover {
+  background: #f1f5f9;
+}
+
+html[data-theme="light"] .etcd-empty-hint {
+  color: #64748b;
+}
+
+html[data-theme="light"] .etcd-value-panel {
+  border-color: #c5cedd;
+  background: #ffffff;
+}
+
+html[data-theme="light"] .etcd-value-key {
+  color: #0f172a;
+}
+
+html[data-theme="light"] .etcd-value-meta {
+  color: #64748b;
+}
+
+html[data-theme="light"] .etcd-value-label {
+  color: #475569;
+}
+
+html[data-theme="light"] .etcd-value-textarea {
+  border-color: #c5cedd;
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+html[data-theme="light"] .etcd-value-textarea:focus {
+  border-color: rgba(13, 148, 136, 0.6);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.16);
+}
+
+html[data-theme="light"] .etcd-save-result {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
+}
+
+html[data-theme="light"] .etcd-placeholder {
+  color: #64748b;
 }

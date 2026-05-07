@@ -1,4 +1,4 @@
-import type { RefObject } from "react";
+import { useEffect, type RefObject } from "react";
 import type { I18nKey } from "../../i18n";
 import { formatBytes } from "./formatters";
 
@@ -37,6 +37,14 @@ export function SftpTextEditorModal({
   onClose,
   onSave,
 }: Props) {
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   if (!open) return null;
   return (
     <div className="sftp-editor-mask" onClick={onClose}>

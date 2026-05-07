@@ -2,6 +2,7 @@ import type { Protocol, Session, SessionInput } from "../../services/types";
 import { useI18n } from "../../i18n-context";
 import { PasswordVisibilityToggle } from "./PasswordVisibilityToggle";
 import { useEffect, useMemo, useState } from "react";
+import { ConfirmDialog } from "../ConfirmDialog";
 
 interface Props {
   session: Session | null;
@@ -40,6 +41,7 @@ export function HostEditModal({
 }: Props) {
   const { tr } = useI18n();
   const [initialSecret, setInitialSecret] = useState("");
+  const [confirmClose, setConfirmClose] = useState(false);
   useEffect(() => {
     if (!session) return;
     setInitialSecret(secret);
@@ -57,17 +59,25 @@ export function HostEditModal({
       secret !== initialSecret
     );
   }, [form, session, secret, initialSecret]);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { onClose(); }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   if (!session) return null;
   const requestClose = () => {
     if (!hasDirty || testing) {
       onClose();
       return;
     }
-    const ok = window.confirm(`${tr("modal.unsavedCloseTitle")}\n${tr("modal.unsavedCloseMessage")}`);
-    if (ok) onClose();
+    setConfirmClose(true);
   };
 
   return (
+    <>
     <div className="modal-backdrop" onClick={requestClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={tr("modal.editHost")}>
         <div className="modal-header">
@@ -76,7 +86,12 @@ export function HostEditModal({
             ×
           </button>
         </div>
-        <div className="modal-form">
+        <div className="modal-form" onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (form.host.trim()) onSubmit();
+          }
+        }}>
           <div className="session-form">
             <input placeholder={tr("form.name")} value={form.name} onChange={(e) => onChangeForm({ ...form, name: e.target.value })} />
             <select
@@ -86,8 +101,8 @@ export function HostEditModal({
                 onChangeForm({ ...form, protocol, port: protocol === "ssh" ? 22 : 23 });
               }}
             >
-              <option value="ssh">SSH</option>
-              <option value="telnet">Telnet</option>
+              <option value="ssh">{tr("protocol.ssh")}</option>
+              <option value="telnet">{tr("protocol.telnet")}</option>
             </select>
             <input placeholder={tr("form.host")} value={form.host} onChange={(e) => onChangeForm({ ...form, host: e.target.value })} />
             <input
@@ -151,6 +166,16 @@ export function HostEditModal({
           </button>
         </div>
       </div>
+      <ConfirmDialog
+        open={confirmClose}
+        title={tr("modal.unsavedCloseTitle")}
+        message={tr("modal.unsavedCloseMessage")}
+        confirmLabel={tr("modal.confirmClose")}
+        cancelLabel={tr("modal.cancel")}
+        onConfirm={() => { setConfirmClose(false); onClose(); }}
+        onCancel={() => setConfirmClose(false)}
+      />
     </div>
+    </>
   );
 }

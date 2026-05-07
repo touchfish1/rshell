@@ -7,6 +7,7 @@ interface Props {
   selectedId?: string;
   databases: string[];
   activeSchema: string;
+  activeTable?: string;
   tables: MySqlTableInfo[];
   tablesLoading: boolean;
   tr: (key: I18nKey, vars?: Record<string, string | number>) => string;
@@ -15,11 +16,14 @@ interface Props {
   onOpenContext: (x: number, y: number, connId: string) => void;
   onSelectSchema: (schema: string) => void;
   onOpenSchemaTab: (schema: string) => void;
-  onOpenDbContext: (x: number, y: number, schema: string) => void;
   onSelectTable: (table: string) => void;
   onOpenTableTab: (schema: string, table: string) => void;
   onOpenTableEdit: (schema: string, table: string) => void;
-  onOpenQueryTop1000?: (schema: string, table: string) => void;
+  onImportDdl?: (schema: string, table: string) => Promise<void>;
+  onExportInserts?: (schema: string, table: string) => Promise<void>;
+  onOpenQueryWithSql?: (schema: string, sql: string) => void;
+  onImportDbDdl?: (schema: string) => Promise<void>;
+  onImportDbDml?: (schema: string) => void;
 }
 
 export function MySqlSidebar({
@@ -27,6 +31,7 @@ export function MySqlSidebar({
   selectedId,
   databases,
   activeSchema,
+  activeTable,
   tables,
   tablesLoading,
   tr,
@@ -35,14 +40,18 @@ export function MySqlSidebar({
   onOpenContext,
   onSelectSchema,
   onOpenSchemaTab,
-  onOpenDbContext,
   onSelectTable,
   onOpenTableTab,
   onOpenTableEdit,
-  onOpenQueryTop1000,
+  onImportDdl,
+  onExportInserts,
+  onOpenQueryWithSql,
+  onImportDbDdl,
+  onImportDbDml,
 }: Props) {
   const [tableFilter, setTableFilter] = useState("");
   const [tableContextMenu, setTableContextMenu] = useState<{ x: number; y: number; table: string } | null>(null);
+  const [dbContextMenu, setDbContextMenu] = useState<{ x: number; y: number; schema: string } | null>(null);
 
   const filteredTables = useMemo(() => {
     if (!tableFilter.trim()) return tables;
@@ -83,7 +92,8 @@ export function MySqlSidebar({
                       onDoubleClick={() => onOpenSchemaTab(db)}
                       onContextMenu={(event) => {
                         event.preventDefault();
-                        onOpenDbContext(event.clientX, event.clientY, db);
+                        event.stopPropagation();
+                        setDbContextMenu({ x: event.clientX, y: event.clientY, schema: db });
                       }}
                     >
                       {db}
@@ -100,6 +110,11 @@ export function MySqlSidebar({
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
+                        {tableFilter.trim() ? (
+                          <div className="mysql-sidebar-filter-hint">
+                            {filteredTables.length}/{tables.length} {tr("mysql.page.selectColumn")}
+                          </div>
+                        ) : null}
                         <div className="mysql-sidebar-table-list">
                           {tablesLoading ? (
                             <div className="mysql-sidebar-table-status">{tr("sftp.loading")}</div>
@@ -110,7 +125,7 @@ export function MySqlSidebar({
                           {filteredTables.map((table) => (
                             <button
                               key={table.name}
-                              className="mysql-sidebar-table-row"
+                              className={`mysql-sidebar-table-row${activeTable === table.name ? " is-selected" : ""}`}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 onSelectTable(table.name);
@@ -139,34 +154,51 @@ export function MySqlSidebar({
           </div>
         ))}
       </div>
+      {/* Table context menu */}
       {tableContextMenu ? (
         <div className="mysql-context-menu" style={{ left: tableContextMenu.x, top: tableContextMenu.y }}>
-          <button
-            className="mysql-context-item"
-            onClick={() => {
-              onOpenTableEdit(activeSchema, tableContextMenu.table);
-              setTableContextMenu(null);
-            }}
-          >
-            {tr("mysql.page.editTable")}
-          </button>
-          <button
-            className="mysql-context-item"
-            onClick={() => {
-              onOpenTableTab(activeSchema, tableContextMenu.table);
-              setTableContextMenu(null);
-            }}
-          >
+          <button className="mysql-context-item" onClick={() => { onOpenTableTab(activeSchema, tableContextMenu.table); setTableContextMenu(null); }}>
             {tr("mysql.page.queryTop1000")}
           </button>
-          <button
-            className="mysql-context-item"
-            onClick={() => {
-              void navigator.clipboard.writeText(tableContextMenu.table).catch(() => undefined);
-              setTableContextMenu(null);
-            }}
-          >
+          <button className="mysql-context-item" onClick={() => { onOpenTableEdit(activeSchema, tableContextMenu.table); setTableContextMenu(null); }}>
+            {tr("mysql.page.editTable")}
+          </button>
+          <div className="mysql-context-separator" />
+          <button className="mysql-context-item" onClick={() => { onImportDdl?.(activeSchema, tableContextMenu.table); setTableContextMenu(null); }}>
+            {tr("mysql.page.importDdl")}
+          </button>
+          <button className="mysql-context-item" onClick={() => {
+            const sql = `SELECT * FROM \`${activeSchema}\`.\`${tableContextMenu.table}\` LIMIT 1000;`;
+            onOpenQueryWithSql?.(activeSchema, sql);
+            setTableContextMenu(null);
+          }}>
+            {tr("mysql.page.importDml")}
+          </button>
+          <button className="mysql-context-item" onClick={() => { onExportInserts?.(activeSchema, tableContextMenu.table); setTableContextMenu(null); }}>
+            {tr("mysql.page.exportInserts")}
+          </button>
+          <div className="mysql-context-separator" />
+          <button className="mysql-context-item" onClick={() => { void navigator.clipboard.writeText(tableContextMenu.table).catch(() => undefined); setTableContextMenu(null); }}>
             {tr("mysql.page.copyName")}
+          </button>
+        </div>
+      ) : null}
+      {/* DB context menu */}
+      {dbContextMenu ? (
+        <div className="mysql-context-menu" style={{ left: dbContextMenu.x, top: dbContextMenu.y }}>
+          <button className="mysql-context-item" onClick={() => {
+            const sql = `SELECT * FROM \`${dbContextMenu.schema}\`.\`${tables[0]?.name ?? ""}\` LIMIT 1000;`;
+            onOpenQueryWithSql?.(dbContextMenu.schema, sql);
+            setDbContextMenu(null);
+          }}>
+            {tr("mysql.page.newQuery")}
+          </button>
+          <div className="mysql-context-separator" />
+          <button className="mysql-context-item" onClick={() => { onImportDbDdl?.(dbContextMenu.schema); setDbContextMenu(null); }}>
+            {tr("mysql.page.importDbDdl")}
+          </button>
+          <button className="mysql-context-item" onClick={() => { onImportDbDml?.(dbContextMenu.schema); setDbContextMenu(null); }}>
+            {tr("mysql.page.importDbDml")}
           </button>
         </div>
       ) : null}
